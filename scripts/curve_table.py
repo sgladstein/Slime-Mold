@@ -22,7 +22,12 @@ PIPS = ("safe", "fair", "hard")
 def rows(paths):
     out = []
     for path in paths:
-        with open(path) as f:
+        # Windows PowerShell 5's Tee-Object writes UTF-16 with a byte-order
+        # mark (the PC's first rows, 11-28), so read by the mark.
+        with open(path, "rb") as b:
+            head = b.read(2)
+        enc = "utf-16" if head in (b"\xff\xfe", b"\xfe\xff") else "utf-8-sig"
+        with open(path, encoding=enc) as f:
             for line in f:
                 line = line[line.find("CURVE "):] if "CURVE " in line else line
                 if not line.startswith("CURVE ") or " league " not in line:
