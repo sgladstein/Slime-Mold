@@ -40,14 +40,29 @@ the dug-outs' plates (draw.rs) and tiles (`squadmode.rs`, Squad's file,
 one line: state "dug in", no AUTO) and the pill's `Icon::Group`. Film:
 `run=3 menu=stars@3`, `run=3:3 centre=124,170,4 at=60`.
 
+**11-28, Look C (planets and terrain):** survey `run=1:STEP hand=idle
+at=5 centre=squad,6 screen=1536x864` on steps 1, 3, 5, 8, 10, 12, ground
+kinds masked with a debug copy of the shader (`LARDER_VIEW_WGSL`, each
+kind a flat colour on every other pixel). Found: open shallow water, lit
+by its gloss, sat at the ground's value or above it (planet 10's lake 40
+in grey on ground at 40, planet 8's river 44 on 34), so a pond read as a
+blue patch of ground. `WET_RGB` and `FEN_WET_RGB` a quarter darker:
+shallow 27-31, deep 8 (was 16), the shallow-deep step still about 20.
+Constants only, no frame cost. Not fixed, minor: planet 4's river scum
+flecks blobby at zoom 12; planet 1's meadow tufts a pixel speckle at zoom
+6. Next in C: the caves' reed stalks over water read as rain at zoom 12
+(planet 10), and rock tops flat at zoom 6.
+
 **11-28, Look B (the slime up close, Scott's pick 07:12Z):** inside a
 packed body only the walkers' energy varies (a hill over each crystal);
 the fed glow (`fed_on`, `fed_mat`, `FED_*` in `view.wgsl`; energy summed
 in the fine grid's third block, off for the Sleeper's crust) raises,
 lights and glosses the body by it and dulls the hungry rim, with a
-crisper sheen. Page and clips `Reports/slime-fed-glow-2026-11-28/`. A card
-asked Scott: land as is (recommended), stronger, land then real veins
-(an Enemy change: the body must not be packed), or something else.
+crisper sheen. Page and clips `Reports/slime-fed-glow-2026-11-28/`. Merged
+as #909. Scott picked "land it, then real veins" (08:26Z): veins are an
+experiment, off by default (a `switches.rs` row); Enemy builds the
+streaming on its branch after the stronger slime and tells this lane when
+it shows at zoom 6, and this lane draws it behind the same switch.
 
 **11-28, Look A (the fight round the squad):** filmed `run=1:5
 hand=greedy at=14.25,24.25 centre=squad,12` (planet 4; the greedy squad
