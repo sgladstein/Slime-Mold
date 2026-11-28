@@ -3,11 +3,11 @@
 # 03:34Z) is his PC when it is on and connected, else GitHub. The same
 # games and the same rows: one planet a game (`league=STEP:SEED:SECS:PIP`,
 # the steps before it won on the Fair route and shopped by the plan), the
-# run bot's plan and the builder arm, each row `CURVE arm=... league ...`
+# run bot's plan with each arm's dials (pc-curve.ps1's $ArmDials), each row `CURVE arm=... league ...`
 # in the job log and the summary; scripts/curve_table.py makes the table.
 #
-# WHY BY HAND ONLY: a whole curve is 3 seeds x 12 steps x 3 pips x 2 arms,
-# about 190 games, and a late step takes about 20 real minutes on Mesa's
+# WHY BY HAND ONLY: a whole curve is 3 seeds x 12 steps x 3 pips x 3 arms,
+# about 280 games, and a late step takes about 20 real minutes on Mesa's
 # software Vulkan: tens of runner hours. Name the part and its runner time
 # first (CLAUDE.md: a census over about an hour needs the owner's OK).
 name: Curve
@@ -28,9 +28,9 @@ on:
         type: string
         default: "safe fair hard"
       arms:
-        description: Arms (main, builder), space-separated
+        description: Arms (main, builder, kite, kitecards, kitebuild), space-separated
         type: string
-        default: "main builder"
+        default: "main kitecards kitebuild"
       secs:
         description: Game seconds a planet (0 = its clock and a minute)
         type: string
@@ -72,11 +72,15 @@ jobs:
           SECS: ${{ inputs.secs }}
         run: |
           PLAN=$(grep -v '^#' scripts/run-bot-plan.txt | grep -m1 .)
-          # The builder arm: as pc-curve.ps1's.
-          BUILDER="$(echo "$PLAN" | sed 's/|/,pumps=1,guard=1,turrets=1,hold=20|/g'),pumps=1,guard=1,turrets=1,hold=20"
+          # The arms' dials: as pc-curve.ps1's $ArmDials.
+          B="pumps=1,guard=1,turrets=1,hold=20"
+          dials() { case "$1" in main) echo "";; builder) echo "$B";; kite) echo "kite=0.6";;
+            kitecards) echo "kite=0.6,cards=2";; kitebuild) echo "kite=0.6,cards=2,$B";;
+            *) echo "no arm $1" >&2; exit 1;; esac; }
           for pip in $PIPS; do
             for arm in $ARMS; do
-              plan="$PLAN"; [ "$arm" = builder ] && plan="$BUILDER"
+              d=$(dials "$arm"); plan="$PLAN"
+              [ -n "$d" ] && plan="$(echo "$PLAN" | sed "s/|/,$d|/g"),$d"
               t0=$(date +%s)
               ./target/release/larder-world "league=$STEP:$SEED:$SECS:$pip" "plan=$plan" > out.txt 2> err.txt < /dev/null || true
               wall=$(( $(date +%s) - t0 ))
