@@ -40,7 +40,7 @@ Milestone 3, a release, only if he chooses one.
 
 | Lane | Test | Top jobs, in order |
 |---|---|---|
-| Direction | all | This page and the rulings, including asks he makes in any thread. One retune pass from each of his run logs. The curve page when test 3 can be measured. D8. |
+| Direction | all | This page and the rulings, including asks he makes in any thread. One retune pass from each of his run logs. The curve page when test 3 can be measured. |
 | Enemy | 1, 3 | Pressure from the slime itself first: rerun the Lab's hunt on today's slime and build what it shows. Then the rescue planet as a star-map node (below). The Grudge readout is merged (#886). |
 | Squad and arsenal | 1, 3 | Turret designs in the run bot (with Engine, #887). Better turrets, worth building against a stronger slime. No economy retune: food, soldier and turret costs follow his playtests (his word, 11-28 03:31Z). |
 | Look and interface | 1, 5 | The star map and slime colours checked against the art direction; the rescue node's badge and screens; then his A to D order. |
@@ -65,7 +65,6 @@ asks at most once a session with a recommendation.
 | What | State |
 |---|---|
 | The PC strategy league | Still running on an 11-22 build; stop it or let Engine rebuild it on main. |
-| Whether to remove today's CPU slime engine (D8) | Decided at this milestone (his card, 11-17 19:21Z). Engine lists what stands on it first. |
 | "Automatically delete head branches" in the repository settings | His switch to turn on (about 40 stale branches). |
 
 ## Things to try at the next play

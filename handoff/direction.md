@@ -12,7 +12,9 @@ end.
 - **Jobs sent 03:20Z**, from the plan's steps: Engine (handoff rewrite; run bot picks by pip, turret designs, no heart siege, builder arm; 1070 retime and star-map save check; PC league PAUSE now, rebuild on main later; handoff lint; D8 list). Squad (handoff; turret-design logic for the bot with Engine; energy sink proposal with figures, prices are Direction's). Enemy (Grudge readout redo, rescue node at step 3, hunt rerun under an hour, retune with Direction per run log). Look (handoff; star map and slime colours against art direction; rescue badge; then A to D).
 - **Added scope:** record every ask Scott makes in any thread in `wiki/decisions-game.md` and here.
 - **His rulings 03:27Z and 03:31Z:** lanes ask him after their first review when a task is unclear or forks (CLAUDE.md, #888). The game being too easy is the core problem, so a stronger slime and better turrets come first. The plan's step 6 (energy sink) is dropped, and economy costs follow his playtests. Enemy is reordered so the hunt rerun goes first. Squad is on turret designs in the bot (#887), then better turrets.
-- **Open with him:** the shop DPS mock-up (other thread, 11-28 03:13Z); D8 once Engine lists what stands on the CPU engine; the auto-delete-branches switch.
+- **D8 closed** (his card 05:38Z, "Keep it, no new twins"): the CPU engine stays through Milestone 2; removal revisited after it.
+- **Told Engine (05:20Z):** a nightly stall becomes a named WALL line in the summary, not a failure; soft locks still fail. Hard walls step 2 for the bot's plan on 3 of 3 seeds, which is a finding for the curve page. The push dial is on (#889).
+- **Open with him:** the shop DPS mock-up (other thread, 11-28 03:13Z); Squad's turret card; the auto-delete-branches switch.
 - **Next:** his next run log gets one retune pass with Enemy; the curve page when Engine's twelve-step curve exists.
 
 ## State (2026-11-27 23:55Z), read this first

@@ -112,8 +112,8 @@ Five standing lanes and a lab, each one long-lived thread (2026-11-17).
 - **New slime rules are built on the GPU engine only** and tested on the
   software GPU: no new CPU twin and no new twin test (owner's card,
   2026-11-17 19:21Z). Today's CPU engine (`src/mould/big.rs`) stays as it is
-  for the tests and the census that stand on it; whether to remove it is
-  decided at Milestone 2.
+  for the tests and the census that stand on it, through Milestone 2 (his
+  card, 2026-11-28 05:38Z, D8); removal is looked at again after it.
 
 ## How threads work
 
