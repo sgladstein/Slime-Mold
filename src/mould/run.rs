@@ -438,7 +438,8 @@ const RAID_SIZE: [f32; 8] = [0.15, 0.2, 0.23, 0.27, 0.3, 0.33, 0.37, 0.4];
 /// soldier lands with `SOLDIER_HP` health, 70 (was `Rules::hp`'s 100), so
 /// Armour's quarter more is worth buying. On his 11-28 run soldiers fell
 /// only to Pinwheels; a soldier took 40 walker-seconds of contact to fall
-/// on every planet past 1, now 28 on planet 1 and 17.5 on the core world.
+/// on every planet past 1 (50 on planet 1), now 35 on planet 1 and 17.5 on
+/// the core world.
 const DRAIN: [f32; 8] = [2.0, 2.4, 2.7, 3.0, 3.3, 3.6, 3.8, 4.0];
 /// A soldier's health at the landing in a run (`Rules::hp`, before Armour);
 /// see `DRAIN`. The gun range and the free maps keep `Rules::hp`'s 100.
