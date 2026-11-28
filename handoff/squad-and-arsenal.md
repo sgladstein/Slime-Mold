@@ -48,6 +48,18 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-28, formations on the move (thread "Improve squad formations on
+the move").** Owner 06:12Z: spread squads "get all disorganized" when sent.
+Causes measured with `move_tests::probe_order` (ignored; `MOVE_MAPS`,
+`MOVE_NS`, `MOVE_SEEDS`, `MOVE_SQUEEZE=0` for the old walk): the funnel
+measured the ground against the full spread, so wide squads walked as
+columns, and a column re-matched its places every step. Built on his card
+(07:08Z, keep the spread, squeeze in gaps): `Rules::squeeze` (on),
+`Squad::squeeze`, `Game::squeeze_turn`/`spread_now`/`spread_own`, `WIDEN`;
+column ranks re-matched once a second. Next in the same thread: the shapes
+list back (blob, ring, line, column; his 07:09Z "add column to the list")
+with right-button hold for a ghost at the target and drag for the spread.
+
 **2026-11-28, turret families (thread "Make turrets work like guns in the
 shop", not this lane's thread; owner 05:49Z and 06:05Z, rows in
 `wiki/decisions-game.md`).** #900: 4 guns and 3 turret designs a shop, Pump

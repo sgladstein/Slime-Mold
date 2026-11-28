@@ -95,6 +95,10 @@ pub enum Formation {
 /// one job, filing through doors, the funnel (`funnel`) already does for
 /// any shape.
 pub const SPREADS: [f32; 5] = [1.0, 1.3, 1.6, 1.9, 2.4];
+/// How fast a squeezed squad opens up again past narrow ground
+/// (`Game::squeeze_turn`): its spread, against the tightest, a game
+/// second (from the widest to the tightest in about 2.3 s).
+pub const WIDEN: f32 = 0.6;
 /// Each step's name, tightest first.
 pub const SPREAD_NAMES: [&str; 5] = ["tight", "close", "open", "loose", "wide"];
 
@@ -193,6 +197,13 @@ pub struct Squad {
     pub formation: Formation,
     /// How far apart it stands: a step of `SPREADS`, 0 the tightest.
     pub spread: u8,
+    /// The spread it walks at now, against the blob's tightest (as a
+    /// `SPREADS` entry), while the ground is narrower than its own spread
+    /// (`Rules::squeeze`, `Game::squeeze_turn`); 0 when it stands at its
+    /// own. Narrows at once where the ground narrows and opens up again
+    /// at `WIDEN` a second past it.
+    #[serde(default)]
+    pub squeeze: f32,
     /// The volley's point, while the player holds fire (`Cmd::Fire`).
     pub fire: Option<(f32, f32)>,
     /// Tick of its next volley.
@@ -295,6 +306,7 @@ impl Default for Squad {
             face: (1.0, 0.0),
             formation: Formation::Blob,
             spread: 0,
+            squeeze: 0.0,
             fire: None,
             next_volley: 0,
             anchor: None,
@@ -350,7 +362,58 @@ impl<W: World> Game<W> {
     /// The room between neighbours in squad `q`'s formation, dish cells:
     /// `gap` times its spread (`SPREADS`).
     pub(super) fn form_gap(&self, q: usize) -> f32 {
-        self.gap() * SPREADS[(self.squads[q].spread as usize).min(SPREADS.len() - 1)]
+        self.gap() * self.spread_now(q)
+    }
+
+    /// Squad `q`'s own spread, against the tightest (`SPREADS`).
+    pub(super) fn spread_own(&self, q: usize) -> f32 {
+        SPREADS[(self.squads[q].spread as usize).min(SPREADS.len() - 1)]
+    }
+
+    /// The spread squad `q` stands at now: its own, or less while it is
+    /// squeezed through narrow ground (`Squad::squeeze`).
+    pub(super) fn spread_now(&self, q: usize) -> f32 {
+        let own = self.spread_own(q);
+        let s = self.squads[q].squeeze;
+        if s > 0.0 { s.clamp(SPREADS[0], own) } else { own }
+    }
+
+    /// Squeezes squad `q`'s spread to the ground's width along its way
+    /// (`Rules::squeeze`), its anchor at `at` heading `dir` (a unit
+    /// vector), with `far` a point further on: the widest spread, up to its
+    /// own, whose blob or ring fits across the narrowest of the three
+    /// points, at once if narrower, and opening up `WIDEN` a game second.
+    /// Before it (owner 2026-11-28 06:12Z: "on some when i tell them to move
+    /// they get all disorganized"), the funnel measured the ground against
+    /// the full spread, so a wide squad found narrow ground nearly
+    /// everywhere: a wide blob of 24 or 40 walked 99% of a walk on planets
+    /// 1 and 8 (seed 1) as a column, its members 11 to 22 cells from their
+    /// places, and the spread came back only at the goal.
+    pub(super) fn squeeze_turn(&mut self, q: usize, pts: [(f32, f32); 3], dir: (f32, f32), dt: f32) {
+        let own = self.spread_own(q);
+        if !self.rules.squeeze || own <= SPREADS[0] {
+            self.squads[q].squeeze = 0.0;
+            return;
+        }
+        let sc = self.s();
+        let n = self.members(q).len();
+        let sq = self.squads[q];
+        // The formation's furthest place at a gap of 1: its width at
+        // spread f is 2 * far * gap * f + gap (`formation_width`).
+        let far = (0..n).map(|r| sq.formation.offset(r, n, 1.0)).map(|o| o.0.hypot(o.1)).fold(0.0, f32::max);
+        let gap = self.gap();
+        let cap = (2.0 * far * gap * own + gap) * sc;
+        let free = pts.iter().map(|&p| {
+            let (l, r) = self.across(p, dir, cap);
+            l + r
+        }).fold(f32::MAX, f32::min);
+        // A gap short of the ground's width, so the funnel (which measures
+        // the same ground against the squeezed width) doesn't find it a
+        // hair too narrow.
+        let fit = if far > 1e-4 { ((free / sc - 2.0 * gap) / (2.0 * far * gap)).clamp(SPREADS[0], own) } else { own };
+        let now = self.spread_now(q);
+        let next = if fit < now { fit } else { (now + WIDEN * dt).min(fit) };
+        self.squads[q].squeeze = if next >= own - 1e-4 { 0.0 } else { next };
     }
 
     /// How far from squad `q`'s middle a member may stand and still count
@@ -828,6 +891,12 @@ impl<W: World> Game<W> {
                 self.squads[q].vel = (0.0, 0.0);
                 self.squads[q].map = None;
                 self.funnel_stop(q);
+                // Squeezed on its way (`squeeze_turn`): opens up to its own
+                // spread where it stands.
+                if self.squads[q].squeeze > 0.0 {
+                    let next = self.squads[q].squeeze + WIDEN * dt;
+                    self.squads[q].squeeze = if next >= self.spread_own(q) - 1e-4 { 0.0 } else { next };
+                }
                 // At rest: round the point every member was last sent to.
                 let m = self.members(q);
                 if let Some(&k0) = m.first() {
@@ -944,6 +1013,12 @@ impl<W: World> Game<W> {
                 let look = (self.formation_width(q) + self.gap()) * sc;
                 let far = self.guide(at, target, look, !steering, whole);
                 let dir = unit((far.0 - at.0, far.1 - at.1)).unwrap_or(sq.face);
+                // Narrower ground first narrows the spread (`squeeze_turn`),
+                // so the funnel below sees the squeezed formation's width
+                // and makes a column only where the tightest won't fit.
+                if !self.columns[q].on {
+                    self.squeeze_turn(q, [at, a, far], dir, dt);
+                }
                 let lead = self.members(q).iter().map(|&k| (self.soldiers[k].x - at.0) * dir.0 + (self.soldiers[k].y - at.1) * dir.1).fold(0.0, f32::max);
                 let front = if self.columns[q].on || lead <= 0.0 { a } else { self.guide(at, target, lead.min(look), !steering, whole) };
                 self.funnel(q, at, a, far, front)
@@ -977,7 +1052,17 @@ impl<W: World> Game<W> {
                     self.squads[q].face = f;
                 }
             }
-            if !self.rules.steer || started || self.columns[q].on || self.rerank(q) {
+            // In a column (`funnel`) each keeps its place in the queue for
+            // a second at a time: matched again every step, as before
+            // 2026-11-28, members traded places 25 to 57 times each on one
+            // walk across planet 1 or 8 (squads of 12 to 40), the shuffle
+            // the owner saw. Never matched again till it left the column,
+            // a squad of 40 that queued round rock on planet 8 (seed 1)
+            // took 30 s to settle after arriving, against under 10.
+            // Without `Rules::squeeze` it matches every step, as before.
+            let beat = self.world.ticks() % (self.rules.tps.max(1) as u64) < (self.rules.frame_ticks.max(1) as u64);
+            let col_rank = self.columns[q].on && (!self.rules.squeeze || beat);
+            if !self.rules.steer || started || col_rank || self.rerank(q) {
                 self.rank_squad(q, a);
             }
             // The match moves with the anchor: once there, the squad isn't
