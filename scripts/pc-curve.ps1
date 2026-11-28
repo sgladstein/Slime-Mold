@@ -23,6 +23,13 @@
 # seed 1, 300 s, c596e7c6: main all 9 dead at 62 s (the hunt, #895);
 # kite=0.6 12 alive (peak 23, 11 fell); kite=0.6,cards=2 12 alive (2 fell);
 # kite=0.9,cards=2 5 alive; kitebuild 12 alive but built no pump.
+# Seeds 1-2, all steps (3e110847): wins main 11, kitecards 6, kitebuild 5,
+# none past step 6. scott is the owner's own build from his 11-28 run's
+# play logs (planets 3 to 5): a carbine with Split, Rate, Range and a torch
+# needle, shop Armour, Heavier shots, Faster trigger, Longer barrels and
+# Fireproof. Step 5 Fair, full clock: scott won seeds 1, 2, 3 (9:42, 9:27,
+# 6:27), main lost all three (wiped at 3:03, 3:53, 3:31), the first wins
+# any arm had there. Default arms since: main, scott, kitecards.
 #
 # Its own clone (never the owner's play folder) at -Tree, on -Commit. One
 # game at a time; before each game it waits while the owner plays (a
@@ -42,7 +49,7 @@ param(
     [int[]]$Seeds = @(1, 2, 3),
     [int[]]$Steps = @(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
     [string[]]$Pips = @("safe", "fair", "hard"),
-    [string[]]$Arms = @("main", "kitecards", "kitebuild"),
+    [string[]]$Arms = @("main", "scott", "kitecards"),
     [int]$Secs = 0,
     [int]$Every = 6,
     [string]$Commit = "origin/main",
@@ -61,6 +68,7 @@ $ArmDials = @{
     "kite"      = "kite=0.6"
     "kitecards" = "kite=0.6,cards=2"
     "kitebuild" = "kite=0.6,cards=2,$builder"
+    "scott"     = "want=split/rate/range/torch.needle,gun=carbine,shop=hp/strike/rate/range/fireproof"
 }
 foreach ($a in $Arms) { if (-not $ArmDials.ContainsKey($a)) { throw "no arm '$a': one of $($ArmDials.Keys -join ', ')" } }
 

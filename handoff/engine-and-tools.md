@@ -48,6 +48,12 @@ and resume of a star-map run), 5 (60 fps at 4K on the GTX 1070).
   a retune signal; the curve needs an arm with a real build, hence the
   kite arms. kitebuild still built no pump on steps 3 and 4: the builder
   dials' pump wait is the next thing to look at if it stays bare.
+- **The scott arm** (Scott's own build from his 11-28 play logs: carbine,
+  Split, Rate, Range, torch needle; Armour, Heavier shots, trigger, barrels,
+  Fireproof): step 5 Fair full clock won seeds 1-3 where main lost all
+  three; the curve's default arms are now main, scott, kitecards. Next:
+  the scott arm across the curve, then whether it should be the run bot's
+  plan (Direction's call; scripts/run-bot-plan.txt).
 - **PC strategy league** (`C:\Users\Scott\Code\slime-league`, detached HEAD,
   src tree `cb8d00f3`, the 11-22 build): paused 11-28 03:27Z with a `PAUSE`
   file (Scott allowed the Remote Control card). Two worker Pythons were
