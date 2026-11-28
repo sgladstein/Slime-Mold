@@ -48,6 +48,23 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-28, turret families (thread "Make turrets work like guns in the
+shop", not this lane's thread; owner 05:49Z and 06:05Z, rows in
+`wiki/decisions-game.md`).** #900: 4 guns and 3 turret designs a shop, Pump
+power and the Walls row off the shop (`run::GONE`). Then: `turrets::Family`
+(11 families over the 4 `TurretKind` styles, `Family::average`,
+`Turret::roll_family`, `Turret::roll(kind, ..)` draws a family of the style
+sold at that depth); `Turret` gains `family`, `spread`, `shots`, `blast`,
+`grade` (range, rate, blast stay multipliers of the style's `BuildRules`;
+`Turret::numbers` gives cells and shots a second); price as a gun's;
+11-word save/replay word, the 7-word one still read. In game: a design's
+`turret_gun` carries its spread and shots (Flak's fan), `fire_shells` a
+cluster and blast (Bombard, Howitzer), the sprayer its spots and arc (Fan);
+test `a_family_fires_its_own_numbers`. Shop: turret rows are
+`ShopArea::Turrets`, a second table on the Guns tab (`gun_table(.., which,
+..)`), owned ones on Owned; film key `tfam=FAMILY,..`. Food per style, not
+per family (open if he wants it per family).
+
 **2026-11-28, split off any number (same thread).** Owner 03:42Z: "sometimes
 I want to just split off 1 or 2 or a 1/4 of the squad"; halving stays easy.
 Built on the recommended option of his card (hold Y, the wheel picks):

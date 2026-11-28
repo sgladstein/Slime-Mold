@@ -2377,13 +2377,12 @@ impl App {
                             let kind = slime_mould::mould::larder_world::design_kind(d.kind);
                             let cost = g.build_price(kind, (0.0, 0.0));
                             let cards = run.design_cards(l);
-                            let over = if d.over { "fires over walls" } else { "walls block it" };
                             let fires = if cards.is_empty() { "no cards yet: give its loadout some in the shop".to_string() } else { slime_mould::mould::rounds::name(&cards) };
-                            c.name = d.kind.name().into();
+                            c.name = d.family.name().into();
                             c.icon = building_icon(kind);
                             c.cost = Some(format!("{cost:.0}"));
                             (c.ready, c.why_not) = cost_now(cost);
-                            c.about = format!("Quick build {}: {}'s {}. {} Reach x{:.2}, rate x{:.2}, {over}. Every one fires {fires}. The shop's loadout bar picks which loadouts are here.", s + 1, run.loadout_name(l), d.title(), d.kind.about(), d.range, d.rate);
+                            c.about = format!("Quick build {}: {}'s {}. {} {}. Every one fires {fires}. The shop's loadout bar picks which loadouts are here.", s + 1, run.loadout_name(l), d.title(), d.family.about(), d.line());
                         }
                         _ => {
                             c.name = format!("Quick build {}", s + 1);
