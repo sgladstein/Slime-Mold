@@ -106,12 +106,17 @@ foreach ($seed in $Seeds) {
                 if ($DryRun) { "dry: $key :: $exe $cmd plan=$p"; continue }
                 WaitTurn
                 $t0 = Get-Date
-                $out = & $exe $cmd "plan=$p" 2>&1
+                # `$res`, not `$out`: PowerShell names ignore case, so `$out`
+                # overwrote the -Out parameter and every push failed (first
+                # PC run, 11-28). Its lines are split again because stderr
+                # and stdout came back as one string, so `^league ` never
+                # matched and played games were written "failed".
+                $res = (& $exe $cmd "plan=$p" 2>&1 | ForEach-Object { "$_" }) -split "`r?`n"
                 $wall = [int]((Get-Date) - $t0).TotalSeconds
-                $line = $out | Where-Object { "$_" -match '^league ' } | Select-Object -First 1
+                $line = $res | Where-Object { $_ -match '^league ' } | Select-Object -First 1
                 if (-not $line) {
-                    $why = ($out | Where-Object { "$_" -match 'no (safe|fair|hard) planet' } | Select-Object -First 1)
-                    $line = if ($why) { "skipped $why" } else { "failed $($out | Select-Object -Last 1)" }
+                    $why = ($res | Where-Object { $_ -match 'no (safe|fair|hard) planet' } | Select-Object -First 1)
+                    $line = if ($why) { "skipped $why" } else { "failed $($res | Select-Object -Last 1)" }
                 }
                 "CURVE arm=$arm step=$step seed=$seed pip=$pip wall=$wall $line" | Tee-Object -FilePath $rows -Append
                 $played++
