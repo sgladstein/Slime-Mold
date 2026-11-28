@@ -534,7 +534,14 @@ fn scar_tough(k: u32) -> bool {
     let i = cell(wk.x, wk.y);
     if (i == NONE) { return false; }
     let p = P.tough * min(scar_at(i) / P.tough_full, 1.0);
-    return unit(keyed(P.s_starve, S.t, k ^ 0x71237123u)) < p;
+    // Each blow the scar turns aside counts in `wstat[14]`, a running
+    // total beside the kills' `wstat[3]` (11-25, Direction): the Grudge's
+    // readout is the share of the squad's hits shrugged off, because the
+    // share of the body on scar stayed at 1% of planet 7's slime at 3:00
+    // (the scar is the kill zone, a sliver of 85,000-167,000 walkers).
+    let shrugged = unit(keyed(P.s_starve, S.t, k ^ 0x71237123u)) < p;
+    if (shrugged) { atomicAdd(&wstat[14], 1u); }
+    return shrugged;
 }
 // **The slime toughens planet by planet** (`Settings::blows`, 2026-11-26,
 // the owner's "the progression needs to be way stronger for the slime"
@@ -4105,7 +4112,7 @@ fn kill(@builtin(global_invocation_id) gid: vec3<u32>) {
 // The living walkers (the CPU's `living`: a slot alive, with growth, and
 // not dead) into `wstat[4]`, and with `grid` the mould grid (the CPU's
 // `mould_grid`: each `grid`-cell square's walkers holding a cell, its
-// `occ`) into `wstat[14..]`, row by row; `Engine::record_count` clears both
+// `occ`) into `wstat[15..]`, row by row; `Engine::record_count` clears both
 // first and dispatches a thread for each slot and each cell. The game's
 // packed readout copies them, so neither costs a read-back of its own (the
 // count read the energy and `spec` back, 8 MB at 1M slots, until
@@ -4137,7 +4144,7 @@ fn count(@builtin(global_invocation_id) gid: vec3<u32>) {
         let o = atomicLoad(&occ[k]);
         if (o > 0u) {
             let gw = (P.w + g - 1u) / g;
-            atomicAdd(&wstat[14u + (k / P.w / g) * gw + (k % P.w) / g], o);
+            atomicAdd(&wstat[15u + (k / P.w / g) * gw + (k % P.w) / g], o);
         }
     }
 }

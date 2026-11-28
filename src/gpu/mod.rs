@@ -246,11 +246,13 @@ const _: () = assert!(MAX_PILES == crate::mould::big::PANIC_PILES, "a panicking 
 /// the cap's two counts, then the condensed strikers' counts (words 8-10,
 /// `Engine::condense`, 2026-11-20; word 8 held the old condensing's
 /// walkers 11-15 to 11-17) and the walkers in their band (word 11), then
-/// the walkers asleep (12) and on full scar (13, both `count`). The
+/// the walkers asleep (12) and on full scar (13, both `count`), then the
+/// blows scar tissue shrugged off (14, a running total as the struck's,
+/// 11-25). The
 /// mould grid follows (`Engine::record_count`), room for squares down to a
 /// game cell or `GRID_MIN` dish cells, whichever is smaller
 /// (`Engine::grid_max`).
-pub const WSTAT_BYTES: usize = 56;
+pub const WSTAT_BYTES: usize = 60;
 
 /// The smallest mould grid square the wall counters have room for, in
 /// dish cells, where the scale is bigger: the campaign's and the player
@@ -2418,6 +2420,7 @@ impl Engine {
         }
         self.queue.write_buffer(&self.bites, 0, &vec![0u8; self.cells as usize * 4]);
         self.queue.write_buffer(&self.wstat, 0, &[0u8; 16]);
+        self.queue.write_buffer(&self.wstat, 56, &[0u8; 4]);
         self.walled = !d.wall.is_empty();
         self.ground_world = ground_bits(d);
         assert_eq!(d.kind.is_empty(), self.kinds == 1, "a dish with this engine's mix");
