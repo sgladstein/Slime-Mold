@@ -170,8 +170,9 @@ impl<W: World> Game<W> {
             }
             let q = s.squad as usize;
             let strike = self.strike_of(q);
-            // A volleying squad fires every member at its point at once and
-            // nothing else; the others fire on their own clocks.
+            // A volleying squad fires every member at its point and nothing
+            // else; the others fire at what they see. Each on its own
+            // clock, spread in time (`Rules::shot_spread`), not in step.
             let volley = self.volley(k, t);
             let firing = self.squads[q].fire.is_some();
             let mut shot = false;
@@ -185,7 +186,7 @@ impl<W: World> Game<W> {
                     // `RoundRules::blast_hurt`): fire on its own keeps them
                     // off the squad where the shot really stops
                     // (`RoundRules::blast_margin`, in `Rounds::fire`).
-                    if volley.is_some() || d <= reach + 4.0 {
+                    if (volley.is_some() || d <= reach + 4.0) && !self.shot_wait(k, q, t) {
                         // The squad's gun (`Game::gun`): its spread, and its
                         // bullets a shot, each turned on its own (the
                         // scattergun's fan; the standard rifle fires one).
@@ -246,8 +247,7 @@ impl<W: World> Game<W> {
                         }
                         // A worker fires at its full rate: it fired at half
                         // while lookouts stood guard (`cover`, gone 11-21).
-                        let gap = self.shot_gap(q);
-                        self.soldiers[k].ready = t + gap;
+                        self.shot_done(k, q, t);
                         shot = true;
                         self.bank -= r.price;
                         self.spent += r.price;
@@ -272,7 +272,6 @@ impl<W: World> Game<W> {
             let s = self.soldiers[k];
             self.heal(k, (s.x - was.0).hypot(s.y - was.1), shot, dt);
         }
-        self.volley_done(t);
         // The player's own mould's gardeners (`own_mould`; nothing here
         // unless the world has one).
         let tended = self.world.tend(&self.soldiers, self.bank, r.frame_ticks);

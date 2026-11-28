@@ -81,6 +81,13 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   still puts every bullet on the cursor: spreading it over the slime round
   the cursor won at a body's edge but lost among loose walkers, so it was not
   kept ([dead ends](../../Reports/dead-ends.md)).
+- **Shots spread in time** (2026-11-28, the owner: "All soldier in a squad
+  shouldn't fire exactly in sync"). Each soldier fires on its own clock, a
+  held volley too: every wait is the gun's gap give or take a quarter
+  (`Rules::shot_spread`, 0.25; 0 is the old lockstep), evenly round the gap
+  so the shots a second stay the gun's, and a soldier idle a whole gap waits
+  up to a quarter gap before its first shot, so an opening volley ripples
+  down the line (`Game::shot_wait`, `Game::shot_done`).
 - **Attack-move stands only for a fight** (owner, 2026-11-19 16:55Z: one
   walker stopped the whole squad). A squad on attack-move stands to fight
   when the walkers in its members' reach reach `Rules::fight_hold` (1) a

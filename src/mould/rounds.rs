@@ -3718,6 +3718,13 @@ mod tests {
             // away from the gun, under the 8 in 10. The throw's way is the
             // card's, not the aim's.
             g.rules.near_first = 0.0;
+            // In lockstep (`Rules::shot_spread` 0, 11-28), as these seeds
+            // were set at too: with shots spread in time most steps hold one
+            // hit, so another lone hit is the one measured, and the squad's
+            // other shots land on its walkers during the shove. Seed 3's
+            // slug then threw 48 of 69 away from the gun, under the 8 in 10
+            // (seed 2: 128 of 147). The throw's way is the card's.
+            g.rules.shot_spread = 0.0;
             g.apply(Cmd::Load(0, Some(Deck::new(&[card]))));
             // This test runs its own `Rounds` to look between a step and its
             // casts, so the game's own (`Game::gear`, 11-20) stays off.

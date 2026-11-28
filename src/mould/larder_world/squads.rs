@@ -205,9 +205,10 @@ pub struct Squad {
     #[serde(default)]
     pub squeeze: f32,
     /// The volley's point, while the player holds fire (`Cmd::Fire`).
+    /// Each member fires at it on its own clock (`Soldier::ready`): the
+    /// squad's one volley clock (`next_volley`, gone 2026-11-28) fired
+    /// every member on the same step.
     pub fire: Option<(f32, f32)>,
-    /// Tick of its next volley.
-    pub next_volley: u64,
     /// The point its formation stands round while it moves as one, fine
     /// cells (None when it is not steered or sent).
     pub anchor: Option<(f32, f32)>,
@@ -308,7 +309,6 @@ impl Default for Squad {
             spread: 0,
             squeeze: 0.0,
             fire: None,
-            next_volley: 0,
             anchor: None,
             work: None,
             queue: [Order::Hold; SQUAD_QUEUE],
@@ -342,7 +342,7 @@ impl Squad {
     /// gun." (From 17:40Z to then the new half took the standard rifle and
     /// the army's round, so a great gun was never copied.)
     fn offshoot(&self) -> Squad {
-        Squad { formation: self.formation, spread: self.spread, face: self.face, fight: self.fight, next_volley: self.next_volley, gun: self.gun, deck: self.deck, loadout: self.loadout, ..Squad::default() }
+        Squad { formation: self.formation, spread: self.spread, face: self.face, fight: self.fight, gun: self.gun, deck: self.deck, loadout: self.loadout, ..Squad::default() }
     }
 }
 
@@ -1112,25 +1112,68 @@ impl<W: World> Game<W> {
         self.members(q).into_iter().filter(|&j| (self.soldiers[j].x - mid.0).hypot(self.soldiers[j].y - mid.1) <= stray).map(|j| self.wade(j)).fold(1.0, f32::min)
     }
 
-    /// Whether soldier `k` fires a volley shot this step, and at what.
+    /// Whether soldier `k` fires a volley shot this step, and at what:
+    /// its squad's point, once its own clock is up.
     pub(super) fn volley(&self, k: usize, t: u64) -> Option<(f32, f32)> {
-        let sq = self.squads[self.soldiers[k].squad as usize];
-        sq.fire.filter(|_| t >= sq.next_volley)
+        let s = &self.soldiers[k];
+        self.squads[s.squad as usize].fire.filter(|_| s.ready <= t)
     }
 
-    /// After the soldiers' shots: squads that volleyed this step wait for
-    /// the next.
-    pub(super) fn volley_done(&mut self, t: u64) {
-        for q in self.live_squads() {
-            let sq = self.squads[q];
-            if sq.fire.is_some() && t >= sq.next_volley {
-                // On the beat (a gap that is not whole frames would
-                // otherwise round every wait up), unless it fell behind.
-                let gap = self.shot_gap(q);
-                let next = sq.next_volley + gap;
-                self.squads[q].next_volley = if next > t { next } else { t + gap };
-            }
+    /// How many whole ticks either side of gap `gap` one soldier's waits
+    /// spread (`Rules::shot_spread`): at least one while it is on, so a
+    /// fast gun still falls out of step, and never the whole gap.
+    fn spread_ticks(&self, gap: u64) -> u64 {
+        let sp = self.rules.shot_spread.max(0.0);
+        if sp <= 0.0 || gap < 2 {
+            return 0;
         }
+        ((gap as f32 * sp).round() as u64).max(1).min(gap - 1)
+    }
+
+    /// A roll for soldier `k` at tick `t`, steady for a replay: a hash,
+    /// not `Game::rng`, so spreading the shots moves no other roll.
+    fn shot_roll(k: usize, t: u64, salt: u64) -> u64 {
+        let mut z = (k as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15) ^ t.wrapping_mul(0xBF58_476D_1CE4_E5B9) ^ salt;
+        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+        z ^ (z >> 31)
+    }
+
+    /// Whether soldier `k` (of squad `q`), about to fire at tick `t`, holds
+    /// its first shot a little instead: one that stood idle a whole gap
+    /// waits 0 to `spread_ticks` ticks, its own roll, so the members of a
+    /// squad that see slime on one step, or are told to fire on one, open
+    /// up one after another. At most a quarter gap once an engagement;
+    /// every shot after keeps the gun's mean gap (`shot_done`).
+    pub(super) fn shot_wait(&mut self, k: usize, q: usize, t: u64) -> bool {
+        let gap = self.shot_gap(q);
+        let s = &self.soldiers[k];
+        // `ready` 0: it has never fired (a new soldier, a new game).
+        if s.ready > 0 && t < s.ready + gap {
+            return false;
+        }
+        let d = self.spread_ticks(gap);
+        let wait = if d > 0 { Self::shot_roll(k, t, 0x5EED) % (d + 1) } else { 0 };
+        if wait == 0 {
+            return false;
+        }
+        self.soldiers[k].ready = t + wait;
+        true
+    }
+
+    /// After soldier `k` of squad `q` fires at tick `t`: when it may fire
+    /// next. Its gap give or take `spread_ticks`, each whole tick in that
+    /// span as likely, so the mean is the gap and the damage a second is
+    /// the gun's. A volley keeps its beat (a gap that is not whole frames
+    /// would otherwise round every wait up) unless it fell behind; free
+    /// fire waits from the shot, as it always has.
+    pub(super) fn shot_done(&mut self, k: usize, q: usize, t: u64) {
+        let gap = self.shot_gap(q);
+        let d = self.spread_ticks(gap);
+        let wait = gap - d + if d > 0 { Self::shot_roll(k, t, 0x5407) % (2 * d + 1) } else { 0 };
+        let s = &self.soldiers[k];
+        let beat = s.ready + wait;
+        self.soldiers[k].ready = if self.squads[q].fire.is_some() && beat > t { beat } else { t + wait };
     }
 
     /// Ticks between squad `q`'s shots: its gun's (`Gun::rate`; the
@@ -1370,13 +1413,11 @@ impl<W: World> Game<W> {
             }
             Cmd::Fire(q, at) if ok(q) => {
                 let q = q as usize;
-                let t = self.world.ticks();
+                // A press fires at once if the guns are ready: each member
+                // only waits out its own last shot's gap
+                // (`Game::shot_done`), and one that stood idle its share of
+                // the ripple (`Game::shot_wait`).
                 let sq = &mut self.squads[q];
-                if sq.fire.is_none() && at.is_some() {
-                    // A press fires at once if the guns are ready: the
-                    // clock only waits out the last volley's gap.
-                    sq.next_volley = sq.next_volley.max(t);
-                }
                 sq.fire = at;
                 if let Some(p) = at {
                     self.face_to(q, p);
