@@ -44,9 +44,9 @@ them.
 
 ## Built
 
-`hunt_pull` by planet (`run::HUNT_PULL`, curve places 1-8: 0, 10, 18, 26,
+`hunt_pull` by planet (`run::HUNT_PULL`, curve places 1-8: 0, 10, 18, 30,
 30, 30, 30, 30): off on the landing world, about 10 at step 2, 14 at step
-3, 27 at step 6, full from step 8, and a Hard pick about four steps on.
+3, full from step 6, and a Hard pick about four steps on.
 The fast tubes are the whole slime's walk and were not taken. The Lab's
 haste key (a longer step on the trail) was dropped: it changed nothing in
 the Lab's rig and would have been a key left off. GPU only, as the lure.
@@ -58,6 +58,6 @@ timed: the 1070 batch is Engine's.
 Still: [step 2, run seed 1, greedy, 2:00](step2-greedy-120s.jpg), the
 Sprawler's body streaming from its crystal down to the squad.
 
-The start and strength are on the owner's card of 11-28 ~04:56Z (mild at
-step 2 to full by step 6 recommended; from step 3; full from step 2; or
-not yet); this table is the recommendation and changes with his answer.
+The start and strength are the owner's pick on the card of 11-28 05:40Z:
+"Mild at step 2, full by step 6" (rejected: from step 3; full from step 2;
+not yet, mass then come in wide first).

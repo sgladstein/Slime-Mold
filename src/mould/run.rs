@@ -580,8 +580,9 @@ const BLOWS: [f32; 8] = [1.0, 1.75, 2.25, 2.75, 2.75, 3.25, 3.75, 4.5];
 /// 2026-11-28, Enemy, the plan's step 5; the owner's 03:31Z "trying to
 /// make the slime enemy stronger"): how hard calm slime leans down the
 /// squad's trail, by curve place. Off on the landing world, about 10 at
-/// step 2, 14 at step 3, 27 at step 6, full (30, the Lab's strongest) from
-/// step 8, and a Hard pick (+2.5 places) about four steps on. Rerun of the Lab's rig on today's slime (step 2, threats off,
+/// step 2, 14 at step 3, 19 at step 4, 25 at step 5, full (30, the Lab's
+/// strongest) from step 6, and a Hard pick (+2.5 places) about four steps
+/// on (the owner's card, 11-28 05:40Z: "Mild at step 2, full by step 6"). Rerun of the Lab's rig on today's slime (step 2, threats off,
 /// 15 rifles, run seeds 1-6, lavapipe, Reports/hunt-rerun-2026-11-28):
 /// soldiers bitten by 5:00 kiting, as main 0 on all six; pull 10:
 /// 0, 0, 7, 11, 0, 0 (one squad wiped); pull 30: 0, 0, 4, 11, 0, -; pull 30
@@ -589,7 +590,7 @@ const BLOWS: [f32; 8] = [1.0, 1.75, 2.25, 2.75, 2.75, 3.25, 3.75, 4.5];
 /// and fighting, main 0, 0, 0, 0, 0, 1; pull 10 18, 0, 5, 18, 21, 20. The
 /// fast tubes (`trail_scale`, `step_by`) are the whole slime's, not
 /// taken. A Direction tuning number.
-const HUNT_PULL: [f32; 8] = [0.0, 10.0, 18.0, 26.0, 30.0, 30.0, 30.0, 30.0];
+const HUNT_PULL: [f32; 8] = [0.0, 10.0, 18.0, 30.0, 30.0, 30.0, 30.0, 30.0];
 
 /// **The slime's levels by planet** (2026-11-26, `larder_world/levels.rs`;
 /// the owner, 08:24Z: "You could change slime color so their are 3-8 levels

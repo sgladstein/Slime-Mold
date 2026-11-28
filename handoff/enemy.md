@@ -54,11 +54,9 @@ Scott paused all work (11-27 23:02Z) to move accounts. State:
   the raid region's fourth quarter, the pull in a new Params row after the
   wind's (the wind row's spare words went to `blows`/`grades`;
   `PARAMS_BYTES` 1280); the Lab's haste key dropped. `run::HUNT_PULL` by
-  curve place [0,10,18,26,30,30,30,30]. Rerun numbers in
-  `Reports/hunt-rerun-2026-11-28/`. Scott's card (posted ~04:56Z) asks
-  where it starts and how strong: mild at step 2 to full by step 6
-  (recommended and built), from step 3, full from step 2, or not yet. If
-  he picks another, change the table. Next on the same thread: Lab's
+  curve place [0,10,18,30,30,30,30,30]. Rerun numbers in
+  `Reports/hunt-rerun-2026-11-28/`. Scott's card, 11-28 05:40Z: "Mild at
+  step 2, full by step 6". Next on the same thread: Lab's
   "mass, then come in wide" if a moving squad still gets away late.
 - **Still waiting:** the Lab's strikers settle patch for lap two
   (`Reports/lab-lap-two-2026-11-24/raw/strikers-settle.patch`).
