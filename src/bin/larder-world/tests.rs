@@ -733,9 +733,12 @@ fn the_squad_modes_keys_do_what_the_card_says() {
     let (took, _) = app.hud.key(KeyCode::KeyG, true, false, &mut app.camera);
     assert!(took && app.hud.targeting().is_some_and(|t| t.0 == HARVEST), "G aims a drain");
     app.hud.cancel_targeting();
-    // Y splits the controlled squad.
+    // Y splits the controlled squad: on letting go, since a held Y picks
+    // how many with the wheel (2026-11-28).
     let n = app.game.as_ref().unwrap().live_squads().len();
     assert!(app.squad_key(squadmode::SPLIT, true, false, false));
+    assert_eq!(app.game.as_ref().unwrap().live_squads().len(), n, "not while Y is held");
+    assert!(app.squad_key(squadmode::SPLIT, false, false, false));
     assert_eq!(app.game.as_ref().unwrap().live_squads().len(), n + 1, "Y split the squad");
     // The wheel zooms (about the squad, still following it); Ctrl + wheel
     // switches squads.
