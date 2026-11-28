@@ -29,22 +29,22 @@ wants to finish and replay. It is done when all six hold:
 
 Milestone 3, a release, only if he chooses one.
 
-**Where it stands (11-27).** From 11-25 to 11-27 his other project built, on his own chat rulings (all in [`wiki/decisions-game.md`](wiki/decisions-game.md)): the star map (#860), hearts as a crystal mini-boss (#858), slime levels and toughness by planet (#862, #864), stronger and smarter mini-bosses (#865), a faster early climb (#868), harder Hard forks (#870), harder from step 2 (#873), turrets that fire their loadout's gun (#871, #875) and are bought like guns (#876), and the HUD's slime bar (#872). Review: [doc](https://claude.ai/artifact/6dmCXQ5GC3H1w8LN4ZWGrE); plan: [doc](https://claude.ai/artifact/57RBPNiFdCkUk4DZwN28nG).
+**Where it stands (11-27).** From 11-25 to 11-27 his other project built, on his own chat rulings (all in [`wiki/decisions-game.md`](wiki/decisions-game.md)): the star map (#860), hearts as a crystal mini-boss (#858), slime levels and toughness by planet (#862, #864), stronger and smarter mini-bosses (#865), a faster early climb (#868), harder Hard forks (#870), harder from step 2 (#873), turrets that fire their loadout's gun (#871, #875) and are bought like guns (#876), and the HUD's slime bar (#872). Review: [doc](https://claude.ai/artifact/6dmCXQ5GC3H1w8LN4ZWGrE); plan: [doc](https://claude.ai/artifact/57RBPNiFdCkUk4DZwN28nG), kept in the repo as `Reports/plan-2026-11-27/` (#882). The work moves to a new account (11-27 23:36Z): start from [`handoff/account-move-2026-11-27.md`](handoff/account-move-2026-11-27.md).
 - **Tests 1 and 3: not measurable yet.** The run bot plays only the Fair planet, builds no turret designs and still aims its siege at hearts; the nightly Run bot was red on 11-25 and 11-27. Last curve pass: 11-24, eight planets.
 - **Test 2: close.** His 11-27 run took about 55 minutes for steps 1 to 6, so about 1 h 50 m for twelve, before the raises since.
 - **Test 4: holds**, recheck on his PC with a star-map run. **Test 5: held 11-24** (P8 p95 16.4 ms), recheck: levels, bigger raids and Hard home-world sizes came since. **Test 6: holds.**
-- **Difficulty hold (Direction, 11-27):** six raises landed in about 30 hours, unmeasured together, so no lane adds a toughness, raid, boss or curve raise until his next run's log or his word on the plan's card; then one retune from that log.
+- **Difficulty (his card, 11-27 23:55Z, "Five lanes, no freeze"):** lanes keep raising difficulty on his notes; each of his run logs gets one retune pass from Direction with Enemy.
 
 ## Each lane's top jobs
 
 | Lane | Test | Top jobs, in order |
 |---|---|---|
-| Direction | all | This page and the rulings, including asks he makes in any thread. The one retune after his next run. The curve page when test 3 can be measured. D8. |
+| Direction | all | This page and the rulings, including asks he makes in any thread. One retune pass from each of his run logs. The curve page when test 3 can be measured. D8. |
 | Enemy | 1, 3 | #848 (no mini-boss on a live heart), the Grudge readout, then the rescue planet as a star-map node (below). Pressure from the slime itself: rerun the Lab's hunt on today's slime. |
 | Squad and arsenal | 3 | Turret designs in the run bot (with Engine). Energy something worth buying if his next log still banks 5,000 or more. |
 | Look and interface | 1, 5 | The star map and slime colours checked against the art direction; the rescue node's badge and screens; then his A to D order. |
 | Engine and tools | 1, 3, 4, 5 | The run bot up to today's game: picks by pip, builds turret designs, no heart siege, the builder arm; then the curve on twelve steps. The 1070 retime and a star-map save check. The PC league stopped or rebuilt on main. |
-| Lab | none | Paused unless the hunt rerun needs its rig (the plan's card). |
+| Lab | none | Paused until the hunt rerun needs its rig (his card, 11-27 23:55Z). |
 
 **The rescue planet** (Direction's call, 11-24, moved 11-27): in about one
 run in three, one planet offered at the step that meets the Trunk is a
@@ -63,7 +63,6 @@ asks at most once a session with a recommendation.
 
 | What | State |
 |---|---|
-| The plan of 11-27: five lanes, the Lab paused, this project as the home, the difficulty hold | His card in "Plan next steps after the 11-25 gap", recommended as written. |
 | The PC strategy league | Still running on an 11-22 build; stop it or let Engine rebuild it on main. |
 | Whether to remove today's CPU slime engine (D8) | Decided at this milestone (his card, 11-17 19:21Z). Engine lists what stands on it first. |
 | "Automatically delete head branches" in the repository settings | His switch to turn on (about 40 stale branches). |
