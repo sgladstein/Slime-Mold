@@ -1420,6 +1420,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         );
         println!("  heard (pass two): payloads {}, raids {}, surges {}, bosses {} (broken {}), built {}, lost {}; coin ticks {}, drops emptied {}", s.payloads, s.raids, s.surges, s.bosses, s.broken, s.built, s.lost, s.coins, s.cashed);
         println!("  heard (kit): shells sent {}, landed {}, sprayer sweeps {}, line ripples {}, canister puffs {}, darts {}", s.launches, s.landings, s.sweeps, s.ripples, s.puffs, s.darts);
+        println!("  heard (walls eaten): gnaws {} (bites a second: mean {:.0}, most {:.0}), cells worn through {} in {} cracks", s.gnaws, s.chew_sum / s.gnaws.max(1) as f32, s.chew_peak, s.walls_broken, s.cracks);
         println!("  hits by kills (0, 1, 2, 3-4, 5-8, 9-16, 17-32, 33+): {:?}; full weight at {:.0} kills", s.kill_hist, s.full);
         let b = bank.stats;
         println!("  played: grains {} (touch {} stolen {} starve {} wither {} kills {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.grains_by_texture[3], b.grains_by_texture[4], b.verb_grains, b.bursts, b.alerts, b.steals);

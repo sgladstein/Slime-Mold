@@ -49,8 +49,11 @@ const BELLS: usize = 4;
 /// dBFS (17.6 dB under the mix by the mix meter), 13 dB under even the
 /// quiet windows: there on paper, gone under a fight. At 0.12 (+6.8 dB)
 /// it sits about 6 dB under the quiet windows, 11 dB under the mix: under
-/// every shot, heard between them.
-pub const SCORE_LEVEL: f32 = 0.12;
+/// every shot, heard between them. 0.36 (+9.5 dB) since 2026-11-28: the
+/// owner picked mix E of five on the mix test page (Reports/
+/// sound-mix-2026-11-28), music and slime up with the guns down
+/// (`synth::BAL_GUN`); 0.12 sat too far in the background.
+pub const SCORE_LEVEL: f32 = 0.36;
 
 /// One planet's music and air.
 #[derive(Clone, Copy, Debug)]

@@ -87,6 +87,22 @@ const PULSE_FAST: f32 = 150.0;
 const PULSE_FLOOR: f32 = 0.7;
 /// Walkers on one soldier that are full danger to the pulse.
 const TOUCH_FULL: f32 = 12.0;
+/// **A wall being eaten** (2026-11-28, the owner ticked it on the mix test
+/// page: "Sounds for specific behaviors or moments in the fight ... are
+/// good", nothing constant): while the slime bites a built wall
+/// (`World::wall_wear`), a wet gnawing (`GrainKind::Slurp` bursts) every
+/// `CHEW_GAP` seconds, its rate and level rising with the bites a second
+/// up to `CHEW_FULL`; a cell worn through cracks (`GrainKind::Knock` over
+/// a `Thunk`). Silent the moment the biting stops.
+const CHEW_GAP: f32 = 0.4;
+/// Wall bites a second heard as the fullest gnawing (`CHEW_GAP`): a pen
+/// under attack on planet 1 (`hand=pen`) took 579 a second on average at
+/// its gnaws, 2,482 at most.
+const CHEW_FULL: f32 = 1500.0;
+/// The least gap between two cracks of wall cells worn through: a pen
+/// under attack on planet 1 lost 232 cells in 85 s, nearly three a second,
+/// and a crack each was a drum roll (`thunk` the mix's second source).
+const CRACK_GAP: f32 = 0.7;
 /// The least gap between coin ticks while soldiers take shop points
 /// (`WorldListener::coins`): ten soldiers drain planet 1's 40-point ore in
 /// about 1.6 s, so about ten ticks run up the scale.
@@ -213,6 +229,15 @@ pub struct WorldStats {
     pub banked: u32,
     pub bought: u32,
     pub walls: u32,
+    /// Walls being eaten (`WorldListener::chew`): gnaws sent and wall
+    /// cells heard worn through.
+    pub gnaws: u32,
+    pub walls_broken: u32,
+    pub cracks: u32,
+    /// Wall bites a second at the gnaws: the most, and the sum (a mean
+    /// over `gnaws`).
+    pub chew_peak: f32,
+    pub chew_sum: f32,
     pub dry: u32,
     pub cores: u32,
     pub endings: u32,
@@ -292,6 +317,13 @@ pub struct WorldListener {
     harvested: f32,
     stolen: f32,
     walls: u32,
+    /// The walls' wear at the last hear (`World::wall_wear`), the wait to
+    /// the next gnaw and the bites gathered toward it (`CHEW_GAP`).
+    wear: (u64, usize),
+    chew_wait: f32,
+    chewed: f32,
+    crack_wait: f32,
+    cracked: usize,
     dry: Vec<bool>,
     core_down: bool,
     ended: bool,
@@ -368,6 +400,11 @@ impl WorldListener {
             harvested: 0.0,
             stolen: 0.0,
             walls: 0,
+            wear: (0, 0),
+            chew_wait: 0.0,
+            chewed: 0.0,
+            crack_wait: 0.0,
+            cracked: 0,
             dry: Vec::new(),
             core_down: false,
             ended: false,
@@ -428,6 +465,7 @@ impl WorldListener {
         self.hurt_wait = vec![0.0; g.soldiers.len()];
         (self.kill_rate, self.steal_rate, self.kill_at) = (0.0, 0.0, g.larder);
         (self.harvested, self.stolen, self.walls) = (g.harvested, g.stolen, g.walls);
+        (self.wear, self.chew_wait, self.chewed, self.crack_wait, self.cracked) = (g.world.wall_wear(), 0.0, 0.0, 0.0, 0);
         self.dry = g.world.crystals().iter().map(|c| c.1 <= 0.0).collect();
         (self.core_down, self.ended, self.beat) = (g.core_down.is_some(), g.end.is_some(), 0.0);
         self.body_at = (self.ticks, g.mould, self.stats.kills);
@@ -457,6 +495,54 @@ impl WorldListener {
         self.buildings = g.buildings.iter().map(|b| b.alive).collect();
         (self.found, self.coin_wait, self.cashed_seen) = (g.starfall.points, 0.0, g.starfall.cashed_n);
         self.stats.rebaselines += 1;
+    }
+
+    /// **A wall being eaten** (`CHEW_GAP`): the bites since the last hear
+    /// gathered into a gnaw every `CHEW_GAP`, heard at the standing wall
+    /// nearest the view's middle; a cell worn through cracks at once.
+    fn chew<W: World>(&mut self, g: &Game<W>, ear: Ear, dt: f32, out: &mut Vec<SoundCmd>) {
+        let (bites, broken) = g.world.wall_wear();
+        let (was_bites, was_broken) = std::mem::replace(&mut self.wear, (bites, broken));
+        self.chewed += bites.saturating_sub(was_bites) as f32;
+        self.chew_wait -= dt;
+        self.crack_wait -= dt;
+        self.cracked += broken.saturating_sub(was_broken);
+        let fresh = self.cracked > 0 && self.crack_wait <= 0.0;
+        if self.chewed <= 0.0 && !fresh {
+            self.crack_wait = self.crack_wait.max(0.0);
+            self.chew_wait = self.chew_wait.max(0.0);
+            return;
+        }
+        let at = (0..g.buildings.len())
+            .filter(|&b| matches!(g.buildings[b].kind, Kind::Wall { .. }))
+            .map(|b| {
+                let (a, z) = g.wall_band(b);
+                ((a.0 + z.0) / 2.0, (a.1 + z.1) / 2.0)
+            })
+            .min_by(|p, q| {
+                let d = |p: &(f32, f32)| (p.0 - ear.centre.0).hypot(p.1 - ear.centre.1);
+                d(p).total_cmp(&d(q))
+            })
+            .unwrap_or(ear.centre);
+        let (pan, gain) = ear.place(at);
+        if fresh {
+            // Several cells at once crack a little harder, not more often.
+            let w = (self.cracked as f32 / 4.0).min(1.0).sqrt();
+            out.push(SoundCmd::Grain { kind: GrainKind::Knock, pan, gain: (0.2 + 0.2 * w) * gain, delay: 0.0 });
+            out.push(SoundCmd::Grain { kind: GrainKind::Thunk, pan, gain: (0.12 + 0.12 * w) * gain, delay: 0.01 });
+            self.stats.walls_broken += self.cracked as u32;
+            self.stats.cracks += 1;
+            (self.cracked, self.crack_wait) = (0, CRACK_GAP);
+        }
+        if self.chew_wait <= 0.0 && self.chewed > 0.0 {
+            let per_sec = self.chewed / CHEW_GAP;
+            self.stats.chew_peak = self.stats.chew_peak.max(per_sec);
+            self.stats.chew_sum += per_sec;
+            let w = (per_sec / CHEW_FULL).clamp(0.0, 1.0).sqrt();
+            out.push(SoundCmd::Burst { kind: GrainKind::Slurp, rate: 6.0 + 24.0 * w, secs: CHEW_GAP, pan, spread: 0.15, gain: (0.06 + 0.18 * w) * gain });
+            self.stats.gnaws += 1;
+            (self.chewed, self.chew_wait) = (0.0, CHEW_GAP);
+        }
     }
 
     /// **Shop points coming in** (starfall's ore and the cores; Boss cores
@@ -730,6 +816,7 @@ impl WorldListener {
             self.stats.walls += g.walls - self.walls;
         }
         self.walls = g.walls;
+        self.chew(g, ear, dt, &mut out);
         for (i, (c, charge)) in g.world.crystals().into_iter().enumerate() {
             if i < self.dry.len() && !self.dry[i] && charge <= 0.0 {
                 let (pan, gain) = ear.place(c);
