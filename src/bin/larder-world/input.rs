@@ -303,12 +303,12 @@ impl App {
                 }
             }
             UPGRADE => {
-                // A door cut into a wall thickens with its wall.
+                // A door cut into a wall hardens with its wall.
                 let b = if matches!(bd.kind, Kind::Wall { .. }) { g.wall_of(b) } else { b };
                 if g.apply(Cmd::Upgrade(b)) {
                     if matches!(bd.kind, Kind::Wall { .. }) {
-                        let cells = g.rules.wall_width * f32::from(g.buildings[b].level);
-                        self.hud.alert(&format!("Wall thickened to {cells:.0} cells"), Some(bd.at), theme::GOOD);
+                        let hp = g.buildings[b].max_hp;
+                        self.hud.alert(&format!("Wall hardened to {hp:.0} health a cell"), Some(bd.at), theme::GOOD);
                     } else if bd.kind == Kind::Turret {
                         let f = g.rules.build.render_food;
                         self.hud.alert(&format!("Turret renders: {f:.2} food per slime killed near it"), Some(bd.at), theme::GOOD);

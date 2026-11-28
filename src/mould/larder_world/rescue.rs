@@ -60,6 +60,10 @@ use crate::mould::larder::Stance;
 /// than the most blows a walker of any level takes (`levels.rs`).
 const CLEAR_BLOWS: u32 = 16;
 
+/// A dug-out ring's cell health at `thick` 1: the 400 the Lab timed them
+/// at, whatever the planet's player walls hold (`Rules::wall_hp`).
+const RING_HP: f32 = 400.0;
+
 /// The rescue's numbers (`Rules::rescue`). Off here; the run turns it on
 /// for a Rescue node.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -287,9 +291,15 @@ impl<W: World> Game<W> {
                     let l = m.0.hypot(m.1).max(1e-6);
                     self.buildings[n0].home = (m.0 / l, m.1 / l);
                     self.raise(n0, 1.0);
-                    for _ in 1..thick.clamp(1, u32::from(super::WALL_LEVELS)) {
-                        self.thicken(n0);
-                    }
+                    // Its own health, not the planet's (`Rules::wall_hp`,
+                    // `run::WALL_HP`, a quarter of this and less deeper
+                    // since 2026-11-28): the Lab timed the rings at 4 to 5
+                    // minutes at 400 a cell, and Enemy keeps them there.
+                    // `thick` levels harden it as the player's upgrade
+                    // does (until 11-28 they added bands outward).
+                    let lv = thick.clamp(1, u32::from(super::WALL_LEVELS)) as f32;
+                    self.harden_to(n0, RING_HP * (1.0 + self.rules.wall_harden * (lv - 1.0)));
+                    self.buildings[n0].level = lv as u8;
                     let wl = &mut self.buildings[n0];
                     wl.hp = wl.max_hp;
                 } else {

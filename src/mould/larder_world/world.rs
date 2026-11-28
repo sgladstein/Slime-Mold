@@ -44,6 +44,17 @@ pub trait World {
     }
     /// A wall from `a` to `b`, dish cells, `width` dish cells thick.
     fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32);
+    /// `build_wall` with each new cell's health `hp` (the player's walls,
+    /// `Game::wall_full`); a world without wall health builds it plain.
+    fn build_wall_hp(&mut self, a: (f32, f32), b: (f32, f32), width: f32, hp: f32) {
+        let _ = hp;
+        self.build_wall(a, b, width);
+    }
+    /// Harden the standing wall cells of the wall from `a` to `b` (`width`
+    /// thick): each gains `add` health (`Game::harden`, a wall's upgrade
+    /// since 2026-11-28). Rubble stays rubble. A world without wall health
+    /// does nothing.
+    fn harden_wall(&mut self, _a: (f32, f32), _b: (f32, f32), _width: f32, _add: f32) {}
     /// Walkers alive (not counting the dead).
     fn living(&self) -> usize;
     /// The mould's mass for the goals (the run's whole-game review, 11-15
@@ -420,6 +431,14 @@ impl World for BigDish {
 
     fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
         BigDish::build_wall(self, a.0, a.1, b.0, b.1, width);
+    }
+
+    fn build_wall_hp(&mut self, a: (f32, f32), b: (f32, f32), width: f32, hp: f32) {
+        BigDish::build_wall_hp(self, a.0, a.1, b.0, b.1, width, hp);
+    }
+
+    fn harden_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32, add: f32) {
+        BigDish::harden_wall(self, a.0, a.1, b.0, b.1, width, add);
     }
 
     fn living(&self) -> usize {
