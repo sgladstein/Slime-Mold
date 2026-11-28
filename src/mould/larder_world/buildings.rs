@@ -745,9 +745,9 @@ impl<W: World> Game<W> {
         match bd.kind {
             Kind::Pump if bd.level < PUMP_LEVELS => Some(self.rules.build.pump_up_cost * f32::from(bd.level)),
             Kind::Turret if bd.level < TURRET_LEVELS => Some(self.rules.build.render_cost),
-            // Thicken (`doors`): each band at the wall's first price. A door
-            // cut into a wall thickens with it, so only its wall does.
-            Kind::Wall { to } if bd.level < super::WALL_LEVELS && bd.home != (0.0, 0.0) && !(bd.door && self.door_host(bd.at, to).is_some()) => Some(self.wall_price(bd.at, to)),
+            // Harden (`doors`): each level at the wall's first price. A door
+            // cut into a wall hardens with it, so only its wall does.
+            Kind::Wall { to } if bd.level < super::WALL_LEVELS && !(bd.door && self.door_host(bd.at, to).is_some()) => Some(self.wall_price(bd.at, to)),
             _ => None,
         }
     }
@@ -914,7 +914,7 @@ impl<W: World> Game<W> {
                 self.bank -= p;
                 self.spent += p;
                 if matches!(self.buildings[b].kind, Kind::Wall { .. }) {
-                    self.thicken(b);
+                    self.harden(b);
                 } else {
                     self.buildings[b].level += 1;
                 }
@@ -946,7 +946,7 @@ impl<W: World> Game<W> {
             Kind::Pump => b.pump_hp,
             Kind::Outpost => b.outpost_hp,
             Kind::Siren => b.siren_hp,
-            Kind::Wall { .. } => self.world_wall_hp(),
+            Kind::Wall { .. } => self.wall_full(1),
         };
         // A ghost starts at a tenth of its health and gains the rest as it
         // rises (`raise`), so a half-built building is weaker.
@@ -957,12 +957,6 @@ impl<W: World> Game<W> {
             self.raise(k, 1.0);
         }
         true
-    }
-
-    /// The nominal health of a wall cell, for the window (the world keeps
-    /// each cell's own).
-    fn world_wall_hp(&self) -> f32 {
-        400.0
     }
 
     /// Add `amount` (0..1 of the whole) to building `k`; at 1 it stands,
