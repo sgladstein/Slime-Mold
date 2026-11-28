@@ -2754,6 +2754,75 @@ impl Run {
         Some(if room { self.put_in(last) } else { last })
     }
 
+    /// Offer `k` tried on (the owner, 2026-11-28 08:37Z: "if you click a
+    /// bullet, it shows up in my gun if there is room or bag and then you
+    /// can add it to the gun as if you own it to see how it changes the
+    /// DPS"): a copy of the run with the card in it as a buy puts it,
+    /// nothing paid and the offer still on the shelf. The window shows the
+    /// copy while the card is picked and never saves or lands it; it
+    /// becomes the run only through `keep_trial`, else `untry` takes the
+    /// card back out. (The review before it, 11-27, had found the chips'
+    /// "no room" and second-bullet numbers unreadable; a mock-up of a
+    /// new-shot/swap chooser was turned down as overcomplicated.)
+    pub fn try_on(&self, k: usize) -> Option<Run> {
+        let &c = self.offers.get(k)?;
+        let mut t = self.clone();
+        let room = t.fits(c);
+        t.cards.push((c, false));
+        let last = t.cards.len() - 1;
+        if room {
+            t.put_in(last);
+        }
+        Some(t)
+    }
+
+    /// The tried-on offer `k` bought where it sits now: paid for and off
+    /// the shelf, as `buy` does. False (nothing changed) when the points
+    /// do not reach.
+    pub fn keep_trial(&mut self, k: usize) -> bool {
+        let Some(&c) = self.offers.get(k) else { return false };
+        if self.field {
+            return false;
+        }
+        if !self.range {
+            let price = card_price(c);
+            if price > self.points {
+                return false;
+            }
+            self.points -= price;
+            self.offers.remove(k);
+            if self.held == Some(c) {
+                self.held = None;
+            }
+        }
+        true
+    }
+
+    /// The tried-on card `c` taken back out of this copy, keeping every
+    /// other move made while it was tried: from the gun when the gun holds
+    /// more of `c` than `gun_before` (the run's own before the trial),
+    /// else from the bag. Copies of one card are alike, so which one goes
+    /// does not matter. The gun is refitted after (a `Thrift` may now cut
+    /// another card).
+    pub fn untry(&mut self, c: Card, gun_before: usize) {
+        if let Some(i) = self.trial_at(c, gun_before) {
+            self.cards.remove(i);
+        }
+        self.refit();
+    }
+
+    /// Where in `cards` the tried-on card `c` sits, as `untry` reckons it
+    /// (the shop marks that tile).
+    pub fn trial_at(&self, c: Card, gun_before: usize) -> Option<usize> {
+        let from_gun = self.in_gun(c) > gun_before;
+        self.cards.iter().rposition(|o| o.0 == c && o.1 == from_gun).or_else(|| self.cards.iter().rposition(|o| o.0 == c))
+    }
+
+    /// How many of card `c` the gun holds.
+    pub fn in_gun(&self, c: Card) -> usize {
+        self.cards.iter().filter(|o| o.1 && o.0 == c).count()
+    }
+
     /// Offer `k` dragged from the shelf onto gun slot `slot`: bought and
     /// put there, or in the bag when the gun has no room for it. False
     /// when it can't be bought.
