@@ -5661,7 +5661,11 @@ mod tests {
         // the same on both, but which frames read near follows the walkers
         // there, and seed 3's moulds then parted by 9.7% at 30 s (795 GPU
         // against 872 CPU walkers), past the 8%.
-        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, range: 15.0, spread: 0.0, near_first: 0.0, ..Rules::default() };
+        // Shots in lockstep (`Rules::shot_spread` 0, 11-28): the spread
+        // is game side, the same on both, but an idle soldier's first-shot
+        // wait follows when it first sees slime, and seed 3's moulds then
+        // parted by 9.9% at 25 s (1283 GPU against 1157 CPU), past the 8%.
+        let rules = Rules { cap: 30.0, crater: 0.0, crystal_solid: false, bullet_speed: 0.0, range: 15.0, spread: 0.0, near_first: 0.0, shot_spread: 0.0, ..Rules::default() };
         // The start's organic outline off (`start_shape`, 2026-11-15), like
         // the game-layer rules above: the same on both engines, but it moves
         // where the mould meets the squad, and seed 3's chaos then parted
@@ -5790,7 +5794,10 @@ mod tests {
         // laid on a soldier, and only the GPU world reads its cloud (the CPU
         // world has no doze, by the owner's no-new-twin rule), so the two
         // squads would part on the doze, not on the calm this compares.
-        let rules = Rules { cap: 30.0, crater: 0.0, doze: 0.0, ..Rules::default() };
+        // Shots in lockstep (`Rules::shot_spread` 0, 11-28): game side and
+        // the same on both, but it moved which frames the soldiers fire on,
+        // and the squad's health parted by a fraction of a point at 15 s.
+        let rules = Rules { cap: 30.0, crater: 0.0, doze: 0.0, shot_spread: 0.0, ..Rules::default() };
         // The start's organic outline off (`start_shape`, 2026-11-15): the
         // gas catches 8 walkers where seed 3's thin edge first bites, and
         // with the outline the squad met a different edge, where the gassed
