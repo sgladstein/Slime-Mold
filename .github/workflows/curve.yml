@@ -28,9 +28,9 @@ on:
         type: string
         default: "safe fair hard"
       arms:
-        description: Arms (main, builder, kite, kitecards, kitebuild), space-separated
+        description: Arms (main, builder, kite, kitecards, kitebuild, scott), space-separated
         type: string
-        default: "main kitecards kitebuild"
+        default: "main scott kitecards"
       secs:
         description: Game seconds a planet (0 = its clock and a minute)
         type: string
@@ -76,11 +76,12 @@ jobs:
           B="pumps=1,guard=1,turrets=1,hold=20"
           dials() { case "$1" in main) echo "";; builder) echo "$B";; kite) echo "kite=0.6";;
             kitecards) echo "kite=0.6,cards=2";; kitebuild) echo "kite=0.6,cards=2,$B";;
+            scott) echo "want=split/rate/range/torch.needle,gun=carbine,shop=hp/strike/rate/range/fireproof";;
             *) echo "no arm $1" >&2; exit 1;; esac; }
           for pip in $PIPS; do
             for arm in $ARMS; do
               d=$(dials "$arm"); plan="$PLAN"
-              [ -n "$d" ] && plan="$(echo "$PLAN" | sed "s/|/,$d|/g"),$d"
+              [ -n "$d" ] && plan="${PLAN//|/,$d|},$d"
               t0=$(date +%s)
               ./target/release/larder-world "league=$STEP:$SEED:$SECS:$pip" "plan=$plan" > out.txt 2> err.txt < /dev/null || true
               wall=$(( $(date +%s) - t0 ))
