@@ -48,6 +48,24 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-28, the new account's lane thread (plan of 11-27, steps 3 and 6).**
+Jobs from Direction, in order: turret designs in the run bot (with Engine,
+who owns the bot files and does pip picks, the heart siege and the builder
+arm), then give energy a job (the turret-against-soldier value test and a
+soldier-price or other sink proposal, figures to Direction, who sets
+prices), and the Grudge re-film with Tinder and a Torch once Enemy's
+readout lands. Built first: the strategy bot buys rolled designs
+(`league::buy_designs`: the best-valued offer of each kind the plan
+places, when it beats the best owned by a tenth; a better gun turret goes
+into the turrets' own loadout so `tcards` stay on it; `Run::quick` then
+holds the best of each placed kind, the plain turret's first) and builds
+them (`strat::design_slot`, `Cmd::Place`; `Cmd::Build` only with no design
+of the kind). Until this every bot turret was plain whatever was bought.
+Smoke, `league=4:2:150 plan=turtle,mortars=1,cards=0`: bought
+`design.lobber/1.20/1.23`, mortars killed 1,372 of 5,027. Note: CI's
+`scripts/run-bot-plan.txt` places no turrets, so the curve gains turrets
+only with Engine's builder arm. Open: guns on turrets for the bot.
+
 **2026-11-27, turrets bought like guns (same thread).** Owner 21:36Z,
 21:42Z, 21:48Z (rows in `wiki/decisions-game.md`): turrets are rolled designs
 sold in the shop, no separate mortar unlock; food cost fixed per kind, shop
