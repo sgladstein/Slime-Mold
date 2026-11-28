@@ -515,6 +515,16 @@ pub struct Rules {
     /// `funnel`, owner 2026-11-15). Off, the formation's places that fall
     /// in rock all go to the anchor, as before.
     pub funnel: bool,
+    /// A moving squad squeezes its spread to the ground's width (on;
+    /// `Squad::squeeze`, formations thread 2026-11-28, owner 06:12Z: "on
+    /// some when i tell them to move they get all disorganized"): it
+    /// narrows where the ground narrows and opens up again past it, and
+    /// funnels into a column only where even its tightest blob does not
+    /// fit. Off (`set=squeeze=0`), a spread squad funnels wherever its
+    /// full spread does not fit, as before: a wide blob of 40 walked 99%
+    /// of a planet 1 or 8 walk as a column.
+    #[serde(default = "super::yes")]
+    pub squeeze: bool,
     /// Soldiers in the squad mode walk with a velocity (on; `steer`,
     /// squad movement rework 2026-11-16, owner: "It is still clunky
     /// overall"): they speed up and slow down, walk in step with their
@@ -826,6 +836,10 @@ impl Rules {
             self.funnel = v > 0.0;
             return true;
         }
+        if name == "squeeze" {
+            self.squeeze = v > 0.0;
+            return true;
+        }
         // Fruiting (`FruitRules`, 2026-11-20): `fruit=1` on; `fruit_armour`
         // and `fruit_throw` whole numbers.
         match name {
@@ -960,6 +974,7 @@ impl Rules {
             "max_squad" => self.max_squad as f32,
             "steer" => on(self.steer),
             "funnel" => on(self.funnel),
+            "squeeze" => on(self.squeeze),
             "fruit" => on(self.fruit.on),
             "star" => on(self.star.on),
             "star_least" => self.star.least as f32,
@@ -1322,6 +1337,7 @@ impl Default for Rules {
             squads: false,
             fireway: true,
             funnel: true,
+            squeeze: true,
             steer: true,
             larder: true,
             guard: 120.0,

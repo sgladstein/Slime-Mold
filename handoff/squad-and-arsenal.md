@@ -48,6 +48,18 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-28, formations on the move (thread "Improve squad formations on
+the move").** Owner 06:12Z: spread squads "get all disorganized" when sent.
+Causes measured with `move_tests::probe_order` (ignored; `MOVE_MAPS`,
+`MOVE_NS`, `MOVE_SEEDS`, `MOVE_SQUEEZE=0` for the old walk): the funnel
+measured the ground against the full spread, so wide squads walked as
+columns, and a column re-matched its places every step. Built on his card
+(07:08Z, keep the spread, squeeze in gaps): `Rules::squeeze` (on),
+`Squad::squeeze`, `Game::squeeze_turn`/`spread_now`/`spread_own`, `WIDEN`;
+column ranks re-matched once a second. Next in the same thread: the shapes
+list back (blob, ring, line, column; his 07:09Z "add column to the list")
+with right-button hold for a ghost at the target and drag for the spread.
+
 **2026-11-28, split off any number (same thread).** Owner 03:42Z: "sometimes
 I want to just split off 1 or 2 or a 1/4 of the squad"; halving stays easy.
 Built on the recommended option of his card (hold Y, the wheel picks):
