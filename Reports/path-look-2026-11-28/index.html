@@ -1,0 +1,106 @@
+<title>Squad Path Options</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap">
+<style>
+/* Layout: one column of options, each a pair of in-game frames with a short verdict. */
+:root{--bg:#f3f2ee;--fg:#1d1f24;--muted:#5e636d;--card:#ffffff;--line:#d9d7d0;--accent:#b8862b;--pick:#2f7d4f;
+--display:"Space Grotesk",system-ui,sans-serif;--body:Inter,system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15171b;--fg:#e9e7e1;--muted:#9aa0a9;--card:#1e2126;--line:#2e3239;--accent:#e0b05a;--pick:#6fcf97;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15171b;--fg:#e9e7e1;--muted:#9aa0a9;--card:#1e2126;--line:#2e3239;--accent:#e0b05a;--pick:#6fcf97;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.55;font-size:15px}
+.wrap{max-width:1040px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:30px}h2{font-size:21px}
+p{margin:0;max-width:68ch}.lede{color:var(--muted)}
+section{display:grid;gap:12px;padding-top:20px;border-top:1px solid var(--line)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:640px){.pair{grid-template-columns:1fr}}
+figure{margin:0;display:grid;gap:4px;min-width:0}
+figure img,figure video{width:100%;max-width:100%;border-radius:4px;display:block;background:#000}
+figcaption{font-size:12.5px;color:var(--muted)}
+.tag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--accent)}
+.pick .tag{color:var(--pick)}
+ul{margin:0;padding-left:20px;max-width:68ch}li{margin:2px 0}
+.note{font-size:13px;color:var(--muted)}
+</style>
+<div class="wrap">
+<header style="display:grid;gap:10px">
+<span class="tag">Plasmodia · squad orders · 2026-11-28</span>
+<h1>How should a squad's planned path look?</h1>
+<p class="lede">Real frames from the game: planet 4 (the Trunk), run seed 1, squad of 9 sent to a crystal with two more orders queued (Shift), the last an attack-move. Left column at zoom 6, right at zoom 3. Options A to C were a local prototype; B is the one built.</p>
+</header>
+
+<section class="pick">
+<span class="tag">Built · Scott picked B at 07:29Z</span>
+<h2>Marching chevrons on the real route, as built</h2>
+<p>The built version draws each chevron with a wide pen in one mark, so it keeps its size on a 4K screen at 250% (the still below is UI 250% at 1920 wide). Clips at zoom 6 and 12, 1.2 game seconds.</p>
+<div class="pair">
+<figure><video src="built-z6.mp4" autoplay muted loop playsinline></video><figcaption>Zoom 6</figcaption></figure>
+<figure><video src="built-z12.mp4" autoplay muted loop playsinline></video><figcaption>Zoom 12</figcaption></figure>
+</div>
+<figure><img src="built-ui250.jpg" alt="Built chevrons at UI 250%"><figcaption>UI 250%: chevrons, the queued leg's chevrons on its own route, numbered goals.</figcaption></figure>
+</section>
+
+<section>
+<span class="tag">Today</span>
+<h2>A dotted hairline, straight to the goal</h2>
+<div class="pair">
+<figure><img src="0-z6.jpg" alt="Today at zoom 6"><figcaption>Zoom 6: the line is one pixel, dashed every 2 px.</figcaption></figure>
+<figure><img src="0-z3.jpg" alt="Today at zoom 3"><figcaption>Zoom 3: the line runs over water; the squad walks round it.</figcaption></figure>
+</div>
+<ul>
+<li>It is a straight line, so it crosses water, rock and walls the squad will walk round. It is not the way the squad goes.</li>
+<li>One pixel wide with no dark edge, so it vanishes on bright slime and will be thinner still on a 4K screen at 250%.</li>
+<li>The end ring is the same for a move and an attack-move; only the colour changes, and queued stops carry no order number.</li>
+</ul>
+</section>
+
+<section>
+<span class="tag">Option A · recommended, not picked</span>
+<h2>The real route, as a solid line with a dark edge</h2>
+<div class="pair">
+<figure><img src="a-z6.jpg" alt="Option A at zoom 6"><figcaption>Zoom 6: the line bends along the shore, where the squad really walks.</figcaption></figure>
+<figure><img src="a-z3.jpg" alt="Option A at zoom 3"><figcaption>Zoom 3: queued stops are thinner and numbered 2 and 3; the attack-move is red with a crosshair.</figcaption></figure>
+</div>
+<figure><video src="a-move.mp4" autoplay muted loop playsinline></video><figcaption>1.4 game seconds: the line stays still and the squad walks it.</figcaption></figure>
+<ul>
+<li>Traced from the walking map the squad already follows, then cut to straight runs between corners. A few hundred cells a frame, for the selected squad only, so it costs next to nothing.</li>
+<li>Cream on a dark edge, as the selection ring is drawn, so it reads on ground, water and slime alike.</li>
+<li>Goal marks by order: a ring and dot for a move, a ring and crosshair for an attack-move; queued stops numbered.</li>
+<li>To add when built: the line shortens behind the squad as it walks, and it scales with the interface size for 4K.</li>
+</ul>
+</section>
+
+<section>
+<span class="tag">Option B</span>
+<h2>Marching chevrons along the real route</h2>
+<div class="pair">
+<figure><img src="b-z6.jpg" alt="Option B at zoom 6"><figcaption>Zoom 6</figcaption></figure>
+<figure><img src="b-z3.jpg" alt="Option B at zoom 3"><figcaption>Zoom 3</figcaption></figure>
+</div>
+<figure><video src="b-move.mp4" autoplay muted loop playsinline></video><figcaption>The chevrons drift toward the goal (the clip is 5 frames a second, so it steps; in game it is smooth).</figcaption></figure>
+<ul>
+<li>Shows which way the squad is going at a glance, which a plain line does not.</li>
+<li>Busier: with several squads linked, moving chevrons all over the map compete with the slime, and they are a painted motion with nothing in the world behind it.</li>
+</ul>
+</section>
+
+<section>
+<span class="tag">Option C</span>
+<h2>Dots one second of walking apart</h2>
+<div class="pair">
+<figure><img src="c-z6.jpg" alt="Option C at zoom 6"><figcaption>Zoom 6</figcaption></figure>
+<figure><img src="c-z3.jpg" alt="Option C at zoom 3"><figcaption>Zoom 3</figcaption></figure>
+</div>
+<ul>
+<li>Counting the dots tells you how long the walk takes, which helps when timing a push before a cold snap ends.</li>
+<li>Faint at play zoom: the dots are small and far apart, so it reads worse than A at a glance.</li>
+</ul>
+</section>
+
+<section>
+<span class="tag">Fits with the formation ghost</span>
+<p>The other thread is building a hold-and-drag ghost of the formation at the goal. Any of these options draws the route up to the goal and leaves the goal itself to that ghost while you hold the button; after you let go, the goal mark above takes over.</p>
+<p class="note">Prototype: <code>PATHLOOK=a|b|c</code> env key on a local build, <code>Game::route</code> in <code>paths.rs</code> reading <code>Squad::map</code>. Film: <code>larder-world look=DIR run=1:4 mode=squads hand=movetour,10,queue centre=squad,6 at=6</code>.</p>
+</section>
+</div>

@@ -5408,10 +5408,18 @@ fn draw_marks(@builtin(workgroup_id) wg: vec3<u32>, @builtin(local_invocation_in
         let len = distance(s, e);
         let n = u32(ceil(len));
         let dash = u32(max(fill, 0.0));
-        for (var i = t0; i <= n; i += 64u * SPLIT) {
+        // `extra` > 1: a pen that many pixels square (`Marks::stroke`; the
+        // squad's planned path, 2026-11-28), so a path reads at 4K without
+        // a mark for each pixel of width. 0 and 1 are the one-pixel line.
+        let wd = clamp(extra, 1u, 12u);
+        let sq = wd * wd;
+        let lo = i32(wd / 2u);
+        for (var j = t0; j < (n + 1u) * sq; j += 64u * SPLIT) {
+            let i = j / sq;
             if (dash > 0u && (i / dash) % 2u == 1u) { continue; }
+            let r = j % sq;
             let p = mix(s, e, f32(i) / f32(max(n, 1u)));
-            claim(i32(floor(p.x)), i32(floor(p.y)), k, false);
+            claim(i32(floor(p.x)) + i32(r % wd) - lo, i32(floor(p.y)) + i32(r / wd) - lo, k, false);
         }
         return;
     }

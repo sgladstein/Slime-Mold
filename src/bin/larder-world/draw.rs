@@ -332,6 +332,109 @@ fn order_chain(marks: &mut Marks, g: &Game<GpuWorld>, from: (f32, f32), orders: 
     }
 }
 
+/// **A squad's planned path** (owner 2026-11-28 07:09Z: "Could we improve
+/// the visual of the squads planned path?"; of a solid route line, marching
+/// chevrons and dots a walking second apart, all filmed in the game, he
+/// picked the chevrons at 07:29Z; page in `Reports/path-look-2026-11-28/`):
+/// for each order, chevrons along the way the squad will really walk
+/// (`Game::route`), drifting toward the goal, cream on a dark pen as the
+/// selection ring is; red for fighting. The current leg is brighter, a
+/// queued one (Shift) fainter with its number at its goal. Each goal is a
+/// ring with a dot, a fight's a ring with a crosshair.
+/// Before, `order_chain` drew a one-pixel dotted line straight to each
+/// goal, through water and rock the squad walked round; it lost itself on
+/// bright slime and at 4K. `ui` is the HUD's scale, so the pens keep their
+/// size on screen. The goal mark is where the formation ghost of a held
+/// order goes (the formations thread, 2026-11-28).
+fn order_path(marks: &mut Marks, g: &Game<GpuWorld>, q: usize, from: (f32, f32), orders: impl Iterator<Item = (Order, bool)>, zoom: f32, ui: f32) {
+    let sc = g.world.scale();
+    // Screen pixels between chevrons, and how fast they drift, at 100%.
+    const GAP: f32 = 22.0;
+    const DRIFT: f32 = 26.0;
+    // Most chevrons a leg: a longer leg spaces them out. Each is 4 marks
+    // (`MAX_MARKS` is 4,096 for the whole frame).
+    const MOST: f32 = 60.0;
+    const INK: [u8; 4] = [14, 13, 10, 150];
+    let px = 1.0 / zoom.max(1e-3);
+    let pen = (2.0 * ui).round().max(2.0) as u32;
+    let ink = pen + 2;
+    let t = g.time();
+    let mut from = from;
+    for (n, (o, queued)) in orders.enumerate() {
+        let to = match o {
+            Order::Move(x, y) | Order::Fight(x, y) | Order::Clear(x, y) | Order::Guard(x, y) => Some((x, y)),
+            Order::Attack => Some(g.core),
+            Order::Burn(a, b) => Some(((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0)),
+            Order::Build(b) => g.buildings.get(b).map(|b| b.at),
+            Order::Hold => None,
+        };
+        let Some(to) = to else { continue };
+        if n == 0 && !queued && (to.0 - from.0).hypot(to.1 - from.1) < sc {
+            continue;
+        }
+        let later = n > 0 || queued;
+        let fight = matches!(o, Order::Attack | Order::Fight(..));
+        let hue = if fight { [255, 120, 105] } else { [250, 246, 228] };
+        let a = if later { 165.0 } else { 235.0 };
+        let pts = g.route(q, from, to, !later);
+        let total: f32 = pts.windows(2).map(|w| (w[1].0 - w[0].0).hypot(w[1].1 - w[0].1)).sum();
+        let gap = (GAP * ui * px).max(total / MOST);
+        let arm = 5.0 * ui * px;
+        let mut next = (t * DRIFT * ui * px) % gap;
+        let mut done = 0.0;
+        for w in pts.windows(2) {
+            let (p0, p1) = (w[0], w[1]);
+            let l = (p1.0 - p0.0).hypot(p1.1 - p0.1);
+            if l < 1e-4 {
+                continue;
+            }
+            let u = ((p1.0 - p0.0) / l, (p1.1 - p0.1) / l);
+            while next <= done + l {
+                let d = next;
+                next += gap;
+                // Out of the squad's middle and short of the goal's ring.
+                let left = total - d;
+                if left < 10.0 * ui * px {
+                    continue;
+                }
+                let fade = (d / (18.0 * ui * px)).clamp(0.0, 1.0) * (left / (30.0 * ui * px)).clamp(0.35, 1.0);
+                if fade <= 0.02 {
+                    continue;
+                }
+                let tip = (p0.0 + u.0 * (d - done), p0.1 + u.1 * (d - done));
+                let ends = [-1.0f32, 1.0].map(|side| (tip.0 - (u.0 + u.1 * side) * arm, tip.1 - (u.1 - u.0 * side) * arm));
+                let c = [hue[0], hue[1], hue[2], (a * fade) as u8];
+                let k = [INK[0], INK[1], INK[2], (INK[3] as f32 * fade) as u8];
+                for e in ends {
+                    marks.stroke(tip, e, ink, k);
+                }
+                for e in ends {
+                    marks.stroke(tip, e, pen, c);
+                }
+            }
+            done += l;
+        }
+        // The goal.
+        let c = [hue[0], hue[1], hue[2], a as u8];
+        let rr = if later { 5.0 } else { 7.0 } * ui;
+        marks.ring_thin(to, rr + ui, 1.5 * ui + 1.0, INK);
+        marks.ring_thin(to, rr, 1.5 * ui, c);
+        if fight {
+            for (dx, dy) in [(1.0f32, 0.0f32), (-1.0, 0.0), (0.0, 1.0), (0.0, -1.0)] {
+                let (a0, a1) = ((rr + 2.0 * ui) * px, (rr + 6.0 * ui) * px);
+                marks.stroke((to.0 + dx * a0, to.1 + dy * a0), (to.0 + dx * a1, to.1 + dy * a1), pen, c);
+            }
+        } else {
+            marks.push(slime_mould::world::Mark::new(slime_mould::world::Shape::Disc, to, (1.6 * ui, 1.6 * ui), c));
+        }
+        if later {
+            let fs = ui.round().max(1.0);
+            marks.label(to, (rr + 3.0 * ui, -3.5 * fs), &format!("{}", n + 1), fs, c);
+        }
+        from = to;
+    }
+}
+
 /// Turret `k` (`Marks::turret`), drawn `half` world units, and the light
 /// of its shot at the muzzle, as a soldier's lights the ground.
 fn turret_mark(marks: &mut Marks, lights: &mut Vec<Light>, looks: &[BuildingLook], g: &Game<GpuWorld>, k: usize, half: f32) {
@@ -1289,7 +1392,7 @@ impl App {
                     _ => None,
                 };
                 let orders = now.map(|o| (o, false)).into_iter().chain(sq.queue[..sq.queued as usize].iter().map(|&o| (o, true)));
-                order_chain(&mut self.marks, g, mid, orders, false, sc);
+                order_path(&mut self.marks, g, r, mid, orders, self.camera.zoom, self.hud.scale.max(1.0));
             }
         }
         // A shot's line, only while shots are rays: with bullets flying
