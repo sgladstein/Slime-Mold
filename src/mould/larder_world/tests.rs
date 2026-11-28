@@ -1913,6 +1913,38 @@ fn a_volley_fires_every_member_at_the_point_at_once_and_the_active_squad_faster(
     assert!(g.squads[0].fire.is_none());
 }
 
+/// `Cmd::SplitOff` takes the `n` soldiers nearest the point (owner
+/// 2026-11-28: split off 1, 2 or a quarter), never the whole squad, and
+/// replays as `splitn`.
+#[test]
+fn split_off_takes_the_nearest_few() {
+    let mut g = squads(6);
+    for _ in 0..7 {
+        g.apply(Cmd::Buy);
+    }
+    g.apply(Cmd::Active(0));
+    off_the_crystal(&mut g);
+    let n = g.members(0).len();
+    assert!(n >= 8, "{n}");
+    let m = g.middle(0).unwrap();
+    let p = (m.0 + 30.0, m.1);
+    let pick = g.split_pick(0, p, 2);
+    assert_eq!(pick.len(), 2);
+    assert!(g.apply(Cmd::SplitOff(0, 2, p)));
+    let b = g.active.unwrap();
+    let mut got = g.members(b);
+    got.sort();
+    let mut want = pick.clone();
+    want.sort();
+    assert_eq!(got, want, "the two nearest the point leave");
+    assert_eq!(g.members(0).len(), n - 2);
+    // Never all of a squad: asking for more leaves one behind.
+    assert_eq!(g.split_pick(b, p, 99).len(), 1);
+    assert!(g.split_pick(b, p, 0).len() == 1, "at least one goes");
+    let c = Cmd::SplitOff(0, 3, (1.5, 2.25));
+    assert_eq!(Cmd::parse(&c.to_line()), Some(c));
+}
+
 #[test]
 fn split_join_and_merge_move_soldiers_between_squads() {
     let mut g = squads(6);

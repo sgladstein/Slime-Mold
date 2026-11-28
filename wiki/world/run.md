@@ -13,6 +13,7 @@ sources:
   - Reports/fruiting-2026-11-20/README.md
   - Reports/gun-order-2026-11-14.md
   - Reports/gun-range-2026-11-15.md
+  - Reports/hunt-rerun-2026-11-28/README.md
   - Reports/lab-bait-trade-2026-11-24/README.md
   - Reports/lab-crystal-bait-2026-11-24/README.md
   - Reports/lab-hunt-2026-11-26/README.md
@@ -286,6 +287,10 @@ On since 2026-11-20 (the owner, 11-20 05:46Z: "once I get strong enough there is
 ## Tougher by planet, in levels
 
 Since 2026-11-26 (the owner, 06:58Z: "the progression needs to be way stronger for the slime"): an ordinary walker takes `blows` blows (`run::BLOWS` in `enemy_keys`), one on planet 1 up to 4.5 on the core world (1.75 on planet 2; 3 there until 11-27, raised with bigger raids and sooner mini-bosses after his "Make it harder!", [playtest](../../Reports/playtest-2026-11-27/README.md)), a fraction being a share of walkers taking one more. The same day (08:24Z: "some toughness scaling and speed scaling is needed ... You could change slime color so their are 3-8 levels of slime ... one area on a later planet is the easier to kill orange slime and this other crystal is full of stronger more dangerous slime") the slime has levels (`larder_world/levels.rs`, `LevelRules`, `run::LEVEL_MAX`): each crystal has one, 0 on planet 1 up to 7 on the core world, the home crystal the highest and the rest rolled lower (`crystal_levels`). Slime born on a crystal takes its level and its children keep it; the slime there at the landing takes its nearest crystal's (`Engine::set_pile_levels`). A level takes `level_blows` 0.5 more blows, steps `level_speed` 6% faster and bites `level_bite` 0.3 walkers more (`LEVEL_BLOWS`, `LEVEL_SPEED`, `LEVEL_BITE`), and is drawn in its colour, gold through orange, red, crimson, wine, plum and indigo, by the mean level round each cell (view.wgsl's `level_rgb`), so where two crystals' slime meet the colour runs between them. GPU only (engine.wgsl's `tough_walker`, `GRADE_BITS`); mini-boss members keep their own armour; the planet's card names the hits and the highest level. The before and after page is [slime-levels-2026-11-26](../../Reports/slime-levels-2026-11-26/README.md).
+
+## The hunt
+
+Since 2026-11-28 (Enemy, the plan's step 5; the owner, 11-28 03:31Z, "trying to make the slime enemy stronger"): the slime follows the squad's trail (`larder_world/hunt.rs`, the Lab's of 11-26, engine key `hunt_pull`). Once a game second the cells the soldiers stand on are kept while warm, and the slime's field is the walking distance to the nearest with each place's age added (`hunt_lag` 4 dish cells a second, out to `hunt_reach` 80), so calm walkers that meet the path go along it to where the squad is now and stop on a cold trail; a masked soldier leaves none. Its pull rises by planet (`run::HUNT_PULL`: off on the landing world, about 10 at step 2, full 30 from step 6, the owner's card of 11-28 05:40Z, "Mild at step 2, full by step 6"). On today's slime (1.75 blows at step 2) the tongue now reaches the guns: in the Lab's rig on step 2, as main a kiting or standing squad of 15 lost 1 soldier in 12 games; with the hunt a standing squad lost soldiers on 5 of 6 seeds and a kiting one on 2 of 6 ([rerun](../../Reports/hunt-rerun-2026-11-28/README.md)). GPU only.
 
 ## Waves
 

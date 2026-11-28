@@ -1303,6 +1303,7 @@ impl<W: World> Game<W> {
                 true
             }
             Cmd::Split(q, p) if ok(q) => self.split(q as usize, p).is_some(),
+            Cmd::SplitOff(q, n, p) if ok(q) => self.split_off(q as usize, p, n as usize).is_some(),
             Cmd::Join(k, q) if ok(q) && k < self.soldiers.len() && self.soldiers[k].alive => {
                 let from = self.soldiers[k].squad as usize;
                 let q = q as usize;
@@ -1463,13 +1464,34 @@ impl<W: World> Game<W> {
     /// next if `q` was. Both halves go on with its order and its queue.
     /// Returns the new squad.
     pub fn split(&mut self, q: usize, p: (f32, f32)) -> Option<usize> {
+        let half = self.members(q).len() / 2;
+        self.split_off(q, p, half)
+    }
+
+    /// **Who a split takes** (owner 2026-11-28 03:42Z: split off 1, 2 or
+    /// a quarter, not only half): squad `q`'s `count` members nearest `p`,
+    /// at least one and never all (so both squads keep someone); empty for
+    /// a squad of one. The window shows these before a split.
+    pub fn split_pick(&self, q: usize, p: (f32, f32), count: usize) -> Vec<usize> {
         let mut m = self.members(q);
         if m.len() < 2 {
+            return Vec::new();
+        }
+        let d = |s: &Soldier| (s.x - p.0).hypot(s.y - p.1);
+        m.sort_by(|&a, &b| d(&self.soldiers[a]).total_cmp(&d(&self.soldiers[b])).then(a.cmp(&b)));
+        let n = count.clamp(1, m.len() - 1);
+        m.truncate(n);
+        m
+    }
+
+    /// Splits off squad `q`'s `count` members nearest `p` (`split_pick`)
+    /// as a new squad, as `split` does with the half.
+    pub fn split_off(&mut self, q: usize, p: (f32, f32), count: usize) -> Option<usize> {
+        let m = self.split_pick(q, p, count);
+        if m.is_empty() {
             return None;
         }
         let n = self.free_squad()?;
-        let d = |s: &Soldier| (s.x - p.0).hypot(s.y - p.1);
-        m.sort_by(|&a, &b| d(&self.soldiers[a]).total_cmp(&d(&self.soldiers[b])).then(a.cmp(&b)));
         // Both halves keep the order they had and what was queued after
         // it (owner 2026-11-22 08:34Z: "if I give a squad a command then
         // split it [both] squads should follow the previous command until
@@ -1491,7 +1513,7 @@ impl<W: World> Game<W> {
             ..was.offshoot()
         };
         self.squads[q].anchor = None;
-        for &k in &m[..m.len() / 2] {
+        for &k in &m {
             self.soldiers[k].squad = n as u8;
         }
         // A half with nothing to do gathers round its own middle.

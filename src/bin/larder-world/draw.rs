@@ -1739,6 +1739,26 @@ impl App {
         let units = self.units();
         self.controls.prune(&units);
         self.controls.marks(&units, &self.camera, r, &mut self.marks);
+        // Y held (Squad and arsenal, 2026-11-28): the soldiers a split
+        // would take, ringed, and "2 of 9" at the cursor.
+        let going = self.split_preview();
+        if !going.is_empty() {
+            // Grouped as the selection rings are (`Controls::marks`), so the
+            // ones that go read as one ring and rings never cross (art
+            // direction rule 6), in the accent blue, as white already
+            // means selected (Look's review of #893).
+            let ring = (r * self.camera.zoom * 0.95).max(2.0) + 2.0;
+            let at: Vec<(f32, f32)> = going.iter().map(|&k| (g.soldiers[k].x, g.soldiers[k].y)).collect();
+            for (c, px) in slime_mould::world::controls::ring_groups(&at, ring / self.camera.zoom.max(1e-6), self.controls.ring_link) {
+                self.marks.ring_thin(c, px * self.camera.zoom, 1.5, theme::ACCENT);
+            }
+            if let (Some((k, n)), Some(at)) = (self.split_count(), self.cursor_world()) {
+                let label = format!("{k} of {n}");
+                let off = (12.0, -18.0);
+                self.marks.plate(at, off, &label, 1.5, LABEL_PLATE);
+                self.marks.label(at, off, &label, 1.5, theme::TEXT);
+            }
+        }
     }
 
     pub(super) fn model(&self, hover: Option<(f32, f32)>, ghost: Option<Ghost>) -> Model {

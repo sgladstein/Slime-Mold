@@ -69,8 +69,8 @@ pub const CLAIM_LAND: u32 = 116;
 pub const DRAW_SPORE_H: u32 = 117;
 pub const DRAW_SLEEP_DIE: u32 = 118;
 
-/// Bytes in `Params` (312 words).
-pub const PARAMS_BYTES: usize = 1264;
+/// Bytes in `Params` (316 words).
+pub const PARAMS_BYTES: usize = 1280;
 /// Where one body's row sits in `Params` (2026-11-12, after the soil row:
 /// `energy_flow`, `hunger_scent`, `hunger_at`; then the far smell,
 /// `far_smell`, S2, in the word that held `fed_full` and then
@@ -518,6 +518,16 @@ pub struct Settings {
     /// `Engine::write_lure_field`); the pull is sent only while one is
     /// written (`Engine::lured`), in the soil row's last word.
     pub lure_pull: f32,
+    /// **The hunt's pull** (`hunt_pull=W`, 2026-11-26, the Lab; 0 off, as
+    /// here): a calm walker inside the squad's trail leans down it, x
+    /// this (engine.wgsl's `hunt_dist`, the hunt block in `sense`). The
+    /// trail is the game's (`Game::time_hunt`, `Engine::write_hunt_field`):
+    /// the walking distance to where the soldiers stood over the last
+    /// seconds, each place's age added as distance, so the field leads
+    /// along the squad's path to where it is now and runs cold behind.
+    /// GPU only (the owner's card, 11-17 19:21Z). Sent only while a field
+    /// is written (`Engine::hunted`), in the row after the wind's.
+    pub hunt_pull: f32,
     /// **The tether** (`tether=N`, 2026-11-18, the Enemy lane, from the
     /// Lab's one-body prototype; 0 off, as here): a walker on its own way
     /// out from the body (a breakaway, a cut-off walker making for food;
@@ -932,6 +942,7 @@ impl Settings {
             gas_burn: t.gas_burn,
             far_smell: t.far_smell,
             lure_pull: 0.0,
+            hunt_pull: 0.0,
             tether: 0,
             crystal_keep: false,
             ceiling: 0,
@@ -1282,6 +1293,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // rig: 10 a steady stream with the body at home, 30 emptied a
         // colony in 45 s (Reports/lab-steering-2026-11-17).
         "lure_pull" => s.lure_pull = f()?,
+        // The hunt's pull (`hunt_pull=W`, 2026-11-26, the Lab): calm slime
+        // on the squad's trail leans down it to where the squad is now.
+        "hunt_pull" => s.hunt_pull = f()?,
         // The tether (`tether=N`, 2026-11-18): slime on its way out from
         // the body steps only where it touches N others (Lab, one body:
         // Reports/lab-body-2026-11-18; 2 its pick).
@@ -1844,6 +1858,10 @@ pub struct Engine {
     /// (`write_lure_field`): only then is `Settings::lure_pull` sent, so
     /// with no lure standing a calm walker reads no word for it.
     pub lured: bool,
+    /// The hunt's trail is written and reaches somewhere
+    /// (`write_hunt_field`, 2026-11-26): only then is
+    /// `Settings::hunt_pull` sent.
+    pub hunted: bool,
     /// The slime's wave field is written and reaches somewhere
     /// (`write_wave_field`, 2026-11-20): only then is its pull (`wave_w`)
     /// sent, in the lone step row's first word, so with no wave a calm
@@ -2229,6 +2247,7 @@ impl Engine {
             clouds: Default::default(),
             minds: !d.mind.is_empty(),
             lured: false,
+            hunted: false,
             waved: false,
             wave_w: 0.0,
             heart: None,
@@ -2451,6 +2470,7 @@ impl Engine {
         // none); the game writes them again within a game second. The
         // fort's mask the same (`Game::time_fort` writes it again).
         self.lured = false;
+        self.hunted = false;
         self.waved = false;
         self.forted = false;
         self.withers = self.grows && (d.p.wither > 0.0 || d.p.panic > 0.0);
@@ -2760,6 +2780,9 @@ impl Engine {
         // packed: sixteenths, 256ths, sixteenths.
         let q = |v: f32, k: f32| (v.max(0.0) * k).round().min(255.0) as u32;
         b.extend(u32_bytes(&[q(s.level_blows, 16.0) | q(s.level_speed, 256.0) << 8 | q(s.level_bite, 16.0) << 16]));
+        // The hunt's pull (`hunt_pull`), only while its trail is written,
+        // and three spare words.
+        b.extend(f32_bytes(&[if self.hunted { s.hunt_pull } else { 0.0 }, 0.0, 0.0, 0.0]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         // Switching withering on starts every walker as if it heard of food
@@ -3987,6 +4010,28 @@ impl Engine {
         let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + 2 * nb) as u64;
         self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(field, self.dish.w, self.dish.h)));
         self.lured = reaches;
+    }
+
+    /// **Writes the hunt's trail** (engine.wgsl's `hunt_dist`; 2026-11-26,
+    /// the Lab, `Game::time_hunt`): each block's walking distance to the
+    /// squad's recent places, each place's age added (`u32::MAX` where
+    /// none reaches), in the fourth quarter of the raid's region (after
+    /// the raid's blocks, the wave's and the condensed band's). An empty
+    /// field clears it. No CPU twin. Nothing is written while there was
+    /// no trail and there is none.
+    pub fn write_hunt_field(&mut self, field: &[u32]) {
+        let reaches = field.iter().any(|&d| d != u32::MAX);
+        if !reaches && !self.hunted {
+            return;
+        }
+        let b = crate::mould::big::RAID_BLOCK;
+        let nb = self.dish.w.div_ceil(b) * self.dish.h.div_ceil(b);
+        if 4 * nb > self.cells as usize {
+            return;
+        }
+        let at = self.dense_at + 4 * (DENSE_HEAD + self.n as usize + self.cells as usize + 3 * nb) as u64;
+        self.queue.write_buffer(&self.news, at, &u32_bytes(&block_words(field, self.dish.w, self.dish.h)));
+        self.hunted = reaches;
     }
 
     /// **Writes the slime's wave field** (engine.wgsl's `wave_dist`;
