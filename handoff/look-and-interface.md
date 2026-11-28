@@ -49,7 +49,10 @@ level rides in the droplet's word (bits 10-12 of layer 2; the layer test
 is now `(drop >> 8) & 3`), and a droplet takes its level's colour or its
 species' hue. No new reads in `base`; llvmpipe 1536x864 base 26.5 ms
 before, 25.9 after (noise). Strikers' beads stay hot gold (they are
-cores). Scott asked 06:15Z for the roadmap; a card asks which look bothers
+cores). Merged as #902. Then the squads' number plates were pushed in
+`marks()` before the soldiers, so a gun barrel lay over "1 *" at zoom 12:
+they now go in `plates` and are drawn after the selection rings
+(`Controls::marks`). Scott asked 06:15Z for the roadmap; a card asks which look bothers
 him most (recommended B, the slime up close).
 
 ## State (2026-11-20)
