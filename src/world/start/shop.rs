@@ -961,7 +961,7 @@ impl StartMenu {
                     // then (2026-11-28) each turret's against the one in
                     // the loadout shown, a second header over them.
                     let head = 24.0 * s;
-                    let gap = 18.0 * s;
+                    let gap = 30.0 * s;
                     let turrets = tab.rows.iter().filter(|&&i| shop.rows[i].area == ShopArea::Turrets).count();
                     let heads = if turrets > 0 && turrets < n { 2.0 * head + gap } else { head };
                     let fit = |rh: f32| ((area.h - heads) / rh).floor().max(1.0) as usize;
@@ -976,6 +976,10 @@ impl StartMenu {
                         let sub = Rect::new(area.x, top, area.w, h.min(area.bottom() - top));
                         self.gun_table(&shop, &g_rows, ShopArea::Guns, sub, head, rh, &ring, c, s);
                         top += head + g_rows.len() as f32 * rh + gap;
+                        // A thin rule between the two tables (Look's review).
+                        if !t_rows.is_empty() {
+                            c.rrect(Rect::new(area.x + 8.0 * s, top - gap / 2.0 - 3.0 * s, area.w - 16.0 * s, 1.0 * s), 0.0, [255, 255, 255, 22]);
+                        }
                     }
                     if !t_rows.is_empty() {
                         let sub = Rect::new(area.x, top, area.w, (area.bottom() - top).max(head + rh));
@@ -1341,8 +1345,12 @@ impl StartMenu {
     #[allow(clippy::too_many_arguments)]
     fn gun_table(&mut self, shop: &Shop, rows: &[usize], which: ShopArea, area: Rect, head: f32, rh: f32, ring: &impl Fn(Hit) -> bool, c: &mut Canvas, s: f32) {
         let yours = shop.rows.iter().find(|r| r.area == which && r.on);
+        // The columns of both tables, guns' and turrets', so a column
+        // shared stands at one x in both (Look's review of #900); a table
+        // heads only the columns its rows fill.
+        let mine: Vec<&String> = rows.iter().flat_map(|&i| shop.rows[i].bars.iter().map(|b| &b.0)).collect();
         let mut labels: Vec<String> = Vec::new();
-        for &i in rows.iter().chain(shop.rows.iter().enumerate().filter(|(_, r)| r.area == which).map(|(i, _)| i).collect::<Vec<_>>().iter()) {
+        for &i in rows.iter().chain(shop.rows.iter().enumerate().filter(|(_, r)| matches!(r.area, ShopArea::Guns | ShopArea::Turrets)).map(|(i, _)| i).collect::<Vec<_>>().iter()) {
             for (l, _, _) in &shop.rows[i].bars {
                 if !labels.contains(l) {
                     labels.push(l.clone());
@@ -1355,16 +1363,19 @@ impl StartMenu {
         labels.sort_by_key(|l| ORDER.iter().position(|o| o == l).unwrap_or(ORDER.len()));
         // Each gun's estimated damage a second with your cards (`Shop::dps`,
         // `ShopRow::dps`; the owner, 2026-11-22) heads its numbers.
-        let dps = shop.dps.is_some() && which == ShopArea::Guns;
+        // (Its slot in the turrets' table too, empty, so the columns line
+        // up.)
+        let dps = shop.dps.is_some();
         if dps {
             labels.insert(0, "DPS".into());
         }
-        let name_w = (area.w * 0.34).max(150.0 * s);
+        let dps = dps && which == ShopArea::Guns;
+        let name_w = (area.w * if labels.len() > 8 { 0.26 } else { 0.34 }).max(150.0 * s);
         let price_w = 78.0 * s;
         let col_w = ((area.w - name_w - price_w) / labels.len().max(1) as f32).max(1.0);
         let base = area.y + 15.0 * s;
         c.text(Weight::SemiBold, 13.0 * s, (area.x + 8.0 * s, base), Align::Left, if which == ShopArea::Turrets { "Turret" } else { "Gun" }, MUTED);
-        for (k, l) in labels.iter().enumerate() {
+        for (k, l) in labels.iter().enumerate().filter(|(_, l)| (dps && l.as_str() == "DPS") || mine.contains(l)) {
             c.text_fit(Weight::SemiBold, 13.0 * s, (area.x + name_w + (k + 1) as f32 * col_w - 8.0 * s, base), Align::Right, l, col_w - 8.0 * s, MUTED);
         }
         c.text(Weight::SemiBold, 13.0 * s, (area.right() - 8.0 * s, base), Align::Right, "Price", MUTED);
@@ -1406,7 +1417,8 @@ impl StartMenu {
                 // a glance.
                 let right = area.x + name_w + (k + 1) as f32 * col_w - 8.0 * s;
                 c.text_fit(Weight::Medium, 14.0 * s, (right, mid - 2.0 * s), Align::Right, v, col_w - 8.0 * s, ink);
-                if r.h >= 24.0 * s {
+                // (No bar under a yes or no: it isn't a quantity.)
+                if r.h >= 24.0 * s && l != "Over walls" {
                     let bw = (col_w - 16.0 * s).min(70.0 * s);
                     let t = Rect::new(right - bw, r.bottom() - 6.0 * s, bw, 3.0 * s);
                     c.rrect(t, 1.5 * s, [255, 255, 255, 20]);
