@@ -2105,7 +2105,7 @@ impl App {
                 cost: Some(format!("{:.0}", r.wall_cost)),
                 ready: g.bank >= r.wall_cost,
                 why_not: need(r.wall_cost),
-                about: format!("A wall the slime has to wear through, slowly. Both ends within a soldier's range; {:.0} food a cell of its length. Doors are on the Build page.", r.wall_cost),
+                about: format!("A wall the slime has to wear through: {:.0} health a cell, Harden for more. Both ends within a soldier's range; {:.0} food a cell of its length. Doors are on the Build page.", r.wall_hp, r.wall_cost),
                 ..Command::new(WALL, (1, 2), Icon::Wall, "Wall", KeyCode::KeyV)
             });
             cmds.push(Command {
@@ -2278,7 +2278,7 @@ impl App {
                     cost: Some(format!("{:.0}/cell", r.wall_cost)),
                     ready: g.bank >= r.wall_cost,
                     why_not: need(r.wall_cost),
-                    about: format!("A wall the slime has to wear through, slowly. Both ends within a soldier's range; costs {:.0} food a cell of its length.", r.wall_cost),
+                    about: format!("A wall the slime has to wear through: {:.0} health a cell, Harden for more. Both ends within a soldier's range; costs {:.0} food a cell of its length.", r.wall_hp, r.wall_cost),
                     ..Command::new(WALL, (0, 2), Icon::Wall, "Wall", KeyCode::KeyV)
                 },
                 Command {
@@ -3532,30 +3532,28 @@ impl App {
                 ..Command::new(TURRET_LOADOUT, (0, 2), Icon::Upgrade, &format!("Loadout {}", now + 1), KeyCode::KeyL)
             });
         }
-        // Thicken (owner 2026-11-16 14:25Z): a band of a wall's width on
-        // its home side, at the wall's first price; a door cut into a wall
-        // thickens its wall, and itself with it.
+        // Harden (the owner, 2026-11-28 06:07Z: more health a cell, not
+        // more cells; Thicken from 11-16 added a band): at the wall's
+        // first price; a door cut into a wall hardens its wall, and itself
+        // with it.
         if matches!(bd.kind, Kind::Wall { .. }) && bd.up() {
             let w = g.wall_of(bk);
             let up = g.upgrade_price(w);
             let need = up.filter(|&p| g.bank < p);
             let level = g.buildings[w].level;
-            let ww = g.rules.wall_width;
+            let (now, next) = (g.wall_full(level), g.wall_full(level + 1));
             cmds.push(Command {
                 cost: up.map(|p| format!("{p:.0}")),
                 ready: up.is_some() && need.is_none(),
                 why_not: Some(match (up, need) {
                     (_, Some(p)) => format!("Need {:.0} more food", p - g.bank),
-                    _ if level >= WALL_LEVELS => format!("At its thickest, {:.0} cells", ww * f32::from(level)),
-                    _ => "This wall can't be thickened".to_string(),
+                    _ if level >= WALL_LEVELS => format!("At its strongest, {now:.0} health a cell"),
+                    _ => "This wall can't be hardened".to_string(),
                 }),
                 about: format!(
-                    "Thicken: {:.0} more cells of wall on your side, from {:.0} to {:.0}, at once, for its first price. The slime eats one face at a time, so each band buys about as long again. {WALL_LEVELS} levels.",
-                    ww,
-                    ww * f32::from(level),
-                    ww * f32::from(level + 1)
+                    "Harden: every cell of this wall goes from {now:.0} to {next:.0} health, at once, for its first price; worn cells keep their wear. Lay another wall behind it to make it thicker. Level {level} of {WALL_LEVELS}."
                 ),
-                ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Thicken", KeyCode::KeyU)
+                ..Command::new(UPGRADE, (0, 1), Icon::Upgrade, "Harden", KeyCode::KeyU)
             });
         }
         if matches!(bd.kind, Kind::Lure | Kind::Siren) {

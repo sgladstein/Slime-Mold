@@ -1073,6 +1073,22 @@ impl World for GpuWorld {
         self.read_now();
     }
 
+    /// The player's wall at its own health (2026-11-28): the engine's cells
+    /// at `hp`, and the mirror's too, which the view reads as the cells'
+    /// full health (`draw::ground_codes`' `wall_share`).
+    fn build_wall_hp(&mut self, a: (f32, f32), b: (f32, f32), width: f32, hp: f32) {
+        self.e.build_wall_hp(&self.shared, &self.s, a.0, a.1, b.0, b.1, width, hp);
+        self.e.dish.build_wall_hp(a.0, a.1, b.0, b.1, width, hp);
+        self.walls_new = true;
+        self.read_now();
+    }
+
+    fn harden_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32, add: f32) {
+        self.e.harden_wall(a.0, a.1, b.0, b.1, width, add);
+        self.e.dish.harden_wall(a.0, a.1, b.0, b.1, width, add);
+        self.walls_new = true;
+    }
+
     /// The living walkers at the last frame's end (its readout's count);
     /// in a garden the enemy's alone (to the game, the mould).
     fn living(&self) -> usize {
@@ -1650,6 +1666,12 @@ mod tests {
         fn build_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32) {
             self.g.build_wall(a, b, width)
         }
+        fn build_wall_hp(&mut self, a: (f32, f32), b: (f32, f32), width: f32, hp: f32) {
+            self.g.build_wall_hp(a, b, width, hp)
+        }
+        fn harden_wall(&mut self, a: (f32, f32), b: (f32, f32), width: f32, add: f32) {
+            self.g.harden_wall(a, b, width, add)
+        }
         fn burst(&mut self, b: &squad::Burst, k: &squad::BurstRules) -> squad::BurstOut {
             self.g.burst(b, k)
         }
@@ -2138,6 +2160,41 @@ mod tests {
             assert_eq!(opened, new.len(), "wall {k}: every bitten cell opened in the mirror");
             assert!(gpu_agar(g) == g.e.dish.agar, "wall {k}: the mirror's agar is the GPU's");
         }
+    }
+
+    /// **A wall hardens in place** (2026-11-28, the owner: an upgrade gives
+    /// "more health per cell"): a wall built at 100 a cell holds 100 on the
+    /// GPU, and hardened by 150 each of its standing cells holds 250, a
+    /// worn one keeps its wear, rubble stays rubble and no cell beside it
+    /// changes; the mirror's full health follows (the view's share).
+    #[test]
+    fn a_wall_hardens_in_place_on_the_gpu() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale) = (5, 1);
+        let s = race_settings(seed, scale, 500);
+        let mut g = GpuWorld::new(&device, &queue, s, scale);
+        let (w, h) = g.size();
+        let health = |g: &GpuWorld| read_back(&g.e.device, &g.e.queue, &g.e.health).chunks_exact(4).map(|b| f32::from_le_bytes(b.try_into().unwrap())).collect::<Vec<f32>>();
+        let walls = |g: &GpuWorld| (0..w * h).filter(|&i| g.e.dish.wall.get(i).copied().unwrap_or(false)).collect::<Vec<usize>>();
+        let before = walls(&g);
+        let (x, y) = (w as f32 * 0.5, h as f32 * 0.5);
+        World::build_wall_hp(&mut g, (x - 8.0, y), (x + 8.0, y), 2.0, 100.0);
+        let new: Vec<usize> = walls(&g).into_iter().filter(|i| !before.contains(i)).collect();
+        assert!(new.len() > 10, "built: {}", new.len());
+        let hp = health(&g);
+        assert!(new.iter().all(|&i| hp[i] == 100.0), "built at 100");
+        // One cell worn by 30, one to rubble (health 0 on the GPU).
+        let (worn, gone) = (new[0], new[1]);
+        let mut hp2 = hp.clone();
+        (hp2[worn], hp2[gone]) = (70.0, 0.0);
+        g.e.queue.write_buffer(&g.e.health, 0, &super::super::f32_bytes(&hp2));
+        World::harden_wall(&mut g, (x - 8.0, y), (x + 8.0, y), 2.0, 150.0);
+        let after = health(&g);
+        assert_eq!(after[worn], 220.0, "the worn cell keeps its wear");
+        assert_eq!(after[gone], 0.0, "rubble stays rubble");
+        assert!(new[2..].iter().all(|&i| after[i] == 250.0), "every other cell hardened");
+        assert!((0..w * h).filter(|i| !new.contains(i)).all(|i| after[i] == hp2[i]), "nothing else changed");
+        assert!(new.iter().all(|&i| g.e.dish.wall_health[i] == 250.0), "the mirror's full health follows");
     }
 
     /// **A step in shares is the same game** (`GpuWorld::spread`,
