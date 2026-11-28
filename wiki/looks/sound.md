@@ -2,7 +2,7 @@
 title: Sound
 kind: look
 status: current
-updated: 2026-11-24
+updated: 2026-11-28
 sources:
   - Reports/kit-sounds-2026-11-24/README.md
   - Reports/larder-sound-2026-11-12.md
@@ -10,7 +10,6 @@ sources:
   - Reports/music-bed-2026-11-22/README.md
   - Reports/sound-pass-2026-11-20.md
 code:
-  - BANK_GAP
   - DEFAULT_MASTER
   - Ear::far
   - FAR_LP_HZ
@@ -121,11 +120,20 @@ alone with `cargo run --release --example scoreplay -- DIR`.
 - 2026-11-22 03:43Z: "We need some like background, music or more ambient
   sound or something but it sounds weird with just like mostly gunshots"
   (the score).
+- 2026-11-28 07:26Z: "95% of what is hear is gun shots and the crystal
+  collecting sound which is a repetitive ding ding ding over and over
+  again. It is both thin and harsh." 08:25Z: "fully drop of the collecting
+  food sound ... the problem is more the lack of other sounds ... or maybe
+  the background music is too much in the background or doesn't fit the
+  mood well enough". The banking chime is cut; the rifle stays as it is.
 
 ## Tried and rejected
 
 - Counting joins by the length of `Dish::snaps`: the list is pruned, so it
   rebaselined 3-6 times a game. Events are found by their step stamp.
+- A chime for food banked (2026-11-20 to 11-28, at most every 2.5 s): with
+  a pump it rang all planet, and the owner heard little but it and the
+  guns. Cut on his word; the larder's pulse shows banking.
 - One fight burst a frame on The Wild One (1,251 bursts): gathered a quarter
   second.
 - Pieces on the campaign's square (4 fine cells at scale 2): a 6-wide cut

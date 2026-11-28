@@ -87,11 +87,6 @@ const PULSE_FAST: f32 = 150.0;
 const PULSE_FLOOR: f32 = 0.7;
 /// Walkers on one soldier that are full danger to the pulse.
 const TOUCH_FULL: f32 = 12.0;
-/// The least gap between banking chimes, seconds. Carriers bank a few food
-/// at a time: the farm hand banked 325 times in two minutes (1,770 food),
-/// which chimed nearly three times a second, so banking is gathered.
-/// 1 s until 2026-11-20: a chime a second through a whole planet.
-const BANK_GAP: f32 = 2.5;
 /// The least gap between coin ticks while soldiers take shop points
 /// (`WorldListener::coins`): ten soldiers drain planet 1's 40-point ore in
 /// about 1.6 s, so about ten ticks run up the scale.
@@ -295,8 +290,6 @@ pub struct WorldListener {
     kill_at: (f32, f32),
     steal_rate: f32,
     harvested: f32,
-    bank_wait: f32,
-    banked: f32,
     stolen: f32,
     walls: u32,
     dry: Vec<bool>,
@@ -373,8 +366,6 @@ impl WorldListener {
             kill_at: g.larder,
             steal_rate: 0.0,
             harvested: 0.0,
-            bank_wait: 0.0,
-            banked: 0.0,
             stolen: 0.0,
             walls: 0,
             dry: Vec::new(),
@@ -437,7 +428,6 @@ impl WorldListener {
         self.hurt_wait = vec![0.0; g.soldiers.len()];
         (self.kill_rate, self.steal_rate, self.kill_at) = (0.0, 0.0, g.larder);
         (self.harvested, self.stolen, self.walls) = (g.harvested, g.stolen, g.walls);
-        (self.bank_wait, self.banked) = (0.0, 0.0);
         self.dry = g.world.crystals().iter().map(|c| c.1 <= 0.0).collect();
         (self.core_down, self.ended, self.beat) = (g.core_down.is_some(), g.end.is_some(), 0.0);
         self.body_at = (self.ticks, g.mould, self.stats.kills);
@@ -727,17 +717,13 @@ impl WorldListener {
         let (rate, level) = density(self.steal_rate, 0.6, 30.0, 0.2);
         out.push(SoundCmd::Texture { kind: TextureKind::Feed, rate, level: level * larder_gain, pan: larder_pan, spread: 0.15 });
         self.stats.stolen_per_sec = self.steal_rate;
-        // Food banked: a chime, gathered to one a second, that climbs as the
-        // bank fills toward a soldier's price several times over.
-        self.banked += (g.harvested - self.harvested).max(0.0);
+        // Food banked made a chime (gathered to one every 2.5 s) until
+        // 2026-11-28, when the owner cut it: "fully drop the collecting food
+        // sound". With a pump it rang all planet, and with the guns it was
+        // most of what he heard. The bank's own pulse on the larder (draw.rs)
+        // still shows food coming in. `banked` stays counted (0) so the
+        // headless `heard:` line keeps its shape.
         self.harvested = g.harvested;
-        self.bank_wait -= dt;
-        if self.banked > 0.0 && self.bank_wait <= 0.0 {
-            let weight = (g.bank / (g.rules.soldier_cost * 4.0)).clamp(0.0, 1.0);
-            out.push(SoundCmd::Alert { kind: AlertKind::Joined, weight, pan: larder_pan });
-            self.stats.banked += 1;
-            (self.banked, self.bank_wait) = (0.0, BANK_GAP);
-        }
         if g.walls > self.walls {
             out.push(SoundCmd::Grain { kind: GrainKind::Thunk, pan: 0.0, gain: 0.45, delay: 0.0 });
             out.push(SoundCmd::Burst { kind: GrainKind::Grit, rate: 90.0, secs: 0.15, pan: 0.0, spread: 0.3, gain: 0.25 });
