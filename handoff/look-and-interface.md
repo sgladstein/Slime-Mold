@@ -1,5 +1,43 @@
 # Look and interface: state and brief
 
+## State (2026-11-28): one thread again
+
+From 11-28 the lane is **one thread** for the world look and the HUD (the
+plan of 11-27, `Reports/plan-2026-11-27/README.md`; the 11-24 split into a
+world thread and a HUD thread is over). Direction steers it. What the
+other project built from 11-25 to 11-27 is in the dated notes below: the
+star map (#860) and its side-by-side cards (#869, `start/stars.rs`), the
+slime gauge (#872), fewer alerts (#874), the 4K review fixes (#878), the
+loadout cards and Owned tab (#880); and
+from Enemy, the slime's levels coloured by crystal (#864, `level_rgb` in
+`view.wgsl`).
+
+**Jobs (Direction, 11-28 03:15Z), in order:** (1) the star map and the
+slime's level colours checked against `wiki/looks/art-direction.md`, and
+what fails fixed; (2) the rescue planet node's badge on its star card and
+its screens, once Enemy builds the node; (3) the owner's A to D order with
+his 4K screen in mind (3840 x 2160 at 250%; film `screen=1536x864`, or
+`screen=3840x2160 ui=125%` for the HUD) and the frame cost quoted. The
+HUD's own next steps (the gauge's tells in the bar, hold-to-hide, the
+twist's countdown, the empty gun panel; *Next for the HUD* below) wait on
+his play notes on the gauge; the Grudge's pill waits on Enemy's readout
+(`handoff/enemy-grudge-readout-2026-11-25.patch`).
+
+**11-28, first review (this thread):** the star map passes the guide;
+its cards now fit their facts (`card_need`) and show the planet's slime
+levels as swatches (`LEVEL_INKS` in `start/stars.rs`, keep in step with
+`level_rgb`). The crystals' two fracture lines (`GEM_VEINS`) are gone (the
+owner, 11-28 03:37Z). The slime's level colours fail rules 3 and 5 on later
+steps: three options rendered in game went to the owner on a card
+(recommended A, a warm ramp with inner heat;
+`Reports/slime-level-colours-2026-11-28/`, diffs there). When he picks,
+build it in `level_rgb` and `LEVEL_INKS` together, tune its glow (0.2 of
+`LEVEL_HEAT` on the page; 0.55 erased the levels' differences) and film
+it in motion at zoom 6 and 12 on steps 4 and 10. Enemy's rescue contract
+is PR #891 (`Contract::Rescue`, `Game::rescue_now()` takes the twist
+pill, `Run::planet_line()` feeds the cards' twist line; run seed 3, step
+3, node 0 has one): badge and screens are this lane's next.
+
 ## State (2026-11-20)
 
 **11-27, the loadout page (thread "Redesign the loadout page"; owner

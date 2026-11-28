@@ -1,0 +1,36 @@
+--- /dev/fd/63	2026-11-28 04:04:00.208171426 +0000
++++ /tmp/claude-0/f/optA.wgsl	2026-11-28 03:51:17.120301155 +0000
+@@ -923,16 +923,18 @@
+ // past the gold (0), deepening and cooling as the slime gets stronger, each
+ // saturated enough for `cell_mat_c`'s push to keep it the brightest warm
+ // thing in its patch; read between the two nearest by the mean level.
++const LEVEL_HEAT: vec3<f32> = vec3<f32>(255.0, 118.0, 28.0);
++const LEVEL_HEAT_FROM: f32 = 2.0;
+ fn level_rgb(l: f32) -> vec3<f32> {
+     var c = array<vec3<f32>, 8>(
+         MOULD_GOLD,
+-        vec3<f32>(238.0, 112.0, 36.0),
+-        vec3<f32>(220.0, 58.0, 32.0),
+-        vec3<f32>(178.0, 26.0, 38.0),
+-        vec3<f32>(140.0, 20.0, 58.0),
+-        vec3<f32>(112.0, 26.0, 96.0),
+-        vec3<f32>(80.0, 30.0, 120.0),
+-        vec3<f32>(52.0, 22.0, 92.0),
++        vec3<f32>(238.0, 134.0, 42.0),
++        vec3<f32>(222.0, 102.0, 30.0),
++        vec3<f32>(190.0, 78.0, 28.0),
++        vec3<f32>(150.0, 58.0, 26.0),
++        vec3<f32>(112.0, 44.0, 24.0),
++        vec3<f32>(78.0, 34.0, 22.0),
++        vec3<f32>(54.0, 26.0, 20.0),
+     );
+     let x = clamp(l, 0.0, 7.0);
+     let i = u32(floor(x));
+@@ -1497,6 +1499,7 @@
+     // explorers, whose height (`film_th`) is next to none.
+     m.vis = 1.0 - smoothstep(0.004, 0.05, th);
+     m.glow = vec3<f32>(0.0);
++    if (lvl > 0.0) { m.glow = LEVEL_HEAT * 0.2 * smoothstep(LEVEL_HEAT_FROM, 7.0, lvl) * (1.0 - cut) * opaque; }
+     m.gloss = mix((0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut), 0.95, dense * (1.0 - cut));
+     // Old looks, given back as body looks (the slime viewer, 11-21: the
+     // owner's card "Bring back old looks", from git). 8, paint: the first

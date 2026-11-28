@@ -603,6 +603,13 @@ pub fn blows(e: f32) -> f32 {
     curve_at(&BLOWS, e)
 }
 
+/// The blows a walker of level `level` takes at curve place `e` (`BLOWS`
+/// and `LEVEL_BLOWS`), for the star map's card (Look and interface,
+/// 2026-11-28: the card said only the orange slime's hits).
+pub fn blows_at_level(e: f32, level: u32) -> f32 {
+    blows(e) + LEVEL_BLOWS * level as f32
+}
+
 /// **The walkers a marcher's next cell must touch** (the engine's
 /// `tether`, 2026-11-18, the Enemy lane). The Lab's pick (one body,
 /// `Reports/lab-body-2026-11-18`): on planet 1, run seed 1, 2 halved the
