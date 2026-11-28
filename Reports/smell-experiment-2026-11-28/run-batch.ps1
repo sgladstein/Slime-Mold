@@ -9,19 +9,22 @@
 # It builds larder-world, plays every line of queue.txt (`ARM PLANET SEED
 # SECS PLAN [ARGS]`, as `league=PLANET:SEED:SECS plan=PLAN ARGS`),
 # `-Parallel` games at a time, and writes rows.txt beside the queue: one
-# `ARMS arm=... wall=... league ...` line a game, in queue order, as the
+# `ARMS game=N arm=... wall=... league ...` line a game as each ends, as the
 # Arms workflow's rows. Games already in rows.txt are skipped, so a run cut
 # short goes on where it stopped.
 
 param(
     [int]$Parallel = 2,
+    # A later batch: queue<Batch>.txt into rows<Batch>.txt (batch 2,
+    # 11-28: the same games on the build without the charges' gate).
+    [string]$Batch = "",
     [switch]$DryRun
 )
 $ErrorActionPreference = "Continue"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$queue = Join-Path $here "queue.txt"
-$rows = Join-Path $here "rows.txt"
-$work = Join-Path $env:TEMP "smell-exp-games"
+$queue = Join-Path $here "queue$Batch.txt"
+$rows = Join-Path $here "rows$Batch.txt"
+$work = Join-Path $env:TEMP "smell-exp-games$Batch"
 New-Item -ItemType Directory -Force -Path $work | Out-Null
 $exe = "target\release\larder-world.exe"
 
