@@ -34,7 +34,7 @@ use slime_mould::mould::bullets::Shell;
 use slime_mould::mould::campaign::Cause;
 use slime_mould::mould::guns::{Gun, GunKind};
 use slime_mould::mould::rounds::Card;
-use slime_mould::mould::route::Pip;
+use slime_mould::mould::route::{self, Pip};
 use slime_mould::mould::run::{self, Pick, ITEMS};
 
 /// The unlocks a plan may build with, as `Run::has` keys.
@@ -589,7 +589,7 @@ pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, pip: Option<P
 
 /// The star-map pick of a run bot that wants `want` (2026-11-28, plan
 /// step 3: "the run bot picks Safe, Fair or Hard by a dial"): at a fork,
-/// the way on with that pip, else the Fair one, else the first; `None`
+/// the way on with that pip, else the nearest in difficulty; `None`
 /// leaves the route to `Run::leg`'s default, node 0 (Fair), as before.
 /// Returns the pip taken, if a pick was due.
 pub(super) fn pick_pip(r: &mut Run, want: Option<Pip>) -> Option<Pip> {
@@ -598,7 +598,11 @@ pub(super) fn pick_pip(r: &mut Run, want: Option<Pip>) -> Option<Pip> {
         return None;
     }
     let c = r.choices();
-    let n = c.iter().find(|n| n.pip == want).or_else(|| c.iter().find(|n| n.pip == Pip::Fair)).or_else(|| c.first())?;
+    // Else the nearest in difficulty (`Pip::offset`), the easier on a tie:
+    // until the second arms batch (11-28) a Safe run with no Safe or Fair
+    // way on took Hard (run seed 3's step 3, lost).
+    let gap = |n: &&route::Node| ((n.pip.offset() - want.offset()).abs(), n.pip.offset());
+    let n = c.iter().min_by(|a, b| gap(a).partial_cmp(&gap(b)).unwrap_or(std::cmp::Ordering::Equal))?;
     let (k, pip) = (n.k, n.pip);
     r.choose(k, false).then_some(pip)
 }

@@ -34,7 +34,11 @@ and resume of a star-map run), 5 (60 fps at 4K on the GTX 1070).
     it is dry or the stall ends. First arms batch (f147c81a): the longest
     stall fell in 7 pairs, rose in none, 3 tied (p 0.008); planet 3 seed 4
     loss to win; pushes cost soldiers. Still over a minute on 5 of 10.
-    Second batch: push=20 against 40, and the first Safe and Hard runs.
+    Second batch (8543d53e): push=20 won 2 of 6 planet 3 games against 4
+    of 6 for 40, so 40 stays. First runs by pip, planets 1 to 3, seeds 1
+    to 3: Safe won 8 of 9 planets (the loss: a Safe run with no Safe or
+    Fair way on took Hard; now the nearest pip); Hard lost step 2 (the
+    Sprawler) on all three seeds, in 1:19 to 4:00 with 19 to 50 fallen.
   - The heart siege clears the live heart's own crystal (any crystal since
     #858), not crystal 0.
   - Star-map picks: `league=run:SEED[:TO[:SECS[:PIP]]]` takes that pip at
@@ -53,9 +57,12 @@ and resume of a star-map run), 5 (60 fps at 4K on the GTX 1070).
 
 ## Next, in order
 
-1. Read the second arms batch; run-bot.yml green or naming a real wall
-   (planet 3 seed 2 loses all 31 soldiers by 4:44 in every arm: the Trunk
-   is a real wall for this plan there).
+1. run-bot.yml green or naming a real wall: its `--check` still fails on a
+   stall over a minute, and stalls of 1 to 4 minutes remain on the Trunk
+   with the push (the bot losing a fight, not a soft lock). Asked
+   Direction 11-28 whether a stall becomes a named wall instead of a
+   failure; their rule (11-22), so not changed here. Planet 3 seed 2 loses
+   all 31 soldiers by 4:44 in every arm.
 2. Whether the heart siege should stay at all (hearts are not the win,
    #858): an arms pair with the siege's heart block off.
 3. The builder arm (pumps plus a turret each) now that #887 builds rolled
