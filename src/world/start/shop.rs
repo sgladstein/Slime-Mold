@@ -398,7 +398,7 @@ impl StartMenu {
             }
         }
         let (mut cards, mut guns, mut tiles, mut owned) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
-        let mut carried = None;
+        let (mut carried, mut mounted) = (None, None);
         for (i, r) in shop.rows.iter().enumerate() {
             // The loadouts' row of cards draws its own; everything owned
             // has a tab of its own (2026-11-27), the carried gun heading
@@ -411,24 +411,32 @@ impl StartMenu {
                 if r.area == ShopArea::Guns && r.on {
                     carried = Some(i);
                 }
+                if r.area == ShopArea::Turrets && r.on {
+                    mounted = Some(i);
+                }
                 continue;
             }
             match r.area {
                 ShopArea::Cards if r.on || r.group == BAG => {}
                 ShopArea::Cards => put(&mut cards, TabKind::Cards, &r.group, i),
                 ShopArea::Guns => put(&mut guns, TabKind::Guns, "Guns", i),
+                // In a run under the guns (2026-11-28); the gun range's
+                // armory, with eight guns already, gives them a tab.
+                ShopArea::Turrets => put(&mut guns, TabKind::Guns, if shop.range { "Turrets" } else { "Guns" }, i),
                 ShopArea::Upgrades if r.group.is_empty() => {}
                 ShopArea::Upgrades => put(&mut tiles, TabKind::Tiles, &r.group, i),
             }
         }
         // Guns first on the Owned tab, then turrets and devices.
         for t in &mut owned {
-            t.rows.sort_by_key(|&i| shop.rows[i].area != ShopArea::Guns);
+            t.rows.sort_by_key(|&i| (shop.rows[i].area != ShopArea::Guns, shop.rows[i].area != ShopArea::Turrets));
         }
-        // The carried gun heads its table.
+        // The carried gun heads its table, and the turret in the loadout
+        // shown heads the turrets' under it.
         for t in &mut guns {
             t.rows.extend(carried);
-            t.rows.sort_by_key(|&i| !shop.rows[i].on);
+            t.rows.extend(mounted);
+            t.rows.sort_by_key(|&i| (shop.rows[i].area == ShopArea::Turrets, !shop.rows[i].on));
         }
         let mut v = if shop.range { [guns, cards].concat() } else { [cards, owned, guns].concat() };
         v.extend(tiles);
@@ -952,13 +960,52 @@ impl StartMenu {
             };
             match tab.kind {
                 TabKind::Guns => {
-                    // A table: each gun's numbers against the carried one's.
+                    // A table: each gun's numbers against the carried one's,
+                    // then (2026-11-28) each turret's against the one in
+                    // the loadout shown, a second header over them.
                     let head = 24.0 * s;
-                    let fit = |rh: f32| ((area.h - head) / rh).floor().max(1.0) as usize;
-                    let rh = if fit(ROW * s) >= n { ROW * s } else { (((area.h - head) / n as f32).floor()).max(ROW_LEAST * s) };
-                    let per = if fit(rh) >= n { n } else { ((area.h - head - PAGER * s) / rh).floor().max(1.0) as usize };
-                    let range = page(per, n.div_ceil(per.max(1)).max(1), self);
-                    self.gun_table(&shop, &tab.rows[range], area, head, rh, ring, c, s);
+                    let gap = 30.0 * s;
+                    let turrets = tab.rows.iter().filter(|&&i| shop.rows[i].area == ShopArea::Turrets).count();
+                    let guns = n - turrets;
+                    let both = turrets > 0 && guns > 0;
+                    let heads = if both { 2.0 * head + gap } else { head };
+                    let fit = |rh: f32, heads: f32| ((area.h - heads) / rh).floor().max(1.0) as usize;
+                    let range = if !both || fit(ROW_LEAST * s, heads) >= n {
+                        let rh = if fit(ROW * s, heads) >= n { ROW * s } else { (((area.h - heads) / n as f32).floor()).max(ROW_LEAST * s) };
+                        let per = if fit(rh, heads) >= n { n } else { ((area.h - heads - PAGER * s) / rh).floor().max(1.0) as usize };
+                        (page(per, n.div_ceil(per.max(1)).max(1), self), rh)
+                    } else {
+                        // Too short for both tables (200% on a small
+                        // screen): the guns' pages, then the turrets'.
+                        let rh = ROW_LEAST * s;
+                        let per = ((area.h - head - PAGER * s) / rh).floor().max(1.0) as usize;
+                        let (pg, pt) = (guns.div_ceil(per), turrets.div_ceil(per));
+                        self.per = per;
+                        self.sheets = pg + pt;
+                        let of = |f: usize| if f < guns { f / per } else { pg + (f - guns) / per };
+                        self.sheet = (if self.focus < n { of(self.focus) } else { self.sheet }).min(pg + pt - 1);
+                        let k = self.sheet;
+                        let r = if k < pg { k * per..((k + 1) * per).min(guns) } else { guns + (k - pg) * per..(guns + (k - pg + 1) * per).min(n) };
+                        (r, rh)
+                    };
+                    let (range, rh) = range;
+                    let on_page = &tab.rows[range];
+                    let (g_rows, t_rows): (Vec<usize>, Vec<usize>) = on_page.iter().partition(|&&i| shop.rows[i].area != ShopArea::Turrets);
+                    let mut top = area.y;
+                    if !g_rows.is_empty() {
+                        let h = head + g_rows.len() as f32 * rh + if t_rows.is_empty() { area.h } else { 0.0 };
+                        let sub = Rect::new(area.x, top, area.w, h.min(area.bottom() - top));
+                        self.gun_table(&shop, &g_rows, ShopArea::Guns, sub, head, rh, &ring, c, s);
+                        top += head + g_rows.len() as f32 * rh + gap;
+                        // A thin rule between the two tables (Look's review).
+                        if !t_rows.is_empty() {
+                            c.rrect(Rect::new(area.x + 8.0 * s, top - gap / 2.0 - 3.0 * s, area.w - 16.0 * s, 1.0 * s), 0.0, [255, 255, 255, 22]);
+                        }
+                    }
+                    if !t_rows.is_empty() {
+                        let sub = Rect::new(area.x, top, area.w, (area.bottom() - top).max(head + rh));
+                        self.gun_table(&shop, &t_rows, ShopArea::Turrets, sub, head, rh, &ring, c, s);
+                    }
                 }
                 TabKind::Owned => {
                     let (per_row, w, per, pages) = flow(n, area, OWNED_W * s, area.w, OWNED_H * s, g, PAGER * s);
@@ -1223,6 +1270,7 @@ impl StartMenu {
         // Its name and kind.
         let kind = match row.area {
             ShopArea::Guns => "gun",
+            ShopArea::Turrets => "turret",
             _ if row.icon == Icon::Turret || row.about.contains("wall") || row.bars.iter().any(|b| b.0 == "Reach" && b.2.starts_with('x')) => "turret",
             _ => "device",
         };
@@ -1316,28 +1364,39 @@ impl StartMenu {
     /// coloured against the carried gun's (green better, red worse), and
     /// its price or where it is.
     #[allow(clippy::too_many_arguments)]
-    fn gun_table(&mut self, shop: &Shop, rows: &[usize], area: Rect, head: f32, rh: f32, ring: impl Fn(Hit) -> bool, c: &mut Canvas, s: f32) {
-        let yours = shop.rows.iter().find(|r| r.area == ShopArea::Guns && r.on);
+    fn gun_table(&mut self, shop: &Shop, rows: &[usize], which: ShopArea, area: Rect, head: f32, rh: f32, ring: &impl Fn(Hit) -> bool, c: &mut Canvas, s: f32) {
+        let yours = shop.rows.iter().find(|r| r.area == which && r.on);
+        // The columns of both tables, guns' and turrets', so a column
+        // shared stands at one x in both (Look's review of #900); a table
+        // heads only the columns its rows fill.
+        let mine: Vec<&String> = rows.iter().flat_map(|&i| shop.rows[i].bars.iter().map(|b| &b.0)).collect();
         let mut labels: Vec<String> = Vec::new();
-        for &i in rows.iter().chain(shop.rows.iter().enumerate().filter(|(_, r)| r.area == ShopArea::Guns).map(|(i, _)| i).collect::<Vec<_>>().iter()) {
+        for &i in rows.iter().chain(shop.rows.iter().enumerate().filter(|(_, r)| matches!(r.area, ShopArea::Guns | ShopArea::Turrets)).map(|(i, _)| i).collect::<Vec<_>>().iter()) {
             for (l, _, _) in &shop.rows[i].bars {
                 if !labels.contains(l) {
                     labels.push(l.clone());
                 }
             }
         }
+        // One column order whatever row comes first (a turret table mixes
+        // families whose numbers differ, 2026-11-28).
+        const ORDER: [&str; 11] = ["Range", "Rate", "Aim", "Arc", "Shots", "Strike", "Over walls", "Budget", "Slots", "Card slots", "Reach"];
+        labels.sort_by_key(|l| ORDER.iter().position(|o| o == l).unwrap_or(ORDER.len()));
         // Each gun's estimated damage a second with your cards (`Shop::dps`,
         // `ShopRow::dps`; the owner, 2026-11-22) heads its numbers.
+        // (Its slot in the turrets' table too, empty, so the columns line
+        // up.)
         let dps = shop.dps.is_some();
         if dps {
             labels.insert(0, "DPS".into());
         }
-        let name_w = (area.w * 0.34).max(150.0 * s);
+        let dps = dps && which == ShopArea::Guns;
+        let name_w = (area.w * if labels.len() > 8 { 0.26 } else { 0.34 }).max(150.0 * s);
         let price_w = 78.0 * s;
         let col_w = ((area.w - name_w - price_w) / labels.len().max(1) as f32).max(1.0);
         let base = area.y + 15.0 * s;
-        c.text(Weight::SemiBold, 13.0 * s, (area.x + 8.0 * s, base), Align::Left, "Gun", MUTED);
-        for (k, l) in labels.iter().enumerate() {
+        c.text(Weight::SemiBold, 13.0 * s, (area.x + 8.0 * s, base), Align::Left, if which == ShopArea::Turrets { "Turret" } else { "Gun" }, MUTED);
+        for (k, l) in labels.iter().enumerate().filter(|(_, l)| (dps && l.as_str() == "DPS") || mine.contains(l)) {
             c.text_fit(Weight::SemiBold, 13.0 * s, (area.x + name_w + (k + 1) as f32 * col_w - 8.0 * s, base), Align::Right, l, col_w - 8.0 * s, MUTED);
         }
         c.text(Weight::SemiBold, 13.0 * s, (area.right() - 8.0 * s, base), Align::Right, "Price", MUTED);
@@ -1379,7 +1438,8 @@ impl StartMenu {
                 // a glance.
                 let right = area.x + name_w + (k + 1) as f32 * col_w - 8.0 * s;
                 c.text_fit(Weight::Medium, 14.0 * s, (right, mid - 2.0 * s), Align::Right, v, col_w - 8.0 * s, ink);
-                if r.h >= 24.0 * s {
+                // (No bar under a yes or no: it isn't a quantity.)
+                if r.h >= 24.0 * s && l != "Over walls" {
                     let bw = (col_w - 16.0 * s).min(70.0 * s);
                     let t = Rect::new(right - bw, r.bottom() - 6.0 * s, bw, 3.0 * s);
                     c.rrect(t, 1.5 * s, [255, 255, 255, 20]);
@@ -1503,6 +1563,7 @@ impl StartMenu {
                 kind.push(if row.cost == 0 { "takes no budget".into() } else { format!("budget {}", row.cost) });
             }
             ShopArea::Guns => kind.push(if row.on { "Your gun".into() } else { format!("Gun, {}", row.state) }),
+            ShopArea::Turrets => kind.push(if row.on { "This loadout's turret".into() } else { format!("Turret, {}", row.state) }),
             ShopArea::Upgrades => {
                 if row.level.1 > 1 {
                     kind.push(format!("Level {} of {}", row.level.0, row.level.1));
@@ -1553,6 +1614,11 @@ impl StartMenu {
         // harm, 2026-11-22), in the warm colour a worse number reads in.
         if row.area == ShopArea::Upgrades && !row.bars.is_empty() {
             y += stat_bars(c, &row.bars, None, r.x + p, y, iw, 22.0 * s, 13.5 * s, WORSE, 1.0, limit, s) + 8.0 * s;
+        }
+        // A turret's numbers, against the one in the loadout shown.
+        if row.area == ShopArea::Turrets && !row.bars.is_empty() {
+            let yours = shop.rows.iter().find(|x| x.area == ShopArea::Turrets && x.on).filter(|_| !row.on);
+            y += stat_bars(c, &row.bars, yours.map(|x| x.bars.as_slice()), r.x + p, y, iw, 21.0 * s, 13.5 * s, ACCENT, 1.0, limit, s) + 6.0 * s;
         }
         // A gun's budget and slots, against the carried gun's.
         if row.area == ShopArea::Guns && !row.bars.is_empty() {

@@ -770,6 +770,12 @@ impl<W: World> Game<W> {
         // A bought design fires the plain rifle scaled by its own rolls
         // (`design_rolls`): its loadout is the design and cards, no gun
         // (owner, 2026-11-27 21:36Z).
+        // Since 2026-11-28 a design's family rolls its own fan: bullets a
+        // pull and their spread (a Flak's 2 to 6, a Repeater's wilder aim);
+        // reach and rate stay its rolls on the rifle (`turret_reach`).
+        if let Some(d) = k.filter(|_| b.is_some_and(|b| b.kind == Kind::Turret)).and_then(|k| self.design_at(k)) {
+            return Gun { spread: d.spread, shots: d.shots.max(1), ..Gun::standard(&self.rules) };
+        }
         if b.is_some_and(|b| b.kind != Kind::Turret || b.slot.is_some()) {
             return Gun::standard(&self.rules);
         }
@@ -1098,6 +1104,10 @@ impl<W: World> Game<W> {
         self.multicast += volley.len() as u32 - 1;
         let nv = volley.len();
         let a0 = dy.atan2(dx);
+        // Its design's family (2026-11-28): a strike times its blast roll,
+        // and a cluster (a Bombard's 2 to 6 shells) spread evenly round
+        // the aim within its spread, each shell its own strike.
+        let (n_shells, spread, blast) = self.design_at(k).map_or((1, 0.0, blast), |d| (d.shots.max(1), d.spread, blast * d.blast));
         for (v, &cast) in volley.iter().enumerate() {
             let ammo = if cast > 0 { m.ammo[cast as usize - 1] } else { Default::default() };
             let shape = ammo.set.shape();
@@ -1106,10 +1116,20 @@ impl<W: World> Game<W> {
             let pellets = shape.pellets.max(1);
             for p in 0..pellets {
                 let a = a0 + side + if pellets > 1 { (p as f32 / (pellets - 1) as f32 * 2.0 - 1.0) * shape.fan } else { 0.0 };
-                let to = (at.0 + a.cos() * d, at.1 + a.sin() * d);
-                let lands = t + self.secs(flight + d / sc / speed.max(0.1)).max(1);
-                self.shells_fired += 1;
-                self.shells.push(Shell { from: at, to, fired: t, lands, r, cast, mortar: k });
+                let mid = (at.0 + a.cos() * d, at.1 + a.sin() * d);
+                for c in 0..n_shells {
+                    // The first at the aim, the rest on a ring round it.
+                    let to = if c == 0 || spread <= 0.0 {
+                        mid
+                    } else {
+                        let q = std::f32::consts::TAU * c as f32 / (n_shells - 1) as f32 + a0;
+                        (mid.0 + q.cos() * spread * sc, mid.1 + q.sin() * spread * sc)
+                    };
+                    let far = (to.0 - at.0).hypot(to.1 - at.1);
+                    let lands = t + self.secs(flight + far / sc / speed.max(0.1)).max(1);
+                    self.shells_fired += 1;
+                    self.shells.push(Shell { from: at, to, fired: t, lands, r, cast, mortar: k });
+                }
             }
         }
     }
@@ -1389,10 +1409,13 @@ impl<W: World> Game<W> {
                                     0
                                 };
                                 let a0 = dy.atan2(dx);
-                                let spots = b.sprayer_spots.max(1);
+                                // Its design's spots and arc (a Fan's
+                                // wide one, 2026-11-28), else the rules'.
+                                let (spots, arc) = self.design_at(k).map_or((b.sprayer_spots, b.sprayer_arc), |d| (d.shots, b.sprayer_arc * d.spread / 60.0));
+                                let spots = spots.max(1);
                                 let at = |i: u32| {
                                     let f = if spots > 1 { i as f32 / (spots - 1) as f32 - 0.5 } else { 0.0 };
-                                    let a = a0 + f * b.sprayer_arc;
+                                    let a = a0 + f * arc;
                                     (bd.at.0 + a.cos() * d, bd.at.1 + a.sin() * d)
                                 };
                                 self.sprays.push(Spray { from: bd.at, spots: (0..spots).map(at).collect(), fired: t, cast, sprayer: k, laid: false });
@@ -1902,6 +1925,56 @@ mod tests {
         assert_eq!(fired, 0, "nothing outside its blind ring, nothing fired");
         let c = Cmd::Build(Kind::Mortar, (10.5, 20.25));
         assert_eq!(Cmd::parse(&c.to_line()), Some(c));
+    }
+
+    /// **A family fires its own numbers** (owner, 2026-11-28: turret
+    /// families, each rolled as a gun is): a Bombard lobs a cluster of
+    /// `shots` shells round its aim, each `blast` times the mortar's
+    /// strike; a Fan lays `shots` spots over its own arc; a Flak fires
+    /// `shots` bullets a pull.
+    #[test]
+    fn a_family_fires_its_own_numbers() {
+        use crate::mould::turrets::{Family, Turret};
+        let run = |d: Turret, out: f32| {
+            let mut g = small(3);
+            g.rules.start_bank = 1e6;
+            g.bank = 1e6;
+            let at = open_near(&g, (g.core.0 + out, g.core.1));
+            for k in 0..g.soldiers.len() {
+                g.soldiers[k].stance = Stance::HoldFire;
+            }
+            assert!(g.apply(Cmd::Design(0, Some(d))) && g.apply(Cmd::Place(0, at)));
+            let k = g.buildings.len() - 1;
+            let (mut volleys, mut spots, mut radii, mut pulls) = (Vec::new(), None, Vec::new(), std::collections::BTreeMap::new());
+            for _ in 0..(g.rules.tps * 12) {
+                let before = g.shells_fired;
+                g.step();
+                if g.shells_fired > before {
+                    volleys.push(g.shells_fired - before);
+                    radii.extend(g.shells.iter().map(|sh| sh.r / g.s()));
+                }
+                if spots.is_none() {
+                    spots = g.sprays.first().map(|sp| sp.spots.len());
+                }
+                for _ in g.last_shots.iter().filter(|s| s.turret == Some(k)) {
+                    *pulls.entry(g.world.ticks()).or_insert(0u32) += 1;
+                }
+            }
+            (volleys, spots, radii, pulls.into_values().collect::<Vec<_>>())
+        };
+        let b = BuildRules::default();
+        let bomb = Turret { shots: 4, ..Turret::average(Family::Bombard) };
+        let (volleys, ..) = run(bomb, 30.0);
+        assert!(!volleys.is_empty() && volleys.iter().all(|&v| v == 4), "{volleys:?}");
+        let how = Turret { blast: 1.7, ..Turret::average(Family::Howitzer) };
+        let (_, _, radii, _) = run(how, 30.0);
+        assert!(!radii.is_empty() && radii.iter().all(|&r| r > b.mortar_blast * 1.3), "a bigger strike than a mortar's: {radii:?}");
+        let fan = Turret { shots: 9, ..Turret::average(Family::Fan) };
+        let (_, spots, ..) = run(fan, 12.0);
+        assert_eq!(spots, Some(9));
+        let flak = Turret { shots: 5, ..Turret::average(Family::Flak) };
+        let (.., pulls) = run(flak, 8.0);
+        assert!(!pulls.is_empty() && pulls.iter().all(|&n| n % 5 == 0), "{pulls:?}");
     }
 
     /// **A sprayer lays its cast in a strip** (the second turret body,
