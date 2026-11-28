@@ -5,28 +5,29 @@
 # or a whole run from planet 1 to N when DEPTH is `runN`. Line i goes to
 # shard i mod 8.
 #
-# 2026-11-22 (Direction, after the Enemy lane's report of the bot standing
-# by the home crystal): planets 1 to 3 as whole runs on the 11 maps the
-# strategy bot is judged on (seeds 1 to 8 and the owner's runs 1795038793,
-# 1795106014, 1795119328) with the slime's ceiling at 1.5 times (18; the
-# difficulty thread's next step), and as is on the eight maps run-bot.yml
-# does not play. Each planet capped at 12 game minutes (720).
-ceil18 run3 1 720 set=ceiling=18
-ceil18 run3 2 720 set=ceiling=18
-ceil18 run3 3 720 set=ceiling=18
-ceil18 run3 4 720 set=ceiling=18
-ceil18 run3 5 720 set=ceiling=18
-ceil18 run3 6 720 set=ceiling=18
-ceil18 run3 7 720 set=ceiling=18
-ceil18 run3 8 720 set=ceiling=18
-ceil18 run3 1795038793 720 set=ceiling=18
-ceil18 run3 1795106014 720 set=ceiling=18
-ceil18 run3 1795119328 720 set=ceiling=18
-as-is run3 4 720
-as-is run3 5 720
-as-is run3 6 720
-as-is run3 7 720
-as-is run3 8 720
-as-is run3 1795038793 720
-as-is run3 1795106014 720
-as-is run3 1795119328 720
+# 2026-11-28 (Engine, the nightly's red Trunk): planet 3 on run seeds 1 to 8,
+# the bot as is against `push=40` (clear the slime's thinnest crystal after
+# 40 s with no harvest and no new 1% low), capped at 12 game minutes; and
+# the nightly's run seeds 2 and 3, planets 1 to 3, both arms. Deciding
+# measure: the league's `stall=` (seconds), paired by seed, then wins.
+# `dials=` adds dials to the plan; `runN.PIP` takes that pip at each fork.
+base 3 1 720
+push40 3 1 720 dials=push=40
+base 3 2 720
+push40 3 2 720 dials=push=40
+base 3 3 720
+push40 3 3 720 dials=push=40
+base 3 4 720
+push40 3 4 720 dials=push=40
+base 3 5 720
+push40 3 5 720 dials=push=40
+base 3 6 720
+push40 3 6 720 dials=push=40
+base 3 7 720
+push40 3 7 720 dials=push=40
+base 3 8 720
+push40 3 8 720 dials=push=40
+base run3 2 0
+push40 run3 2 0 dials=push=40
+base run3 3 0
+push40 run3 3 0 dials=push=40

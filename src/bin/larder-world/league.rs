@@ -10,8 +10,10 @@
 //!   (`runbot::gun_lab`, the gun-building thread) lands the same way with
 //!   the run bot's shop. SECS caps the game time (0: the planet's clock
 //!   and a minute, as the run bot).
-//! - `league=run:SEED[:TO[:SECS]] plan=PLAN`: a whole run from planet 1 to
-//!   TO (3) or a loss, shopping by the plan between planets.
+//! - `league=run:SEED[:TO[:SECS[:PIP]]] plan=PLAN`: a whole run from planet
+//!   1 to TO (3) or a loss, shopping by the plan between planets. PIP
+//!   (`safe`, `fair`, `hard`, 2026-11-28) is the star-map fork it takes at
+//!   each step (`pick_pip`); without it, Fair, as before.
 //!
 //! A plan that starts `util:` is the utility bot's weights (`utility.rs`)
 //! with its own `shop` and `cards`; any other is the strategy bot's.
@@ -467,11 +469,12 @@ pub(super) fn play(base: &Args, r: &Run, spec: &str, secs: f32, device: &wgpu::D
     // and the walkers the hunters' shells killed.
     let bodies = format!("{}/{}/{}/{}", count(|k| *k == Kind::Mortar), count(|k| *k == Kind::Sprayer), count(|k| *k == Kind::Hunter), g.hunter_killed);
     let line = format!(
-        "depth={} seed={} planet_seed={} tier={} how={how} ended={ended} won={} stars={stars} secs={end:.1} stall={stall:.0} origin={origin} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} bodies={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
+        "depth={} seed={} planet_seed={} tier={} pip={} how={how} ended={ended} won={} stars={stars} secs={end:.1} stall={stall:.0} origin={origin} killed={} turret_killed={} mortar_killed={} mould={} start_mould={start_mould} peak_mould={peak_mould} alive={} peak_alive={peak_alive} min_alive={} bought={bought} bank={:.0} income={:.0} pumped={:.0} harvested={:.0} lost_buildings={} pumps={} turrets={} walls={} lures={} bodies={} t_home={} t_out={} t_build={} t_back={} t_rush={} t_regroup={} t_burnt={} t_cool={} tools={tools} drops={drops} at150={} at300={} at600={} wall={:.0} marks={} fell={} fell_end={} bitten_end={} burned_end={} starfall_end={} blasted_end={} late={} stand={}:{}:{}:{}:{} rest={}",
         r.depth,
         r.seed,
         l.seed,
         l.tier.name(),
+        r.pip().name().to_lowercase(),
         u8::from(how == "won"),
         g.killed,
         g.turret_killed,
@@ -578,13 +581,31 @@ pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, pip: Option<P
     }
     let out = play(&base, &r, stage(spec, depth), secs, device, queue)?;
     let size = base.size.map_or(String::new(), |f| format!("size={f} "));
-    let pip = pip.map_or(String::new(), |p| format!("pip={} curve={:.2} tier={} walkers={:.2} ", p.name().to_lowercase(), r.curve(), r.level().tier.name(), r.level().walkers));
+    // The pip is the line's own `pip=` (since 11-28, every league line).
+    let pip = pip.map_or(String::new(), |_| format!("curve={:.2} walkers={:.2} ", r.curve(), r.level().walkers));
     println!("league plan={spec} {size}{pip}{} shop={} gun={} arms={}", out.line, bought.join("/"), r.gun_text(), arms(&r));
     Ok(())
 }
 
-/// `league=run:SEED[:TO[:SECS]]` (see the module's docs).
-pub(super) fn whole_run(base: Args, seed: u64, to: u32, secs: f32, spec: &str, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
+/// The star-map pick of a run bot that wants `want` (2026-11-28, plan
+/// step 3: "the run bot picks Safe, Fair or Hard by a dial"): at a fork,
+/// the way on with that pip, else the Fair one, else the first; `None`
+/// leaves the route to `Run::leg`'s default, node 0 (Fair), as before.
+/// Returns the pip taken, if a pick was due.
+pub(super) fn pick_pip(r: &mut Run, want: Option<Pip>) -> Option<Pip> {
+    let want = want?;
+    if !r.choosing() {
+        return None;
+    }
+    let c = r.choices();
+    let n = c.iter().find(|n| n.pip == want).or_else(|| c.iter().find(|n| n.pip == Pip::Fair)).or_else(|| c.first())?;
+    let (k, pip) = (n.k, n.pip);
+    r.choose(k, false).then_some(pip)
+}
+
+/// `league=run:SEED[:TO[:SECS[:PIP]]]` (see the module's docs).
+#[allow(clippy::too_many_arguments)]
+pub(super) fn whole_run(base: Args, seed: u64, to: u32, secs: f32, pip: Option<Pip>, spec: &str, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
     for part in spec.split('|') {
         shop_plan(part)?;
     }
@@ -606,6 +627,9 @@ pub(super) fn whole_run(base: Args, seed: u64, to: u32, secs: f32, spec: &str, d
         if r.over || r.depth > to {
             break;
         }
+        if let Some(took) = pick_pip(&mut r, pip) {
+            println!("league plan={spec} route depth={} pip={}", r.depth, took.name().to_lowercase());
+        }
         let p = shop_plan(stage(spec, r.depth))?;
         let b = shop(&mut r, &p);
         println!("league plan={spec} shop depth={} bought={}", r.depth, b.join("/"));
@@ -617,7 +641,18 @@ pub(super) fn whole_run(base: Args, seed: u64, to: u32, secs: f32, spec: &str, d
 /// Parses `league=`'s value: `DEPTH:SEED[:SECS]` or `run:SEED[:TO[:SECS]]`.
 pub(super) enum Job {
     Planet { depth: u32, seed: u64, secs: f32, pip: Option<Pip> },
-    Run { seed: u64, to: u32, secs: f32 },
+    Run { seed: u64, to: u32, secs: f32, pip: Option<Pip> },
+}
+
+/// `safe`, `fair` or `hard`: a fork's pip on the command line.
+fn parse_pip(v: &str, s: Option<&str>) -> Result<Option<Pip>, String> {
+    match s {
+        None => Ok(None),
+        Some("safe") => Ok(Some(Pip::Safe)),
+        Some("fair") => Ok(Some(Pip::Fair)),
+        Some("hard") => Ok(Some(Pip::Hard)),
+        Some(o) => Err(format!("league={v}: PIP is safe, fair or hard, not {o}")),
+    }
 }
 
 pub(super) fn parse(v: &str) -> Result<Job, String> {
@@ -629,20 +664,15 @@ pub(super) fn parse(v: &str) -> Result<Job, String> {
             seed: seed(s)?,
             to: rest.first().map_or(Ok(3.0), |x| num(x))?.clamp(1.0, run::PLANETS as f32) as u32,
             secs: rest.get(1).map_or(Ok(0.0), |x| num(x))?,
+            pip: parse_pip(v, rest.get(2).copied())?,
         }),
         [d, s, rest @ ..] => Ok(Job::Planet {
             depth: (num(d)? as u32).clamp(1, run::PLANETS),
             seed: seed(s)?,
             secs: rest.first().map_or(Ok(0.0), |x| num(x))?,
-            pip: match rest.get(1).copied() {
-                None => None,
-                Some("safe") => Some(Pip::Safe),
-                Some("fair") => Some(Pip::Fair),
-                Some("hard") => Some(Pip::Hard),
-                Some(o) => return Err(format!("league={v}: PIP is safe, fair or hard, not {o}")),
-            },
+            pip: parse_pip(v, rest.get(1).copied())?,
         }),
-        _ => Err(format!("league={v}: DEPTH:SEED[:SECS] or run:SEED[:TO[:SECS]]")),
+        _ => Err(format!("league={v}: DEPTH:SEED[:SECS[:PIP]] or run:SEED[:TO[:SECS[:PIP]]]")),
     }
 }
 
@@ -745,6 +775,34 @@ mod tests {
             r.points += 2_000;
             let bought = shop(&mut r, &Plan::parse("cards=0").unwrap());
             assert_eq!(r.owned[fp], 0, "seed {seed}: {bought:?}");
+        }
+    }
+
+    /// `league=run:...:PIP` takes that pip at each fork, else Fair.
+    #[test]
+    fn a_run_bot_takes_the_pip_it_wants_at_each_fork() {
+        for seed in 1..=4 {
+            for want in [Pip::Safe, Pip::Fair, Pip::Hard] {
+                let mut r = Run::new(seed);
+                r.restock();
+                assert_eq!(pick_pip(&mut r, Some(want)), None, "seed {seed}: step 1 has no fork");
+                r.won(2);
+                // Step 2 is always a fork of three.
+                assert_eq!(pick_pip(&mut r, Some(want)), Some(want), "seed {seed}");
+                assert_eq!(r.pip(), want, "seed {seed}");
+                for _ in 3..=6 {
+                    r.won(2);
+                    let took = pick_pip(&mut r, Some(want));
+                    assert!(!r.choosing(), "seed {seed}: a pick was due and taken ({took:?})");
+                    // A step with one way on takes it itself (`Run::won`).
+                    let ok = took.is_none() || took == Some(want) || r.choices().iter().all(|n| n.pip != want);
+                    assert!(ok, "seed {seed}: took {took:?} with {want:?} on offer");
+                }
+            }
+            let mut r = Run::new(seed);
+            r.restock();
+            r.won(2);
+            assert_eq!(pick_pip(&mut r, None), None, "seed {seed}: no dial leaves the route to node 0");
         }
     }
 

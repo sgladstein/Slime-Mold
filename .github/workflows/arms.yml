@@ -61,12 +61,25 @@ jobs:
               continue
             fi
             t0=$(date +%s)
+            # `dials=A=1,B=2` among the game arguments (11-28) adds those
+            # strategy dials to every planet's part of the plan.
+            plan="$PLAN"
+            args=""
+            for w in $extra; do
+              case "$w" in
+                dials=*) d="${w#dials=}"; plan="$(echo "$plan" | sed "s/|/,$d|/g"),$d" ;;
+                *) args="$args $w" ;;
+              esac
+            done
+            extra="$args"
             # $extra unquoted on purpose: one game argument a word.
             case "$depth" in
+              # `runN.PIP`: the whole run taking that pip at every fork.
+              run*.*) r="${depth%%.*}"; game="league=run:$seed:${r#run}:$secs:${depth#*.}" ;;
               run*) game="league=run:$seed:${depth#run}:$secs" ;;
               *) game="league=$depth:$seed:$secs" ;;
             esac
-            ./target/release/larder-world "$game" "plan=$PLAN" $extra > out.txt 2>> trace.txt < /dev/null \
+            ./target/release/larder-world "$game" "plan=$plan" $extra > out.txt 2>> trace.txt < /dev/null \
               || echo "ARMS failed $arm $depth $seed"
             wall=$(( $(date +%s) - t0 ))
             grep '^league ' out.txt | sed "s/^/ARMS arm=$arm wall=$wall /" | tee -a rows.txt || true
