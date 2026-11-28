@@ -1852,6 +1852,27 @@ impl App {
             self.marks.plate(at, off, &text, scale, LABEL_PLATE);
             self.marks.label(at, off, &text, scale, colour);
         }
+        // The move button held (formations thread, 2026-11-28; owner
+        // 06:12Z: "if you click and hold the ghost the of soliders in the
+        // new location in formation show up"): a thin accent ring where
+        // each soldier will stand (accent, as the split's rings: white
+        // already means selected), and the spread by the cursor while it
+        // drags. A ring a little over half a soldier's size: at the soldier's
+        // own size (0.8) a tight squad's rings ran into one tangle at
+        // zoom 12, and this keeps each place apart.
+        if let Some((pts, x)) = self.move_ghost() {
+            let px = (r * self.camera.zoom * 0.55).max(2.0);
+            for p in pts {
+                self.marks.ring_thin(p, px, 1.2, theme::ACCENT);
+            }
+            if let (Some(at), true) = (self.cursor_world(), self.sq.as_ref().and_then(|s| s.drag).is_some_and(|d| d.shown)) {
+                let i = slime_mould::mould::larder_world::nearest_step(x) as usize;
+                let label = format!("{} ({x:.1}x)", slime_mould::mould::larder_world::SPREAD_NAMES[i]);
+                let off = (12.0, -18.0);
+                self.marks.plate(at, off, &label, 1.5, LABEL_PLATE);
+                self.marks.label(at, off, &label, 1.5, theme::TEXT);
+            }
+        }
         // Y held (Squad and arsenal, 2026-11-28): the soldiers a split
         // would take, ringed, and "2 of 9" at the cursor.
         let going = self.split_preview();
@@ -2260,39 +2281,29 @@ impl App {
             road = Some(Command { ready: any, on: all(Task::Road), why_not: no_sel(), about: "Lay a road of your slime's trail where the soldier walks, free: your slime follows it. Lead it to food or into the enemy, where it converts the enemy's slime it outweighs. Press again to stop.".into(), ..Command::new(ROAD, (1, 0), Icon::Move, "Lay a road", KeyCode::KeyY) });
         }
         if self.form_page && squads {
-            // The Formation page (owner's review, 2026-11-23 03:33Z: "just
-            // have blob and circle base shapes ... Then separate control of
-            // the spread/tightness"): the two shapes on the top row, each
-            // drawn at the squad's spread, and the five spread steps below,
-            // each drawn in the squad's shape, so the page shows what a
-            // pick will look like. A pick keeps the page open, so shape and
-            // spread can both be set; T, Esc or Back close it.
-            use slime_mould::mould::larder_world::{SPREADS, SPREAD_NAMES};
+            // The Formation page: the shapes alone (owner 2026-11-28 06:12Z:
+            // "go back to the old formation list that is just shapes and
+            // spread is set when moving the solders", 07:09Z: "add column
+            // to the list"). The spread is set by holding the move button
+            // and dragging (`squadmode::MoveDrag`), or [ and ]. From 11-23
+            // to 11-28 the page had two shapes on top and five spread steps
+            // below. Each shape is drawn at the squad's spread; a pick
+            // keeps the page open; T, Esc or Back close it.
             let now = g.active.map(|a| (g.squads[a].formation, g.squads[a].spread));
-            let (shape, step) = now.unwrap_or_default();
+            let step = now.map_or(0, |n| n.1);
             let form = |id: u32, slot: (u8, u8), key: KeyCode, about: &str| {
                 let f = super::form_of(id).unwrap_or_default();
                 let mut name = f.name().to_string();
                 name[..1].make_ascii_uppercase();
-                Command { ready: now.is_some(), on: now.map(|n| n.0) == Some(f), why_not: no_sel(), about: about.into(), ..Command::new(id, slot, form_icon(f, step), &name, key) }
+                let about = format!("{about} Hold the right button to see it where you send the squad; drag to spread it out or close it in.");
+                Command { ready: now.is_some(), on: now.map(|n| n.0) == Some(f), why_not: no_sel(), about, ..Command::new(id, slot, form_icon(f, step), &name, key) }
             };
-            let keys = [KeyCode::KeyC, KeyCode::KeyV, KeyCode::KeyB, KeyCode::KeyN, KeyCode::KeyM];
-            let steps = (0..SPREADS.len()).map(|i| {
-                let s = i as u8;
-                let mut name = SPREAD_NAMES[i].to_string();
-                name[..1].make_ascii_uppercase();
-                let about = match i {
-                    0 => "Shoulder to shoulder: every gun near every other, the narrowest squad to steer through gaps. The default.".to_string(),
-                    4 => format!("{:.1} times the tight room: few soldiers in one bite of a surge or a raid and fire spread over the most slime, but the widest squad, slow to gather through a gap.", SPREADS[i]),
-                    _ => format!("{:.1} times the tight room: fewer soldiers in one bite of a surge, fire spread over more of the slime, a wider squad through gaps.", SPREADS[i]),
-                };
-                Command { ready: now.is_some(), on: now.map(|n| n.1) == Some(s), why_not: no_sel(), about: format!("{about} [ and ] step it from anywhere."), ..Command::new(super::SPREAD_IDS[i], (1, i as u8), form_icon(shape, s), &name, keys[i]) }
-            });
             cmds = vec![
                 form(F_BLOB, (0, 0), KeyCode::KeyZ, "A crowd round its middle: every gun near the others, the way to walk and fight. The default."),
                 form(F_RING, (0, 1), KeyCode::KeyX, "A circle with its middle empty, facing out: for holding ground round a crystal, a pump or a turret with slime on every side."),
+                form(F_LINE, (0, 2), KeyCode::KeyC, "Ranks across the way you send it, every gun to the front: for a slime coming from one side."),
+                form(F_COLUMN, (0, 3), KeyCode::KeyV, "Two abreast along the way you send it: narrow, for lanes between rock and through doors."),
             ];
-            cmds.extend(steps);
             cmds.push(Command { about: "Back to the squad's commands.".into(), ..Command::new(F_BACK, (1, 5), Icon::Close, "Back", super::squadmode::FORMATION) });
         }
         if self.tools_page {
@@ -3409,7 +3420,14 @@ pub(super) fn pump_rig_r<W: World>(g: &Game<W>, c: usize) -> f32 {
 /// A formation's icon on the card at spread step `step`: its soldiers as
 /// dots.
 fn form_icon(f: slime_mould::mould::larder_world::Formation, step: u8) -> Icon {
-    Icon::form(f == slime_mould::mould::larder_world::Formation::Ring, step)
+    use slime_mould::mould::larder_world::Formation;
+    let shape = match f {
+        Formation::Blob => 0,
+        Formation::Ring => 1,
+        Formation::Line => 2,
+        Formation::Column => 3,
+    };
+    Icon::form(shape, step)
 }
 
 pub(super) fn run_hidden(id: u32) -> bool {

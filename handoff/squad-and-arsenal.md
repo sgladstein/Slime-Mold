@@ -56,9 +56,15 @@ measured the ground against the full spread, so wide squads walked as
 columns, and a column re-matched its places every step. Built on his card
 (07:08Z, keep the spread, squeeze in gaps): `Rules::squeeze` (on),
 `Squad::squeeze`, `Game::squeeze_turn`/`spread_now`/`spread_own`, `WIDEN`;
-column ranks re-matched once a second. Next in the same thread: the shapes
-list back (blob, ring, line, column; his 07:09Z "add column to the list")
-with right-button hold for a ghost at the target and drag for the spread.
+column ranks re-matched once a second (PR #908). Part two (second PR, same
+branch): the shapes list back, blob, ring, line, column (his 07:09Z "add
+column to the list"); line and column face the move (`Squad::form_face`,
+`Formation::offset_facing`); right-button hold shows a ghost at the target
+(`MoveDrag` in squadmode.rs, `Game::ghost_places`) and a drag sets an exact
+spread (`Cmd::Spread`, replay `spread q x`, `Squad::spread_x`); the
+Formation page lost its spread row, `[` `]` stay. Headless card steps
+`line`, `column`, `ghost[X]` film it. Open: planet 1 seed 2 columns rose
+with the squeeze.
 
 **2026-11-28, turret families (thread "Make turrets work like guns in the
 shop", not this lane's thread; owner 05:49Z and 06:05Z, rows in

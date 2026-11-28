@@ -2058,7 +2058,9 @@ fn squad_commands_round_trip_as_lines() {
         Cmd::Unlink(3),
         Cmd::Formation(0, Formation::Blob, 0),
         Cmd::Formation(3, Formation::Blob, 4),
-        Cmd::Arm(2, None),
+        Cmd::Formation(2, Formation::Line, 1),
+        Cmd::Formation(1, Formation::Column, 0),
+        Cmd::Spread(0, 1.75),
         Cmd::Arm(1, Some(Gun::roll(11, 3))),
         Cmd::Arm(0, Some(crate::mould::guns::GunKind::Scatter.average())),
     ];
@@ -2068,6 +2070,9 @@ fn squad_commands_round_trip_as_lines() {
     // Replays from before the spread (2026-11-23): the 11-21 names.
     assert_eq!(Cmd::parse("formation 2 spread"), Some(Cmd::Formation(2, Formation::Blob, 3)));
     assert_eq!(Cmd::parse("formation 1 wedge"), Some(Cmd::Formation(1, Formation::Blob, 0)));
+    // Line and column, back since 2026-11-28, are themselves again.
+    assert_eq!(Cmd::parse("formation 1 line"), Some(Cmd::Formation(1, Formation::Line, 0)));
+    assert_eq!(Cmd::parse("formation 1 column"), Some(Cmd::Formation(1, Formation::Column, 0)));
     assert_eq!(Cmd::parse("formation 0 ring"), Some(Cmd::Formation(0, Formation::Ring, 0)));
 }
 
@@ -5169,4 +5174,88 @@ fn a_hunter_falls_back_into_its_slime_past_the_guns() {
     let ring = (g.gun_range_max() + g.rules.panic_margin.max(0.0)) * sc;
     let d = g.soldiers.iter().filter(|x| x.alive).map(|x| (x.x - p.0).hypot(x.y - p.1)).fold(f32::INFINITY, f32::min);
     assert!(d > ring, "past the guns: {d} against {ring}");
+}
+
+/// **Line and column** (back 2026-11-28, owner 07:09Z: "add column to the
+/// list"): ranks of at most `LINE_MOST` across the way the squad is sent,
+/// and two abreast along it, centred on the anchor; their width across the
+/// way is what the funnel and the squeeze measure (`half_width`).
+#[test]
+fn a_line_and_a_column_stand_across_and_along_their_facing() {
+    use crate::mould::larder_world::LINE_MOST;
+    let east = (1.0, 0.0);
+    let pts = |f: Formation, n: usize| (0..n).map(|r| f.offset_facing(r, n, 1.0, east)).collect::<Vec<_>>();
+    // A line of 10 facing east: one rank north to south, all at x 0.
+    let l = pts(Formation::Line, 10);
+    assert!(l.iter().all(|p| p.0.abs() < 1e-4), "{l:?}");
+    assert!((Formation::Line.half_width(10) - 4.5).abs() < 1e-4);
+    // Past `LINE_MOST`, ranks behind: 20 stand 10 abreast in two ranks.
+    let l = pts(Formation::Line, 20);
+    let ranks: std::collections::BTreeSet<i32> = l.iter().map(|p| (p.0 * 10.0).round() as i32).collect();
+    assert_eq!(ranks.len(), 2, "{l:?}");
+    assert!(Formation::Line.half_width(20) <= LINE_MOST as f32 / 2.0);
+    // A column of 8 facing east: four rows of two, a cell across.
+    let c = pts(Formation::Column, 8);
+    assert!(c.iter().all(|p| (p.1.abs() - 0.5).abs() < 1e-4), "{c:?}");
+    assert!((Formation::Column.half_width(8) - 0.5).abs() < 1e-4);
+    // Facing north, the same column runs north to south.
+    let north = (0.0, -1.0);
+    let c = (0..8).map(|r| Formation::Column.offset_facing(r, 8, 1.0, north)).collect::<Vec<_>>();
+    assert!(c.iter().all(|p| (p.0.abs() - 0.5).abs() < 1e-4), "{c:?}");
+    // A blob and a ring never turn.
+    for f in [Formation::Blob, Formation::Ring] {
+        assert_eq!(f.offset_facing(3, 8, 1.0, north), f.offset(3, 8, 1.0));
+    }
+}
+
+/// A line sent somewhere faces the way it went, and stands across it.
+#[test]
+fn a_sent_line_faces_the_way_it_was_sent() {
+    let mut g = squads(7);
+    for _ in 0..6 {
+        g.apply(Cmd::Buy);
+    }
+    off_the_crystal(&mut g);
+    g.apply(Cmd::Formation(0, Formation::Line, 1));
+    let m = g.middle(0).unwrap();
+    let to = open_near(&g, 30.0);
+    assert!(g.apply(Cmd::SquadOrder(0, Order::Move(to.0, to.1))));
+    let f = g.squads[0].form_face;
+    let want = ((to.0 - m.0) / (to.0 - m.0).hypot(to.1 - m.1), (to.1 - m.1) / (to.0 - m.0).hypot(to.1 - m.1));
+    assert!((f.0 - want.0).abs() < 1e-3 && (f.1 - want.1).abs() < 1e-3, "faces {f:?}, sent {want:?}");
+    for _ in 0..12 * g.rules.tps / g.rules.frame_ticks {
+        g.step();
+    }
+    // Every place lies across the facing (a line of 10, one rank).
+    let n = g.members(0).len();
+    assert!(n <= crate::mould::larder_world::LINE_MOST);
+    for k in g.members(0) {
+        let o = g.place(k);
+        assert!((o.0 * f.0 + o.1 * f.1).abs() < 1e-3, "place {o:?} off the line");
+    }
+}
+
+/// A drag's exact spread (`Cmd::Spread`): kept between steps, named by the
+/// nearest step, replaced by a new step and kept by a new shape.
+#[test]
+fn a_drag_sets_an_exact_spread() {
+    use crate::mould::larder_world::{SPREADS, SPREAD_MOST};
+    let mut g = squads(7);
+    for _ in 0..6 {
+        g.apply(Cmd::Buy);
+    }
+    assert!(g.apply(Cmd::Spread(0, 1.8)));
+    assert_eq!((g.spread_own(0), g.squads[0].spread), (1.8, 3));
+    assert!(g.apply(Cmd::Spread(0, 9.0)));
+    assert_eq!(g.spread_own(0), SPREAD_MOST, "no wider than a drag may set");
+    g.apply(Cmd::Spread(0, 1.8));
+    g.apply(Cmd::Formation(0, Formation::Ring, 3));
+    assert_eq!(g.spread_own(0), 1.8, "a new shape keeps the drag's spread");
+    g.apply(Cmd::Formation(0, Formation::Ring, 1));
+    assert_eq!(g.spread_own(0), SPREADS[1], "a new step replaces it");
+    // A drag the furthest place's reach asks for: the ghost's furthest
+    // place lands where the cursor is.
+    let x = g.spread_for_reach(0, 20.0 * g.s());
+    let far = g.ghost_places(0, (0.0, 0.0), x, (1.0, 0.0)).iter().map(|p| p.0.hypot(p.1)).fold(0.0, f32::max);
+    assert!((far - 20.0 * g.s()).abs() < 0.05 * g.s() || x == SPREAD_MOST || x == SPREADS[0], "{far} for {x}");
 }

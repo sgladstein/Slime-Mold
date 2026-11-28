@@ -74,6 +74,9 @@ pub enum Cmd {
     Active(u8),
     /// Squad `q` takes a formation and a spread step (`squads::SPREADS`).
     Formation(u8, Formation, u8),
+    /// Squad `q` stands at an exact spread, against the tightest (a drag of
+    /// the move button, 2026-11-28; `Squad::spread_x`). Replay word `spread`.
+    Spread(u8, f32),
     /// Shift + a squad order: squad `q` does it after what it is doing
     /// (`Squad::queue`); an idle squad starts it at once.
     SquadQueue(u8, Order),
@@ -148,6 +151,7 @@ impl Cmd {
             Cmd::Merge(a, b) => format!("merge {a} {b}"),
             Cmd::Active(q) => format!("active {q}"),
             Cmd::Formation(q, f, s) => format!("formation {q} {} {s}", f.name()),
+            Cmd::Spread(q, x) => format!("spread {q} {x}"),
             Cmd::SquadQueue(q, o) => format!("squeue {q}{}", &super::super::larder::Cmd::Order(0, o).to_line()["order 0".len()..]),
             Cmd::Link(a, b) => format!("link {a} {b}"),
             Cmd::Unlink(q) => format!("unlink {q}"),
@@ -206,6 +210,7 @@ impl Cmd {
                 let s = w.get(3).and_then(|s| s.parse().ok()).or(was).unwrap_or(0);
                 return Some(Cmd::Formation(w.get(1)?.parse().ok()?, f, s));
             }
+            "spread" => return Some(Cmd::Spread(w.get(1)?.parse().ok()?, f(2)?)),
             "link" => return Some(Cmd::Link(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "unlink" => return Some(Cmd::Unlink(w.get(1)?.parse().ok()?)),
             "band" => return Some(Cmd::Band(w.get(1)?.parse().ok()?)),
@@ -378,7 +383,7 @@ impl<W: World> Game<W> {
                 }
                 None => false,
             },
-            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::SplitOff(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Band(..) | Cmd::Heal(..) => self.squad_cmd(c),
+            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::SplitOff(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::Spread(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Band(..) | Cmd::Heal(..) => self.squad_cmd(c),
             Cmd::Device(q, t) => self.device(q as usize, t),
             Cmd::Auto(m) => {
                 self.autocast = m;

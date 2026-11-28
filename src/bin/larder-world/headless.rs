@@ -1701,8 +1701,14 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
         "hold" => {
             app.hud_event(HudEvent::Command { id: HOLD_FIRE })?;
         }
-        "blob" | "ring" => {
-            app.hud_event(HudEvent::Command { id: if step == "ring" { F_RING } else { F_BLOB } })?;
+        "blob" | "ring" | "line" | "column" => {
+            let id = match step {
+                "ring" => F_RING,
+                "line" => F_LINE,
+                "column" => F_COLUMN,
+                _ => F_BLOB,
+            };
+            app.hud_event(HudEvent::Command { id })?;
         }
         // `buyN`: N soldiers bought for the squad, as the card's Buy (a
         // formation film wants a squad bigger than the landing's four).
@@ -1713,10 +1719,30 @@ fn card_step(app: &mut App, step: &str) -> Result<(), String> {
                 g.apply(Cmd::Buy);
             }
         }
-        // A spread step (2026-11-23).
+        // A spread step (2026-11-23; the page's row went 11-28, so as the
+        // bracket keys set it).
         "tight" | "close" | "open" | "loose" | "wide" => {
             let i = slime_mould::mould::larder_world::SPREAD_NAMES.iter().position(|&n| n == step).unwrap_or(0);
-            app.hud_event(HudEvent::Command { id: SPREAD_IDS[i] })?;
+            app.squad_spread_step(i as u8);
+        }
+        // `ghost[X]` (formations thread, 2026-11-28): the move button held,
+        // the commanded squad sent 25 cells east of its middle, its ghost
+        // showing there, at exact spread X if given (as a drag sets it).
+        s if s.starts_with("ghost") => {
+            let x = s[5..].parse::<f32>().ok();
+            let g = app.game.as_mut().unwrap();
+            let Some(q) = g.active else { return Ok(()) };
+            let Some(m) = g.middle(q) else { return Ok(()) };
+            let sc = g.world.scale();
+            let at = (m.0 + 25.0 * sc, m.1);
+            let at = g.nearest_standable(at, 10.0 * sc).unwrap_or(at);
+            g.apply(Cmd::SquadOrder(q as u8, Order::Move(at.0, at.1)));
+            if let Some(x) = x {
+                g.apply(Cmd::Spread(q as u8, x));
+            }
+            if let Some(sq) = app.sq.as_mut() {
+                sq.drag = Some(super::squadmode::MoveDrag::shown_at(q as u8, at));
+            }
         }
         // Esc: no squad commanded, so a click on a building selects it.
         "free" => app.let_go(),

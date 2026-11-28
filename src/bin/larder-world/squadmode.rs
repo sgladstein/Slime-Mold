@@ -8,7 +8,9 @@
 //!   (2026-11-21).
 //! - **Hold the left button**: every soldier in it fires at the cursor on
 //!   the same beat. It faces the cursor.
-//! - **Right click** sends it there as a squad; on a crystal it stands by
+//! - **Right click** sends it there as a squad; **held**, its formation
+//!   shows there and a drag spreads it out or closes it in (`MoveDrag`,
+//!   2026-11-28); on a crystal it stands by
 //!   and guards it (a slow income while no slime is on it, for as long as
 //!   it holds), **Ctrl + right click** drains it (fast, until it is gone
 //!   for both sides). No larder in this mode (`Rules::larder`).
@@ -134,11 +136,11 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
     [
         ("Your squad".to_string(), String::new()),
         (wasd.clone(), "Steer your squad; the camera follows it (paused, or no squad controlled: pan the camera)".to_string()),
-        ("Right click".into(), "Send it; on a crystal it guards it (slow pay, lasts)".into()),
+        ("Right click".into(), "Send it (hold to see it there, drag to spread it); on a crystal it guards it".into()),
         ("Shift + right click".into(), "Queue it: the squad goes there after what it is doing".into()),
         ("Ctrl + right click".into(), "On a crystal: drain it (fast, then it is gone)".into()),
         ("Right click a half-built building".into(), "Back to building it (nothing paid again)".into()),
-        (k(FORMATION), "Formation page: blob or ring, and how far apart, tight to wide (on the card)".into()),
+        (k(FORMATION), "Formation page: blob, ring, line or column (on the card)".into()),
         (format!("{}, {}", k(TIGHTER), k(LOOSER)), "The squad stands tighter, or looser (five steps)".into()),
         (k(HEAL_KEY), "Heal: the squad stops and heals for food, fast by a crystal you hold (on the card)".into()),
         ("Esc".into(), format!("On a card page: back to the main card; else let go of the squad (every squad runs on its own and {wasd} pans); Esc again: the menu")),
@@ -197,7 +199,47 @@ pub(super) struct SquadInput {
     /// off 1 or 2 or a 1/4 of the squad"): the step in `split_sizes` the
     /// wheel has picked, the half when Y went down. Letting go splits.
     split_hold: Option<usize>,
+    /// The move button held (`MoveDrag`).
+    pub(super) drag: Option<MoveDrag>,
 }
+
+/// **The move button held** (owner 2026-11-28 06:12Z: "if you just click
+/// move that works as it does today but if you click and hold the ghost
+/// the of soliders in the new location in formation show up, then you can
+/// while holding the click drag the mouse to spread out or close in the
+/// formation"). The order goes when the button goes down, as before, so a
+/// click is as quick as ever; held past `GHOST_SECS`, or dragged past
+/// `DRAG_PX`, the formation shows where it will stand, and the cursor's
+/// distance from the point sets the spread (`Cmd::Spread`) of the squad
+/// and those commanded with it, live, till the button comes up.
+#[derive(Clone, Copy, Debug)]
+pub(super) struct MoveDrag {
+    /// The squad commanded when it went down, and the point it was sent.
+    pub(super) q: u8,
+    pub(super) at: (f32, f32),
+    /// Real seconds held.
+    held: f32,
+    /// The ghost shows.
+    pub(super) shown: bool,
+    /// The cursor has left the click's few pixels, so its distance sets the
+    /// spread.
+    dragged: bool,
+    /// The spread last sent, 0 none.
+    sent: f32,
+}
+
+impl MoveDrag {
+    /// A held move already showing its ghost, without a drag (a film's
+    /// `card=ghost` step).
+    pub(super) fn shown_at(q: u8, at: (f32, f32)) -> MoveDrag {
+        MoveDrag { q, at, held: GHOST_SECS, shown: true, dragged: false, sent: 0.0 }
+    }
+}
+
+/// Seconds the move button is held before the ghost shows.
+pub(super) const GHOST_SECS: f32 = 0.2;
+/// Screen pixels the cursor moves, button down, before it is a drag.
+pub(super) const DRAG_PX: f32 = 6.0;
 
 /// **The sizes a held Y steps through** with the wheel, for a squad of `n`
 /// (2 or more): 1, 2, a quarter, the half, three quarters, each at least
@@ -386,10 +428,16 @@ impl App {
             return true;
         }
         if matches!(code, TIGHTER | LOOSER) {
-            let now = self.active().and_then(|q| self.game.as_ref().map(|g| g.squads[q as usize].spread as i32));
+            // The next step past the spread it stands at, which a drag may
+            // have set between steps.
+            let now = self.active().and_then(|q| self.game.as_ref().map(|g| g.spread_own(q as usize)));
             if let Some(now) = now {
-                let to = (now + if code == LOOSER { 1 } else { -1 }).clamp(0, SPREADS.len() as i32 - 1);
-                self.squad_formation(None, Some(to as u8));
+                let to = if code == LOOSER {
+                    SPREADS.iter().position(|&x| x > now + 0.01).unwrap_or(SPREADS.len() - 1)
+                } else {
+                    SPREADS.iter().rposition(|&x| x < now - 0.01).unwrap_or(0)
+                };
+                self.squad_spread_step(to as u8);
             }
             return true;
         }
@@ -600,7 +648,19 @@ impl App {
                         if let Some(g) = self.game.as_mut() {
                             g.apply(if shift { Cmd::SquadQueue(q, o) } else { Cmd::SquadOrder(q, o) });
                         }
+                        // Held, a ghost and a drag's spread (`MoveDrag`): a
+                        // move or a guard sent now, not a drain, a build or a
+                        // queued order, and not on the minimap.
+                        let point = match o {
+                            Order::Move(x, y) | Order::Fight(x, y) | Order::Guard(x, y) => Some((x, y)),
+                            _ => None,
+                        };
+                        if let Some(at) = point.filter(|_| !shift && self.cursor_minimap().is_none()) {
+                            self.sq.as_mut().unwrap().drag = Some(MoveDrag { q, at, held: 0.0, shown: false, dragged: false, sent: 0.0 });
+                        }
                     }
+                } else if let Some(sq) = self.sq.as_mut() {
+                    sq.drag = None;
                 }
                 true
             }
@@ -798,6 +858,7 @@ impl App {
         }
         let at = self.cursor_world();
         let between = self.between();
+        self.move_drag(dt);
         let Some(g) = self.game.as_mut() else { return };
         // The screen edge does not pan: the cursor is the aim.
         self.controls.edge = false;
@@ -852,6 +913,65 @@ impl App {
             self.camera.centre_on(to);
             sq.put = Some(self.camera.focus());
         }
+    }
+
+    /// The held move button, each frame (`MoveDrag`): the ghost once held
+    /// or dragged, and the spread from the cursor's distance once dragged.
+    fn move_drag(&mut self, dt: f32) {
+        let Some(mut d) = self.sq.as_ref().and_then(|sq| sq.drag) else { return };
+        let cursor = self.controls.cursor.and_then(|c| self.camera.world_at(c));
+        let zoom = self.camera.zoom.max(1e-6);
+        let Some(g) = self.game.as_mut() else { return };
+        if g.members(d.q as usize).is_empty() {
+            self.sq.as_mut().unwrap().drag = None;
+            return;
+        }
+        d.held += dt;
+        // No cursor over the world (it is over the HUD, or a film has
+        // none): the spread stays as it is.
+        let dist = cursor.map(|c| (c.0 - d.at.0).hypot(c.1 - d.at.1));
+        d.dragged |= dist.is_some_and(|x| x * zoom > DRAG_PX);
+        d.shown |= d.dragged || d.held >= GHOST_SECS;
+        if let (true, Some(dist)) = (d.dragged, dist) {
+            let x = g.spread_for_reach(d.q as usize, dist);
+            if (x - d.sent).abs() > 0.02 {
+                for r in g.linked(d.q as usize) {
+                    g.apply(Cmd::Spread(r as u8, x));
+                }
+                d.sent = x;
+            }
+        }
+        self.sq.as_mut().unwrap().drag = Some(d);
+    }
+
+    /// The ghost of the held move (`MoveDrag`): for each squad sent, where
+    /// its soldiers will stand, fine cells; and the spread, for the label.
+    pub(super) fn move_ghost(&self) -> Option<(Vec<(f32, f32)>, f32)> {
+        let d = self.sq.as_ref()?.drag.filter(|d| d.shown)?;
+        let g = self.game.as_ref()?;
+        let q = d.q as usize;
+        let mut pts = Vec::new();
+        for r in g.linked(q) {
+            let at = g.squads[r].dest.or_else(|| g.members(r).first().and_then(|&k| match g.soldiers[k].order {
+                Order::Move(x, y) | Order::Fight(x, y) | Order::Guard(x, y) => Some((x, y)),
+                _ => None,
+            }));
+            let at = at.unwrap_or(d.at);
+            pts.extend(g.ghost_places(r, at, g.spread_own(r), g.squads[r].form_face));
+        }
+        Some((pts, g.spread_own(q)))
+    }
+
+    /// The bracket keys' and the films' spread step `i` (`SPREADS`) for
+    /// the commanded squad and those commanded with it.
+    pub(super) fn squad_spread_step(&mut self, i: u8) {
+        let (Some(q), Some(g)) = (self.active(), self.game.as_mut()) else { return };
+        let i = (i as usize).min(SPREADS.len() - 1);
+        for r in g.linked(q as usize) {
+            g.apply(Cmd::Spread(r as u8, SPREADS[i]));
+        }
+        let f = g.squads[q as usize].formation;
+        self.hud.alert(&format!("Formation: {}", form_name(f, i as u8)), None, theme::TEXT);
     }
 
     /// Focus lost: let go of the keys and the trigger.
@@ -1090,6 +1210,6 @@ pub(super) fn form_name(f: Formation, spread: u8) -> String {
 /// selection ring (`Controls::ring_link`): the usual reach times the
 /// widest spread among them, so a loose or wide squad keeps one ring.
 pub(super) fn ring_link(g: &Game<GpuWorld>, q: usize) -> f32 {
-    let widest = g.linked(q).into_iter().map(|r| SPREADS[(g.squads[r].spread as usize).min(SPREADS.len() - 1)]).fold(1.0, f32::max);
+    let widest = g.linked(q).into_iter().map(|r| g.spread_own(r)).fold(1.0, f32::max);
     slime_mould::world::controls::RING_LINK * widest
 }
