@@ -1169,6 +1169,9 @@ struct App {
     /// The gun range's armory, between rounds too (`args.range` is the
     /// one the round was armed from).
     range: Option<Run>,
+    /// A card on the shelf tried on while it is picked (`menu::Trial`):
+    /// the shop shows its copy of the run, never saved or landed.
+    trial: Option<menu::Trial>,
     /// The armory is up over a live range round (the start menu's shop
     /// page, the round paused under it), not the menu over its dish
     /// (`App::set_armory`).
@@ -1243,6 +1246,7 @@ impl App {
             run: args.run.clone(),
             range: args.range.clone(),
             armory: false,
+            trial: None,
             armory_minimap: false,
             args,
             window: None,
