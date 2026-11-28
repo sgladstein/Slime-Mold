@@ -336,7 +336,9 @@ the view, a dark rim, white-hot cooling to orange, 0.45 s and 7 cells
 ([gun feel](../../Reports/gun-feel-2026-11-15/README.md)). Since 11-18 the
 rim is gone: each droplet is a bead in the slime's gold lit by its key
 light, with a small shadow
-([droplets](../../Reports/droplets-2026-11-18/README.md)). Camera shake
+([droplets](../../Reports/droplets-2026-11-18/README.md)); since 11-28
+in the colour of the slime it came from, its level's (`level_rgb`) or its
+species' (`drop_rgb` in `view.wgsl`), not always the plain gold. Camera shake
 and hit-stop on blasts are on in the game since 2026-11-20 (the owner's
 card, "Turn them on"; the review's D6), `shake=0 hitstop=0` off for a film.
 

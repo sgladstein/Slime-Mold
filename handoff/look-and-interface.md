@@ -40,6 +40,21 @@ the dug-outs' plates (draw.rs) and tiles (`squadmode.rs`, Squad's file,
 one line: state "dug in", no AUTO) and the pill's `Icon::Group`. Film:
 `run=3 menu=stars@3`, `run=3:3 centre=124,170,4 at=60`.
 
+**11-28, Look A (the fight round the squad):** filmed `run=1:5
+hand=greedy at=14.25,24.25 centre=squad,12` (planet 4; the greedy squad
+is lost by 0:36, so film before 30 s). Found: the spray's droplets were
+always the plain gold, so round a squad on crimson or violet slime they
+read as a second material. Fixed in `drop_rgb` (`view.wgsl`): the walker's
+level rides in the droplet's word (bits 10-12 of layer 2; the layer test
+is now `(drop >> 8) & 3`), and a droplet takes its level's colour or its
+species' hue. No new reads in `base`; llvmpipe 1536x864 base 26.5 ms
+before, 25.9 after (noise). Strikers' beads stay hot gold (they are
+cores). Merged as #902. Then the squads' number plates were pushed in
+`marks()` before the soldiers, so a gun barrel lay over "1 *" at zoom 12:
+they now go in `plates` and are drawn after the selection rings
+(`Controls::marks`). Scott asked 06:15Z for the roadmap; a card asks which look bothers
+him most (recommended B, the slime up close).
+
 ## State (2026-11-20)
 
 **11-27, the loadout page (thread "Redesign the loadout page"; owner

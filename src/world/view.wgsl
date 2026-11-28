@@ -4433,6 +4433,11 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
         // from landing to leaving.
         var heat = 0.0;
         if (spray) { heat = clamp((fl - 0.2) / 0.6, 0.0, 1.0); }
+        // Its level (the engine's `GRADE_BITS`, kept while it flies, read
+        // as the body's are above), bits 10-12, so the droplet is the
+        // colour of the slime it came out of (`drop_rgb`).
+        var lv = 0u;
+        if (P.dense_at > 0u && P.ripe_at == 0u && (dw & DENSE_BIT) == 0u) { lv = (dw >> 12u) & 7u; }
         let pad = vec2<f32>(rh + 1.0);
         let lo = vec2<i32>(floor(min(s, tail) + min(sh, vec2<f32>(0.0)) - pad));
         let hi = vec2<i32>(ceil(max(s, tail) + max(sh, vec2<f32>(0.0)) + pad));
@@ -4455,7 +4460,7 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
                     let o = (p - on) / max(r, 0.5);
                     let n = normalize(vec3<f32>(o, sqrt(max(1.0 - dot(o, o), 0.0))));
                     let f = u32(round(15.0 * clamp((dot(n, l) + 0.3) / 1.3, 0.0, 1.0)));
-                    v = (2u << 8u) | (h4 << 4u) | f;
+                    v = (lv << 10u) | (2u << 8u) | (h4 << 4u) | f;
                 } else {
                     let ts = clamp(dot(s - (p - sh), dir) / len, 0.0, 1.0);
                     if (distance(p - sh, s - dir * (ts * len)) <= rh * (1.0 - 0.7 * ts)) { v = 1u << 8u; }
@@ -4545,6 +4550,29 @@ const DROP_GLOW: f32 = 0.4;
 const DROP_HEAT: vec3<f32> = vec3<f32>(255.0, 238.0, 180.0);
 const DROP_GOLD: vec3<f32> = vec3<f32>(255.0, 196.0, 70.0);
 const DROP_COOL: vec3<f32> = vec3<f32>(238.0, 118.0, 24.0);
+// A droplet's colour before its light: the slime it came out of (Look A,
+// 11-28). Until then every droplet was the plain slime's gold, so round a
+// squad on a crimson or violet level (`level_rgb`, kept 11-28) or a lemon
+// Swarmer the spray flew out as pale gold seeds, a second material beside
+// the body. Now the plain gold and its cooling orange carry the species'
+// hue as the body does (`species_hue` over `MOULD_GOLD`), and a droplet
+// with a level takes that level's colour, lifted as `DROP_GOLD` is over
+// the gold while it is fast and a quarter darker as it lands. A spray's
+// heat glow (`DROP_GLOW`) stays on top in `base`, so a fresh one is still
+// hot out of the hit.
+fn drop_rgb(lv: f32, spray: bool, hh: f32) -> vec3<f32> {
+    let sp = species_hue() / MOULD_GOLD;
+    var fast = DROP_GOLD * sp;
+    var slow = DROP_COOL * sp;
+    if (lv > 0.0) {
+        let b = level_rgb(lv);
+        fast = min(b * (DROP_GOLD / MOULD_GOLD), vec3<f32>(255.0));
+        slow = b * DROP_LAND;
+    }
+    if (!spray) { return min(fast, vec3<f32>(255.0)); }
+    return min(mix(slow, fast, hh), vec3<f32>(255.0));
+}
+const DROP_LAND: f32 = 0.75;
 // Off the map in the shaded view: darker than any ground or rock.
 const BACK: vec3<f32> = vec3<f32>(6.0, 8.0, 10.0);
 // The micro-look's strength: the first cut (one) read only as a faint
@@ -4667,14 +4695,11 @@ fn base(@builtin(global_invocation_id) gid: vec3<u32>) {
                 c = mix(c, MIND_ROSE, MIND_TINT * a * on);
             }
             if ((drop >> 8u) == 1u) { c *= 1.0 - DROP_SHADE; }
-            if ((drop >> 8u) == 2u) {
+            if (((drop >> 8u) & 3u) == 2u) {
                 let h4 = (drop >> 4u) & 15u;
-                var dc = DROP_GOLD;
                 var hh = 0.0;
-                if (h4 > 0u) {
-                    hh = f32(h4 - 1u) / 14.0;
-                    dc = mix(DROP_COOL, DROP_GOLD, hh);
-                }
+                if (h4 > 0u) { hh = f32(h4 - 1u) / 14.0; }
+                let dc = drop_rgb(f32((drop >> 10u) & 7u), h4 > 0u, hh);
                 let fl = f32(drop & 15u) / 15.0 * 1.3 - 0.3;
                 let lz = normalize(LIGHT).z;
                 let shade = clamp(1.0 + DROP_SLOPE * (fl - lz), DROP_FLOOR, 1.4);
