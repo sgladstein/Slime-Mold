@@ -9,6 +9,8 @@ first move, on 11-17, is recorded in
 [`Reports/handoff-2026-11-17.md`](../Reports/handoff-2026-11-17.md); its
 copy of the old project memory is in `handoff/project-memory-2026-11-17/`.
 
+The review of 11-24 to 11-27 and the plan for the rest of Milestone 2 (six steps, five lanes, the Lab paused; his card 11-27 23:55Z "Five lanes, no freeze") are in [`Reports/plan-2026-11-27/README.md`](../Reports/plan-2026-11-27/README.md).
+
 Main at the move: `5cd97aba` (#876). Everything below is merged unless it
 says otherwise.
 
