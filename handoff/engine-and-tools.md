@@ -57,12 +57,11 @@ and resume of a star-map run), 5 (60 fps at 4K on the GTX 1070).
 
 ## Next, in order
 
-1. run-bot.yml green or naming a real wall: its `--check` still fails on a
-   stall over a minute, and stalls of 1 to 4 minutes remain on the Trunk
-   with the push (the bot losing a fight, not a soft lock). Asked
-   Direction 11-28 whether a stall becomes a named wall instead of a
-   failure; their rule (11-22), so not changed here. Planet 3 seed 2 loses
-   all 31 soldiers by 4:44 in every arm.
+1. run-bot.yml (11-28): seeds 1 to 3 times Safe, Fair, Hard; a stall over
+   a minute is a WALL line with step, pip and seed, not a failure
+   (Direction's word 11-28), and a step that walls on every seed heads its
+   pip's table; soft locks still fail. Hard step 2 losing is a finding for
+   the curve page, not a bug (Direction: Scott wants it harder).
 2. Whether the heart siege should stay at all (hearts are not the win,
    #858): an arms pair with the siege's heart block off.
 3. The builder arm (pumps plus a turret each) now that #887 builds rolled
