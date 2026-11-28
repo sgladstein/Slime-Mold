@@ -2,7 +2,7 @@
 title: Squad mode
 kind: design
 status: open
-updated: 2026-11-24
+updated: 2026-11-28
 sources:
   - Reports/auto-fire-2026-11-18/README.md
   - Reports/bug-sweep-2026-11-14.md
@@ -109,7 +109,12 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   `Run::turret_loadout`'s cards (the turrets' deck). A loadout with no gun
   fits the turrets' rack. On a planet H opens the panel, paused, with
   nothing for sale; changes apply at once, with no reload.
-- **Split, join, link.** Y splits the front half off, and both halves go on
+- **Split, join, link.** A tap of Y splits off the half nearer the cursor
+  (the panel's Split, the front half). Held, the wheel picks 1, 2, a
+  quarter, the half or three quarters, the ones that will go are ringed
+  with "2 of 10" by the cursor, and letting go splits them off (owner
+  2026-11-28 03:42Z: "sometimes I want to just split off 1 or 2 or a 1/4
+  of the squad"; `Cmd::SplitOff`). Both halves go on
   with the squad's order and Shift queue (owner 2026-11-22 08:34Z); J or the tile's + joins
   only a squad that touches yours. Linked squads (Ctrl + number, only while
   touching) are commanded as one and keep their own guns and settings.

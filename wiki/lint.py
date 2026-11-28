@@ -19,6 +19,10 @@ With `--base`, a change to the game (`src/`, `assets/`, the play scripts)
 that adds no line to `news/whats-new.txt` is an error too, unless a commit
 message says why not in a `Nothing-new:` line (`whats_new`, below).
 
+With `--base`, a change under `src/` that touches no `handoff/*.md` file is
+an error too, unless a commit message says why in a `No-handoff:` line
+(`handoff_kept`, below).
+
 With `--base`, a pull request that adds more than `MEDIA_CAP` of pictures,
 films or sound outside `assets/`, or one such file over `MEDIA_FILE_CAP`,
 is an error too, unless a commit message says why in a `Big-media:` line
@@ -110,6 +114,11 @@ MEDIA = (".gif", ".mp4", ".webm", ".mov", ".png", ".jpg", ".jpeg", ".webp", ".wa
 MEDIA_CAP = 12 * 1024 * 1024
 MEDIA_FILE_CAP = 3 * 1024 * 1024
 BIG_MEDIA = "Big-media:"
+# The handoff rule (the plan of 2026-11-27, "A handoff in every PR": from
+# 11-25 to 11-27 two projects changed this repo and no lane's handoff said
+# so, so the threads after them had to rebuild the state from commits).
+HANDOFF_DIR = "handoff/"
+NO_HANDOFF = "No-handoff:"
 INDEX_LINE_CAP = 200   # one index line is one sentence (warning)
 STATUSES = {"current", "open", "decided", "paused", "retired"}
 
@@ -245,6 +254,32 @@ def whats_new(base):
                       + f") and adds no line to {NEWS}. Add one line at the bottom saying what "
                       "the player will see and how to try it. If nothing the player sees or does "
                       f"changed, say why in a commit message line: `{NO_NEWS} <why>`")
+    return errors
+
+
+def handoff_kept(base):
+    """The handoff rule (`HANDOFF_DIR`): a pull request that changes `src/`
+    changes a `handoff/*.md` file too (the lane's state, open branch, next
+    step: CLAUDE.md, "Keep handoff/<your-lane>.md current"), or one of its
+    commit messages says why not in a line `No-handoff: <why>` (a one-line
+    fix the lane's handoff already covers). One pull request at a time, as
+    `whats_new`."""
+    errors = []
+    for what, lo, hi, span in units_of(base):
+        files = [f for f in git("diff", "--name-only", span).split("\n") if f]
+        code = [f for f in files if f.startswith("src/")]
+        if not code or any(f.startswith(HANDOFF_DIR) and f.endswith(".md") for f in files):
+            continue
+        why = [l.strip() for l in git("log", "--format=%B", f"{lo}..{hi}").splitlines()
+               if l.strip().startswith(NO_HANDOFF) and len(l.strip()) > len(NO_HANDOFF) + 8]
+        if why:
+            print(f"note: {what} changes src/ and no handoff: {why[0]}")
+            continue
+        errors.append(f"{what} changes src/ ({code[0]}"
+                      + (f" and {len(code) - 1} more" if len(code) > 1 else "")
+                      + f") and no {HANDOFF_DIR}*.md file. Say in your lane's handoff what changed, "
+                      f"the open branch and the next step, or say why not in a commit message line: "
+                      f"`{NO_HANDOFF} <why>`")
     return errors
 
 
@@ -514,6 +549,7 @@ def main():
     if base:
         errors += whats_new(base)
         errors += media_cap(base)
+        errors += handoff_kept(base)
 
     for w in warnings:
         print("warning:", w)

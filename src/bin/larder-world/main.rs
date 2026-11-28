@@ -2233,20 +2233,25 @@ impl App {
                 self.hud.alert(&format!("{} is drained dry", crystal_name(i)), Some(c), theme::WARN);
             }
         }
+        let run = self.args.run.as_ref().map(|r| r.seed);
+        self.star_hint.update(g, run);
         // Ore landed and cores dropped (owner's play, 11-20 23:17Z: "it
         // isn't clear how to collect the miniboss hearts"): an alert that
-        // says what to do, pointing at it.
+        // says what to do, pointing at it. Not while the run's Starfall
+        // hint hangs under a drop (11-28): until then the first drop of a
+        // run said the same words twice, in the corner and under the gem.
+        let hinted = self.hints.on && self.star_hint.show.is_some();
         if (g.starfall.landed, g.starfall.cores) != self.drops_told {
             use slime_mould::mould::larder_world::{CoreFrom, DropKind};
             let (landed, cores) = self.drops_told;
             self.drops_told = (g.starfall.landed, g.starfall.cores);
             let newest = |kind: DropKind| g.starfall.live.iter().rev().find(|d| d.down && d.kind == kind);
-            if g.starfall.landed > landed {
+            if g.starfall.landed > landed && !hinted {
                 if let Some(d) = newest(DropKind::Ore) {
                     self.hud.alert("Ore landed: stand a squad on it for shop points", Some(d.at), theme::WARN);
                 }
             }
-            if g.starfall.cores > cores {
+            if g.starfall.cores > cores && !hinted {
                 if let Some(d) = newest(DropKind::Core) {
                     let what = match d.from {
                         CoreFrom::Boss { .. } => "A mini-boss core: stand a squad on it before the slime does",
@@ -2257,8 +2262,6 @@ impl App {
                 }
             }
         }
-        let run = self.args.run.as_ref().map(|r| r.seed);
-        self.star_hint.update(g, run);
         // First-sight hints (`hints.rs`); Options' Hints row turns them and
         // the Starfall one off.
         self.hints.update(g, self.window.is_some(), self.star_hint.show.is_some());
@@ -3217,7 +3220,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
         match job {
             league::Job::Planet { depth, seed, secs, pip } => league::planet(base, depth, seed, secs, pip, &league_plan, &device, &queue)?,
-            league::Job::Run { seed, to, secs } => league::whole_run(base, seed, to, secs, &league_plan, &device, &queue)?,
+            league::Job::Run { seed, to, secs, pip } => league::whole_run(base, seed, to, secs, pip, &league_plan, &device, &queue)?,
         }
         return Ok(());
     }
@@ -3230,7 +3233,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some((seed, to)) = runbot {
         let (device, queue) = gpu().ok_or("no GPU adapter")?;
         let plan = if league_plan.is_empty() { runbot::PLAN } else { league_plan.as_str() };
-        league::whole_run(base, seed, to, 0.0, plan, &device, &queue)?;
+        league::whole_run(base, seed, to, 0.0, None, plan, &device, &queue)?;
         return Ok(());
     }
     // **A saved round replayed headless with a per-crystal trace**

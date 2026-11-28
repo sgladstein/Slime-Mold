@@ -166,6 +166,16 @@ pub trait World {
     /// nearest lure within its reach (`u32::MAX` past it), or empty for
     /// none.
     fn set_lure_field(&mut self, _field: Vec<u32>) {}
+    /// **The hunt** (2026-11-26, the Lab; `Game::time_hunt`): whether the
+    /// slime follows the squad's trail, so the game builds one. A rule of
+    /// the GPU engine only, as the lure's field is.
+    fn hunt_pull(&self) -> bool {
+        false
+    }
+    /// Sets the hunt's trail: each block's walking distance to the squad's
+    /// recent places, each place's age added (`u32::MAX` past its reach),
+    /// or empty for none.
+    fn set_hunt_field(&mut self, _field: Vec<u32>) {}
     /// **The fort** (2026-11-18, the Enemy lane): whether the slime sets
     /// on a mask the game gives it, so the game builds one
     /// (`Game::time_fort`). A rule of the GPU engine only, as the lure's

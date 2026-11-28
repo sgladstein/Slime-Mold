@@ -30,10 +30,7 @@ levels as swatches (`LEVEL_INKS` in `start/stars.rs`, keep in step with
 owner, 11-28 03:37Z). The slime's level colours fail rules 3 and 5 on later
 steps: three options rendered in game went to the owner on a card
 (recommended A, a warm ramp with inner heat;
-`Reports/slime-level-colours-2026-11-28/`, diffs there). When he picks,
-build it in `level_rgb` and `LEVEL_INKS` together, tune its glow (0.2 of
-`LEVEL_HEAT` on the page; 0.55 erased the levels' differences) and film
-it in motion at zoom 6 and 12 on steps 4 and 10. Enemy's rescue contract
+`Reports/slime-level-colours-2026-11-28/`, diffs there). He kept today's colours (05:37Z: "Todays colors are still best. I like the vibrancy. All your new suggestions are too monotone."); nothing was built. Enemy's rescue contract
 is PR #891 (`Contract::Rescue`, `Game::rescue_now()` takes the twist
 pill, `Run::planet_line()` feeds the cards' twist line; run seed 3, step
 3, node 0 has one): badge and screens are this lane's next. Built
@@ -42,6 +39,18 @@ map node and beside the card's pip, the card's twist row reads "Rescue";
 the dug-outs' plates (draw.rs) and tiles (`squadmode.rs`, Squad's file,
 one line: state "dug in", no AUTO) and the pill's `Icon::Group`. Film:
 `run=3 menu=stars@3`, `run=3:3 centre=124,170,4 at=60`.
+
+**11-28, Look A (the fight round the squad):** filmed `run=1:5
+hand=greedy at=14.25,24.25 centre=squad,12` (planet 4; the greedy squad
+is lost by 0:36, so film before 30 s). Found: the spray's droplets were
+always the plain gold, so round a squad on crimson or violet slime they
+read as a second material. Fixed in `drop_rgb` (`view.wgsl`): the walker's
+level rides in the droplet's word (bits 10-12 of layer 2; the layer test
+is now `(drop >> 8) & 3`), and a droplet takes its level's colour or its
+species' hue. No new reads in `base`; llvmpipe 1536x864 base 26.5 ms
+before, 25.9 after (noise). Strikers' beads stay hot gold (they are
+cores). Scott asked 06:15Z for the roadmap; a card asks which look bothers
+him most (recommended B, the slime up close).
 
 ## State (2026-11-20)
 
