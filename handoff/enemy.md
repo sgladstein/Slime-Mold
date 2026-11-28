@@ -48,7 +48,7 @@ Scott paused all work (11-27 23:02Z) to move accounts. State:
   for a wiped dug-out; as a contract the penalty is the pay not earned.
   Next: Look badges the contract and the HUD pill (draw.rs uses the twist
   pill for `Game::rescue_now`); the run bot does not play the rescue.
-- **The hunt, in a PR 11-28** (the plan's step 5; Direction moved slime
+- **The hunt, merged 11-28 06:05Z (#895)** (the plan's step 5; Direction moved slime
   strength to the top on Scott's 03:31Z "trying to make the slime enemy
   stronger"). The Lab's hunt (`ec603a74`) ported: `hunt.rs`, the trail in
   the raid region's fourth quarter, the pull in a new Params row after the
@@ -58,6 +58,14 @@ Scott paused all work (11-27 23:02Z) to move accounts. State:
   `Reports/hunt-rerun-2026-11-28/`. Scott's card, 11-28 05:40Z: "Mild at
   step 2, full by step 6". Next on the same thread: Lab's
   "mass, then come in wide" if a moving squad still gets away late.
+- **Hunt at step 6** (11-28, lavapipe, every threat on, league
+  `plan=rush,cap=30,go=30,shop=squad,cards=0,kite=1.2`, seeds 1-3): hunt
+  off, wiped at 1:54 and 1:56, seed 3 alive at 5:00 (20 left); hunt on,
+  all three wiped (2:18, 1:26, 1:49). A card-less rifle bot already loses
+  step 6, so this says only that the hunt adds on top; Scott's own runs
+  (step 4 won in 1:15 on 11-28) are the measure. The Difficulty thread
+  (weaker walls, softer soldiers) was told the rescue's door rings need
+  their health kept or `rescue_thick` raised.
 - **Still waiting:** the Lab's strikers settle patch for lap two
   (`Reports/lab-lap-two-2026-11-24/raw/strikers-settle.patch`).
 - **Twists** (#830) and their hooks (`Run::twist`, `Game::twist_now`) are
