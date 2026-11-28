@@ -3,36 +3,57 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
-## Now (2026-11-24 19:30Z)
+## Now (2026-11-28 00:15Z, at the account move)
 
-- **Merged 11-24 (afternoon):** #803 (origin 1.5x on planets 5, 6, 8:
-  2,250, 2,700, 3,600), #824 (a lump's member never dozes: the Dozer's and
-  Sleeper's hearts dropped dozing members out of `lumpsum` and planet 8's
-  broke unattacked), #830 (planet twists: wind all planet or a cold snap
-  0:20-1:20, rolled on about one planet in three from planet 2, never two
-  in a row, `twist.rs`, `run::PlanetTwist`, Params row `WIND_AT`; and a
-  lump's member never fruits: the Sporer's heart burst into spores when
-  shot). Earlier: #749, #756, #763/#769, #775, #784, #788 (the Dozer).
-- **D7, the owner's card "Tougher heart by planet" (14:52Z):** measure is
-  the smallest squad that breaks the heart (Engine's `hand=origin2`, banks
-  1,600/4,800/11,200 for squads of about 8/16/32). Armour 12 everywhere:
-  P2 16, P3 32, P4 16, P6 32, P7 32, P8 32 once in three. So the work was
-  planets 4 and 5. `run::ORIGIN_ARMOUR` (new) sets planet 4 at 15: snipe
-  only at 32 (y1), the siege still won 5 of 6 (z4). Planet 5 waits on
-  Engine's y3 (snipe and siege, as is and armour 15, after #830). Land it
-  with a what's-new line naming D7.
-- **Planet 8 start size:** 1.4x rejected (Engine's rerun of batch v after
-  #824: 1 win and 2 losses against 2 wins and none at 1.0, storm off).
-- **Planet 7:** gather cap 1.25 rejected (0 of 6 against 3 of 6); recheck
-  after Engine's map B harvest fix.
-- **Lap two (waits on the owner's run length):** the Lab's strikers settle
-  patch (`strikers_settle`, Reports/lab-lap-two-2026-11-24/raw/
-  strikers-settle.patch); run.rs `SKIP_STARS_X10`/`SKIP_FOUND` are sized
-  PLANETS-1; past planet 8 the origin starts nearly empty.
-- **Look's hooks:** twist card and HUD tell (`Run::twist`,
-  `PlanetTwist::card`, `Game::twist_now`) sent to Look HUD.
-- **Parked by Direction:** the Death gas relic. Night (a twist) stays on
-  the Lab's branch.
+This thread was rate-limited from 11-25 00:48Z to 11-27 23:04Z, then
+Scott paused all work (11-27 23:02Z) to move accounts. State:
+
+- **Merged since 11-24:** #836 (D7: `run::ORIGIN_ARMOUR`, planet 4 at 15),
+  #848 (no mini-boss forms or regroups on a live heart, `Game::on_heart`:
+  on planet 7 map C a Crowd wanderer formed on the packed heart at 58 s and
+  took 954 of its 1,575 members; an engine guard "a lump never takes
+  another's members" was tried first and failed the CPU mortar test, since
+  a mortar takes back its thrown members).
+- **Built, not landed: the Grudge's readout** (Direction's pick 11-25):
+  the HUD reads "N% of hits shrugged off by scar" over the last 10 s, where
+  the share of the body on full scar stayed at 0.5-1.5% of planet 7's
+  slime at 2:00 whatever the lever (the scar is the kill zone). Engine
+  `wstat[14]` counts blows scar tissue turns aside (the mould grid moves to
+  word 15, `WSTAT_BYTES` 60), `GpuWorld::shrugged(ticks)`, the tell in
+  draw.rs (Look's file), a report folder. Holding one spot on planet 7: 21%
+  at 0:30, 47-52% from 0:40 to 3:00. It is the patch
+  [`enemy-grudge-readout-2026-11-25.patch`](enemy-grudge-readout-2026-11-25.patch)
+  (`git am` it on main; rebased 11-27 on `7a88a5a7`; clippy and the scar
+  tests passed). Squad then films Tinder and a Torch against it.
+- **Dropped** (Direction agreed 11-27): planet 5's spore burst 0.05 and
+  planet 4's heart at 900. Both were tuned to win the siege on the heart,
+  which no longer decides a planet (#858), and both made the slime easier.
+  For the record (Engine's z5-z7, GTX 1070): the fruit gate of #830 (a
+  lump's member never fruits) was the whole planet 4 drop, 2 of 6 against
+  5 of 6 without it, because a heart on its crystal shed members to scent
+  fruiting; 900 won 5 of 6 with a snipe of about 24.
+- **Next: the rescue planet as a star-map node** (Direction 11-27 23:41Z):
+  in about one run in three, one planet at the step that meets the Trunk
+  (step 3) is a Rescue planet, marked on its card, keeping its pip and pay;
+  won by bringing both dug-in squads home or by wiping the slime; hearts
+  form and break there as anywhere; not on later steps until the Lab's
+  planets 4 and 5 work lands. Card line: "Distress call: two squads are dug
+  in deep in the Trunk. Reach both and walk them home at a wounded pace.
+  The slime wakes when you find them, and its rings won't hold past five
+  minutes." Sources: the Lab's `rescue.rs` on `claude/project-thread-2o4cic`
+  (a7b9204e) and [its report](../Reports/lab-rescue-2026-11-24/README.md);
+  wounded pace is `Soldier::pace` (#851); the origin-unsmelled patch in the
+  report's `raw/`. Plan: pick the dug-outs at the first second on thick
+  slime whose ring `drop_ground().fits()` (reachable from the landing, clear
+  of crystals); `RescueRules` in rules.rs; a `rescue` flag on `route::Node`
+  (rolled from the seed, so saves keep it); a `rescue` field on `Game` for
+  the planet save; a hand for the bots with Engine; the node badge and
+  screens are Look HUD's.
+- **Still waiting:** the Lab's strikers settle patch for lap two
+  (`Reports/lab-lap-two-2026-11-24/raw/strikers-settle.patch`).
+- **Twists** (#830) and their hooks (`Run::twist`, `Game::twist_now`) are
+  on main; since the star map a Safe planet has none and a Hard one always
+  does.
 
 ## Slime progression thread (2026-11-26)
 
