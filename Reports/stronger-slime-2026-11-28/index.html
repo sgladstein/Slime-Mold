@@ -1,0 +1,106 @@
+<title>Stronger Slime Options</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column of three option sections; each pairs today's game with the option, same planet, same moment. */
+:root {
+  --bg: #f3f1ec; --panel: #ffffff; --fg: #1f1d1a; --muted: #6b665d; --line: #dcd7cc;
+  --slime: #d9821c; --bite: #b8361f; --good: #2f7a4c;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #17150f; --panel: #211e17; --fg: #ece7dc; --muted: #a39b8b; --line: #3a352a;
+  --slime: #f0a040; --bite: #ec6a50; --good: #6cc48e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #17150f; --panel: #211e17; --fg: #ece7dc; --muted: #a39b8b; --line: #3a352a;
+  --slime: #f0a040; --bite: #ec6a50; --good: #6cc48e; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 48px; }
+main { max-width: 1240px; margin: 0 auto; display: grid; gap: 40px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.45rem; display: flex; gap: 12px; align-items: baseline; }
+.tag { font-family: var(--mono); font-size: .8rem; color: var(--slime); letter-spacing: .06em; text-transform: uppercase; }
+p { margin: 0; max-width: 68ch; }
+.lede { display: grid; gap: 10px; }
+.muted { color: var(--muted); }
+section { display: grid; gap: 14px; padding-top: 20px; border-top: 1px solid var(--line); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+figure { margin: 0; display: grid; gap: 8px; min-width: 0; }
+video { width: 100%; max-width: 100%; aspect-ratio: 8 / 5; background: #000; border-radius: 6px; display: block; }
+figcaption { display: grid; gap: 2px; font-size: .88rem; }
+figcaption b { font-family: var(--display); font-size: .98rem; }
+.nums { font-family: var(--mono); font-size: .82rem; font-variant-numeric: tabular-nums; color: var(--muted); }
+.nums .down { color: var(--bite); }
+.nums .up { color: var(--good); }
+.views { display: flex; gap: 8px; flex-wrap: wrap; }
+.views button { font: 600 .82rem var(--body); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.views button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.views button:focus-visible { outline: 2px solid var(--slime); outline-offset: 2px; }
+.verdict { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: .92rem; }
+</style>
+
+<main>
+  <div class="lede">
+    <span class="tag">Enemy lane · 2026-11-28 · step 3, the Trunk, run seed 2 · third cut</span>
+    <h1>Stronger slime: A made bigger, D reworked</h1>
+    <p>Your note: focus on A, try to fix D. B is dropped. Same standing squad as before: 19 soldiers at the landing on free fire, never moving. Every clip is the same game from 1:26 to 2:02 at 3x speed; the clips start identical and split where the option first does something. Switch to the whole map to see where the slime comes from.</p>
+    <div class="views" role="group" aria-label="View">
+      <button type="button" id="v-near" aria-pressed="true">Squad, zoom 6</button>
+      <button type="button" id="v-all" aria-pressed="false">Whole map</button>
+    </div>
+  </div>
+
+  <section>
+    <h2><span class="tag">A</span> Mass, then come in wide: now it masses for 20 s</h2>
+    <p>The slime that follows your trail stops on the ring just past your guns, piles up there and to the sides while the trail keeps feeding it, then comes in from every pile at once. It now gathers for 20 s instead of 12, so each pile is bigger when it comes. Here it starts gathering at 1:30 and strikes at 1:50, from the north and the south-west together, and the strike reaches into the squad.</p>
+    <div class="pair">
+      <figure>
+        <video data-near="s-main-near.mp4" data-all="s-main-all.mp4" src="s-main-near.mp4" controls loop muted playsinline preload="metadata"></video>
+        <figcaption><b>Today's game</b><span class="nums">soldiers 19 → 19 · slime killed in the clip 1,517</span></figcaption>
+      </figure>
+      <figure>
+        <video data-near="s-a2-near.mp4" data-all="s-a2-all.mp4" src="s-a2-near.mp4" controls loop muted playsinline preload="metadata"></video>
+        <figcaption><b>With A, 20 s gather</b><span class="nums">soldiers 19 → 19 · slime killed 2,064</span></figcaption>
+      </figure>
+    </div>
+    <p class="verdict">The slime now lands on the squad as two big bodies at once, where today it trickles in. 19 rifles still held it in this clip without a loss, so it is a stronger slime, not yet a deadly one. It lands on by default from step 3.</p>
+  </section>
+
+  <section>
+    <h2><span class="tag">D</span> Several tongues, reworked</h2>
+    <p>The first D piled the slime into one body just out of range. Now the trail starts at two points 75 degrees either side of the slime's way to the squad, and the squad's own trail is pushed back, so the slime goes round to those points and comes in from both sides.</p>
+    <div class="pair">
+      <figure>
+        <video data-near="s-main-near.mp4" data-all="s-main-all.mp4" src="s-main-near.mp4" controls loop muted playsinline preload="metadata"></video>
+        <figcaption><b>Today's game</b><span class="nums">soldiers 19 → 19 · slime killed 1,517</span></figcaption>
+      </figure>
+      <figure>
+        <video data-near="s-d2-near.mp4" data-all="s-d2-all.mp4" src="s-d2-near.mp4" controls loop muted playsinline preload="metadata"></video>
+        <figcaption><b>With D, reworked</b><span class="nums">soldiers 19 → 19 · slime killed 1,561</span></figcaption>
+      </figure>
+    </div>
+    <p class="verdict">It no longer stalls, but on this planet it reads like today's game: today's slime already comes down two branches, north-west and south-west, and D's two tongues land in about the same places. Not landed; recorded as tried. A does the "from two sides" job better.</p>
+  </section>
+
+  <p class="muted">B (the armoured tongue) was dropped on your note; its clip is still in the folder. Software GPU in the cloud (lavapipe), one game each, so the counts are one sample, not a measure. Clips and this page are kept in the repo under Reports/stronger-slime-2026-11-28.</p>
+</main>
+
+<script>
+(function () {
+  var near = document.getElementById('v-near'), all = document.getElementById('v-all');
+  function show(view) {
+    near.setAttribute('aria-pressed', view === 'near');
+    all.setAttribute('aria-pressed', view === 'all');
+    document.querySelectorAll('video').forEach(function (v) {
+      var src = v.getAttribute('data-' + view);
+      if (v.getAttribute('src') !== src) { v.setAttribute('src', src); v.load(); }
+    });
+  }
+  near.addEventListener('click', function () { show('near'); });
+  all.addEventListener('click', function () { show('all'); });
+})();
+</script>

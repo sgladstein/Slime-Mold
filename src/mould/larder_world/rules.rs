@@ -901,6 +901,12 @@ impl Rules {
                 self.wave.on = v > 0.0;
                 return true;
             }
+            // Hunted waves (`waves.rs`, 2026-11-28): the hunt catching up
+            // starts a wave that fills its flanks.
+            "hunt_wave" => {
+                self.wave.hunted = v > 0.0;
+                return true;
+            }
             "heart" => {
                 self.heart.on = v > 0.0;
                 return true;
@@ -1008,6 +1014,7 @@ impl Rules {
             "fruit_armour" => self.fruit.armour as f32,
             "fruit_throw" => self.fruit.throw as f32,
             "wave" => on(self.wave.on),
+            "hunt_wave" => on(self.wave.hunted),
             "heart" => on(self.heart.on),
             "strikers" => on(self.strikers.on),
             "strikers_most" => self.strikers.most as f32,
@@ -1169,6 +1176,10 @@ impl Rules {
             "wave_reach" => &mut self.wave.reach,
             "wave_strike" => &mut self.wave.strike,
             "wave_strike_pull" => &mut self.wave.strike_pull,
+            "wave_near" => &mut self.wave.near,
+            "wave_flank" => &mut self.wave.flank,
+            "wave_lead" => &mut self.wave.lead,
+            "wave_hunted_gather" => &mut self.wave.hunted_gather,
             "fight_hold" => &mut self.fight_hold,
             "boss_every" => &mut self.boss.every,
             "boss_every_sd" => &mut self.boss.every_sd,

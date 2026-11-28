@@ -10,6 +10,9 @@ sources:
   - Reports/music-bed-2026-11-22/README.md
   - Reports/sound-pass-2026-11-20.md
 code:
+  - BAL_GUN
+  - CHEW_GAP
+  - CRACK_GAP
   - DEFAULT_MASTER
   - Ear::far
   - FAR_LP_HZ
@@ -35,6 +38,7 @@ code:
   - VoiceBank
   - WorldListener
   - WorldListener::bangs
+  - WorldListener::chew
   - WorldListener::pops
   - WorldListener::puffs
   - blow
@@ -76,9 +80,22 @@ Since pass two the gun cards' payloads, raids, surges, mini-bosses,
 buildings, the menus and the end of a planet sound too (`WorldListener::pops`,
 `App::click_sound`).
 The kit's own voices: [below](#the-kits-voices).
+The balance and a wall being eaten: [below](#the-balance).
 The music bed and the planet's air: [The score](#the-score).
 
 Keeping it playing: [below](#keeping-it-playing).
+
+## The balance
+
+**The balance** (2026-11-28, the owner's pick, mix E of five on the
+[mix test page](https://claude.ai/artifact/QomitqRZwbfeuX6Lo5hcPG)): every
+command's level is scaled once in the voice bank, guns down 6 dB, hits
+down 3 dB, the slime's drone, textures and grains up (`BAL_GUN` and its
+neighbours), and the music 9.5 dB up (`SCORE_LEVEL` 0.36). Before it a
+planet 2 fight was 56% guns and hits, 8% music, 7% drone and 1-2% for
+each other slime sound. **A wall being eaten** gnaws (`WorldListener::chew`,
+`CHEW_GAP`), faster and louder as the slime bites harder, and a cell
+worn through cracks (`CRACK_GAP`); silent when the biting stops.
 
 ## The kit's voices
 

@@ -3,7 +3,8 @@
 //! won planet and its shop. The run's twelve steps run left to right
 //! across the top, the landing world first and the home world last; each
 //! step's planets sit in lanes down the map, joined to the next step's by
-//! dotted lanes. Under it, the planets the route can go to next stand side
+//! lanes (curved, each planet a little off its lane's line since 11-28,
+//! so the map reads as a route of places, not a table). Under it, the planets the route can go to next stand side
 //! by side as cards, so the choice is read at once (2026-11-27, the
 //! owner: "The planet path selection map needs to be improved and planet
 //! text needs to be improved"). Until then one pane at the right told one
@@ -156,6 +157,24 @@ fn pip_ink(pips: u8) -> Rgba {
 /// A lane as drawn: its rank (higher over lower), its ends, its ink, its
 /// dots' radius, and the two planets' radii it stops short of.
 type Lane = (u8, (f32, f32), (f32, f32), Rgba, f32, f32, f32);
+
+/// How far a planet sits off its column (a share of the column's width)
+/// and off its lane (a share of the map's height), at most (`jitter`).
+const JIT_X: f32 = 0.16;
+const JIT_Y: f32 = 0.08;
+
+/// A fixed jitter for the planet at `step` in `lane`, each part -1 to 1,
+/// the same every time the page is drawn.
+fn jitter(step: usize, lane: f32) -> (f32, f32) {
+    let mut z = (step as u32).wrapping_mul(0x9E37_79B9) ^ ((lane * 64.0) as i32 as u32).wrapping_mul(0x85EB_CA6B) ^ 0x2545_F491;
+    let mut next = || {
+        z ^= z << 13;
+        z ^= z >> 17;
+        z ^= z << 5;
+        (z % 20_001) as f32 / 10_000.0 - 1.0
+    };
+    (next(), next())
+}
 
 fn pip_name(pips: u8) -> &'static str {
     ["Safe", "Fair", "Hard"][(pips.clamp(1, 3) - 1) as usize]
@@ -427,31 +446,41 @@ impl StartMenu {
         let ny0 = map.y + head + 8.0 * s;
         let ny1 = map.bottom() - foot;
         let node = (NODE * s).min(col * 0.2).min((ny1 - ny0) / 7.0).max(4.0 * s);
-        let at = |step: usize, lane: f32| (map.x + col * (step as f32 + 0.5), ny0 + (ny1 - ny0) * (0.5 + 0.42 * lane));
+        // Each planet a little off its lane's line and its step's column
+        // (a fixed jitter by step and lane; 11-28, the owner: "It does not
+        // at all look like you are selecting a path of planets": on three
+        // straight rows joined in an even lattice, the map read as a chart).
         // Names under the planets only where the lanes leave room for
         // them (at a large UI size the map is short, and the cards name
         // the planets to pick from anyway).
         let roomy = (ny1 - ny0) * 0.42 > node * 2.4 + 30.0 * s;
+        // Off the lane's line only where there is room (on a short map
+        // the planets would touch the heads and each other's stars).
+        let jy_k = if roomy { JIT_Y } else { 0.0 };
+        let at = |step: usize, lane: f32| {
+            let (jx, jy) = jitter(step, lane);
+            (map.x + col * (step as f32 + 0.5 + JIT_X * jx), ny0 + (ny1 - ny0) * (0.5 + 0.42 * lane + jy_k * jy))
+        };
         let shared = |step: &[StarNode]| step.first().filter(|f| step.iter().all(|o| o.slime == f.slime)).map(|f| f.slime.trim_start_matches("The ").to_string());
-        // The step ahead's column, lit.
-        if at_step >= 1 && at_step <= n {
-            let cx = map.x + col * (at_step as f32 - 0.5);
-            let band = Rect::new(cx - col * 0.46, map.y, col * 0.92, map.h);
-            c.rrect(band, 10.0 * s, [96, 190, 255, 14]);
-            c.outline(band, 10.0 * s, s.max(1.0), [96, 190, 255, 40]);
-        }
+        // The step ahead's column was lit by a band (11-26); with the
+        // planets off their grid, the band and bold heads read as a
+        // table's column, so the heads are quiet and the band is gone:
+        // the route's arrows say where you can go.
         for (i, step) in v.steps.iter().enumerate() {
-            let (cx, _) = at(i, 0.0);
+            let cx = map.x + col * (i as f32 + 0.5);
             let now = i + 1 == at_step;
             let past = i + 1 < at_step;
-            let ink = if now { TEXT } else if past { with_alpha(MUTED, 0.6) } else { MUTED };
+            let ink = if now { TEXT } else if past { with_alpha(MUTED, 0.45) } else { with_alpha(MUTED, 0.75) };
             c.text(Weight::SemiBold, 12.0 * s, (cx, map.y + 14.0 * s), Align::Centre, &(i + 1).to_string(), if now { ACCENT } else { ink });
             let name = if i + 1 == n { "Home world".to_string() } else { shared(step).unwrap_or_default() };
             c.text_fit(Weight::Medium, 13.0 * s, (cx, map.y + 30.0 * s), Align::Centre, &name, col - 6.0 * s, ink);
         }
-        // The lanes: dots from each planet to those it leads to; the
-        // route taken bright, the ways on from here in their planet's
-        // colour, the picked one's ways on after it lit, the rest faint.
+        // The lanes: curves from each planet to those it leads to (out
+        // and in level, so a lane leaves a planet forward). The route
+        // taken a solid bright trail; the ways on from here solid, in
+        // their planet's colour, each with an arrowhead; the picked one's
+        // ways on after it dotted; the rest faint dots that fade with the
+        // steps ahead.
         let mut lanes: Vec<Lane> = Vec::new();
         for (i, step) in v.steps.iter().enumerate() {
             let Some(next) = v.steps.get(i + 1) else { break };
@@ -466,23 +495,58 @@ impl StartMenu {
                     } else if a.open && Some(a.k) == pick && i + 1 == at_step {
                         (1, [200, 212, 228, 120], 1.9 * s)
                     } else {
-                        (0, [150, 160, 180, 36], 1.5 * s)
+                        let ahead = (i + 1).saturating_sub(at_step) as f32;
+                        (0, with_alpha([150, 160, 180, 255], (0.16 * 0.82f32.powf(ahead)).max(0.06)), 1.5 * s)
                     };
                     lanes.push((rank, p, q, ink, r, ra, rb));
                 }
             }
         }
         lanes.sort_by_key(|l| l.0);
-        for (_, p, q, ink, r, ra, rb) in lanes {
-            let len = ((q.0 - p.0).powi(2) + (q.1 - p.1).powi(2)).sqrt();
-            let dots = (len / (7.0 * s)).max(2.0) as usize;
-            for d in 1..dots {
-                let f = d as f32 / dots as f32;
-                let (dx, dy) = (p.0 + (q.0 - p.0) * f, p.1 + (q.1 - p.1) * f);
-                if f * len < ra + 4.0 * s || (1.0 - f) * len < rb + 4.0 * s {
+        for (rank, p, q, ink, r, ra, rb) in lanes {
+            // The curve: level out of `p` and into `q`, from just off one
+            // planet's edge to just off the other's (an arrow's tip
+            // further off, past the picked planet's ring).
+            let tip = if rank == 2 || rank == 4 { rb + 9.0 * s } else { rb + 4.0 * s };
+            let mx = (p.0 + q.0) / 2.0;
+            let curve = |t: f32| {
+                let u = 1.0 - t;
+                let x = u * u * u * p.0 + 3.0 * u * u * t * mx + 3.0 * u * t * t * mx + t * t * t * q.0;
+                let y = u * u * u * p.1 + 3.0 * u * u * t * p.1 + 3.0 * u * t * t * q.1 + t * t * t * q.1;
+                (x, y)
+            };
+            // Solid (dots overlapping) for the route and the ways on, a
+            // dot every 7 px for the rest.
+            let step_px = if rank >= 2 { r * 0.7 } else { 7.0 * s };
+            let len = ((q.0 - p.0).powi(2) + (q.1 - p.1).powi(2)).sqrt() * 1.15;
+            let k = (len / step_px).max(2.0) as usize;
+            let mut end = q;
+            for d in 1..k {
+                let pt = curve(d as f32 / k as f32);
+                let (da, db) = (((pt.0 - p.0).powi(2) + (pt.1 - p.1).powi(2)).sqrt(), ((pt.0 - q.0).powi(2) + (pt.1 - q.1).powi(2)).sqrt());
+                if da < ra + 4.0 * s || db < tip {
                     continue;
                 }
-                c.rrect(Rect::new(dx - r, dy - r, 2.0 * r, 2.0 * r), r, ink);
+                end = pt;
+                c.rrect(Rect::new(pt.0 - r, pt.1 - r, 2.0 * r, 2.0 * r), r, ink);
+            }
+            // The arrowhead: a chevron at the line's end, toward `q`.
+            if (rank == 2 || rank == 4) && end != q {
+                let (dx, dy) = (q.0 - end.0, q.1 - end.1);
+                let l = (dx * dx + dy * dy).sqrt().max(1e-3);
+                let (ux, uy) = (dx / l, dy / l);
+                let tipx = (end.0 + ux * 3.0 * s, end.1 + uy * 3.0 * s);
+                let head = 9.0 * s;
+                for side in [-1.0f32, 1.0] {
+                    // Back from the tip at 35 degrees each side.
+                    let (c35, s35) = (0.819f32, 0.574 * side);
+                    let (bx, by) = (-(ux * c35 - uy * s35), -(ux * s35 + uy * c35));
+                    let m = (head / (r * 0.7)).max(2.0) as usize;
+                    for j in 0..=m {
+                        let f = j as f32 / m as f32 * head;
+                        c.rrect(Rect::new(tipx.0 + bx * f - r, tipx.1 + by * f - r, 2.0 * r, 2.0 * r), r, ink);
+                    }
+                }
             }
         }
         // The planets.
@@ -498,16 +562,23 @@ impl StartMenu {
                 let past = (i + 1) < at_step;
                 let now = i + 1 == at_step;
                 let picked = now && Some(nd.k) == pick;
-                let fade: f32 = if nd.open || nd.taken { 1.0 } else if past { 0.22 } else { 0.55 };
+                // The far future fades a step at a time toward the home
+                // world (it was 0.55 for every step ahead).
+                let ahead = (i + 1).saturating_sub(at_step) as f32;
+                let fade: f32 = if nd.open || nd.taken || home { 1.0 } else if past { 0.22 } else { (0.7 * 0.86f32.powf(ahead - 1.0)).max(0.3) };
                 if picked {
                     c.rrect(r.inset(-8.0 * s), rad + 8.0 * s, with_alpha(ink, 0.2));
                     c.outline(r.inset(-6.0 * s), rad + 6.0 * s, 2.0 * s, ink);
                 } else if (nd.open && hover.is_some_and(|p| r.inset(-8.0 * s).contains(p))) || (now && focus == Some(Hit::Star(nd.k))) {
                     c.outline(r.inset(-5.0 * s), rad + 5.0 * s, 1.5 * s, with_alpha(ink, 0.8));
                 }
-                // The planet just won: where the route stands.
+                // The planet just won: where the route stands, "You" over
+                // it (where the lanes leave room).
                 if nd.taken && i + 2 == at_step {
                     c.outline(r.inset(-5.0 * s), rad + 5.0 * s, 1.5 * s, [236, 240, 244, 200]);
+                    if roomy && cy - rad - 14.0 * s > map.y + head {
+                        c.text(Weight::SemiBold, 11.5 * s, (cx, cy - rad - 10.0 * s), Align::Centre, "YOU", WARN);
+                    }
                 }
                 planet(c, cx, cy, rad, &nd.biome, nd.pips, fade, s);
                 if nd.rescue {

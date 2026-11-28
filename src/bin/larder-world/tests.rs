@@ -2661,3 +2661,39 @@ fn a_card_picked_on_the_shelf_is_tried_on_and_only_bought_kept() {
     assert_eq!(r.offers.len(), before.offers.len() - 1);
     assert_eq!(r.cards.iter().filter(|o| o.0 == c).count(), before.cards.iter().filter(|o| o.0 == c).count() + 1);
 }
+
+/// **A card tried on over a full gun** (2026-11-28): it waits in the bag,
+/// dropped on a slot it takes that slot and the card there goes to the
+/// bag; when the trial ends that card is back in its slot, and bought
+/// the swap stands.
+#[test]
+fn a_card_tried_on_a_full_gun_swaps_and_the_gun_comes_back() {
+    use slime_mould::mould::guns::Gun;
+    use slime_mould::mould::run::Pick;
+    use slime_mould::world::start::StartEvent;
+    let mut app = App::new(run_base());
+    app.menu = Some(start_menu(&run_base()));
+    let mut r = Run::new(9);
+    r.points = 10_000;
+    r.guns[0] = Gun { budget: 4, slots: 2, ..r.guns[0] };
+    r.cards = vec![(rounds::Card::Wide, true), (rounds::Card::Rate, true)];
+    r.offers = vec![rounds::Card::Pierce];
+    app.run = Some(r);
+    app.show_shop();
+    let before = app.run.clone().unwrap();
+    let name = before.shop().into_iter().find(|r| r.pick == Pick::Offer(0)).unwrap().name;
+    let m = app.menu.as_mut().unwrap();
+    assert!(m.open_shop_tab_named(&name) && m.pick_named(&name));
+    app.sync_trial();
+    let t = app.trial_run().unwrap();
+    assert_eq!(t.gun(), before.gun(), "no room: it waits in the bag");
+    let at = t.shop().iter().position(|r| r.name == name && r.price.is_empty()).unwrap();
+    app.menu_event(StartEvent::Move(at, 0)).unwrap();
+    assert_eq!(app.trial_run().unwrap().gun(), [rounds::Card::Pierce, rounds::Card::Rate], "Pierce over Wide");
+    assert_eq!(app.run.as_ref(), Some(&before));
+    let m = app.menu.as_mut().unwrap();
+    assert!(m.open_shop_tab_named("Squad"));
+    app.sync_trial();
+    assert_eq!(app.run.as_ref().unwrap().gun(), before.gun(), "Wide back in slot 1");
+    assert_eq!(app.run.as_ref().unwrap().cards.len(), 2);
+}

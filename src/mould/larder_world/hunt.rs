@@ -48,6 +48,11 @@ impl<W: World> Game<W> {
         if !self.world.hunt_pull() {
             return;
         }
+        // A gathering hunted wave (`waves.rs`) keeps the trail warm: with
+        // it cold while the wave gathered (tried 11-28) the stream behind
+        // stopped coming and the gathering was the few walkers already
+        // near; warm, the stream keeps coming down the trail into the
+        // gathering's pull and piles up there.
         if let Some(way) = self.hunt.way.take() {
             self.world.set_hunt_field(way.finish());
         } else if self.hunt.set {
@@ -73,6 +78,14 @@ impl<W: World> Game<W> {
             let age = ((now - at) as f32 * lag).round() as u32;
             cells.iter().map(move |&c| (c, age))
         }).collect();
+        // **Several tongues** (D of the owner's three to see, 11-28 07:07Z;
+        // tried and dropped the same morning, Reports/dead-ends.md): the
+        // trail started at two points beside the squad, either side of the
+        // way to the slime near it, so the slime would come round at it as
+        // two tongues. As two lines out from the squad the field was flat
+        // along them and the slime stalled in one body out of reach; as two
+        // start points with the squad's own trail set back, it read like
+        // the hunt without it on the films.
         if from.is_empty() {
             return;
         }

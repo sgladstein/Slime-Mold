@@ -173,6 +173,16 @@ pub const SWITCHES: &[Switch] = &[
         sees: "A crystal your squad drained slowly fills again",
         why_off: "Since 11-21 only your squad empties a crystal. Off, a drained crystal stays empty, so draining is a lasting win; on decides whether it comes back",
     },
+    Switch {
+        key: "stream",
+        label: "Streaming slime",
+        choices: &[OFF, on(&[("stream", "6")])],
+        default: "off",
+        lane: Lane::Enemy,
+        since: "2026-11-28",
+        sees: "Inside a thick slime body the walkers trade places and stream between its crystals and its edge, for the veins",
+        why_off: "A prototype the owner asked for as an experiment, not the default (11-28 08:26Z: \"the real veins is just a prototype or experimental option\")",
+    },
 ];
 
 /// A switch by its key.

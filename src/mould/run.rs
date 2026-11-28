@@ -706,6 +706,15 @@ pub const CEILING: f32 = 12.0;
 /// three points round it, masses there for 12 s, and comes in from all of
 /// them at once for 8 s. 45 s apart at least. GPU only.
 ///
+/// **The hunt comes in wide** (`hunt_wave`, 2026-11-28, the Enemy lane, on
+/// the owner's 11-28 ask for a stronger slime; `larder_world/waves.rs`):
+/// once the squad's trail has brought half a percent of the slime up to
+/// the ring just past the guns' reach, that slime masses there for 20 s
+/// (12 at first, longer on the owner's 08:56Z "focus on A" so the masses
+/// are bigger), splitting to points 70 degrees either side, and comes in
+/// from all of them at once. Standing or walking: the owner's films had
+/// a squad standing still. One planet before the losing waves.
+///
 /// **The slime beats** (`heart`, 2026-11-20, the same thread;
 /// `larder_world/heart.rs`): every 6 s a beat runs out from its home
 /// crystal (else the crystal it holds most) through the body, and the
@@ -737,7 +746,7 @@ pub const CEILING: f32 = 12.0;
 /// or more, every walker left gathers into one armoured heart on its heart
 /// crystal, which lunges at the nearest soldier every 20 s, until it is cut
 /// under 15% of the most it held or is 150 s old. GPU only.
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0), ("ceiling", CEILING), ("origin", 1.0)];
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0), ("ceiling", CEILING), ("origin", 1.0), ("hunt_wave", 1.0)];
 
 /// **The planet each of `ENEMY_RULES` first plays on** (2026-11-20, the
 /// thread "Pace threats across the planets"; the owner that night, after a
@@ -769,7 +778,7 @@ pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), (
 /// time"). His log: at 8:44 the slime's mass rose 14,045 to 17,936 in 3 s
 /// as a fruit burst, and 21 of 28 soldiers died in those 3 s; the dark
 /// knot it grows from reads as a mini-boss.
-pub const FIRST_PLANET: &[(&str, u32)] = &[("fruit", 2), ("strikers", 2), ("wave", 3), ("late_at", 3), ("stand", 4)];
+pub const FIRST_PLANET: &[(&str, u32)] = &[("fruit", 2), ("strikers", 2), ("hunt_wave", 2), ("wave", 3), ("late_at", 3), ("stand", 4)];
 
 /// The planet `rule` (one of `ENEMY_RULES`) first plays on (`FIRST_PLANET`).
 pub fn first_planet(rule: &str) -> u32 {
@@ -2837,7 +2846,7 @@ impl Run {
     fn move_to(&mut self, i: usize, slot: usize) -> bool {
         let Some(&(c, on)) = self.cards.get(i) else { return false };
         if !on && !self.fits(c) {
-            return false;
+            return self.swap_in(i, slot);
         }
         let was = self.cards.clone();
         self.cards.remove(i);
@@ -2850,6 +2859,27 @@ impl Run {
         // A move that takes a card out from behind a `Thrift`, or puts one
         // there, changes the cost: one that leaves the gun over its budget
         // does not happen.
+        if !self.fits_now() {
+            self.cards = was;
+            return false;
+        }
+        true
+    }
+
+    /// Bag card `i` dropped on gun slot `slot` of a gun with no room for
+    /// it: it takes that slot and the card there goes to the bag, if the
+    /// gun fits its budget after; else nothing changes (false). (The
+    /// coordinator for the owner, 2026-11-28, after cards could be tried
+    /// on: on a full gun a card waited in the bag until one was dragged
+    /// out first.)
+    fn swap_in(&mut self, i: usize, slot: usize) -> bool {
+        let ons: Vec<usize> = self.cards.iter().enumerate().filter(|(_, o)| o.1).map(|(k, _)| k).collect();
+        let Some(&at) = ons.get(slot) else { return false };
+        let was = self.cards.clone();
+        self.cards[at].1 = false;
+        let (c, _) = self.cards.remove(i);
+        let at = if i < at { at - 1 } else { at };
+        self.cards.insert(at, (c, true));
         if !self.fits_now() {
             self.cards = was;
             return false;
@@ -4367,7 +4397,8 @@ mod tests {
     /// The owner, 20:32Z: "How do I actually build and adjust my guns.
     /// When I buy a card it goes into the gun but I don't see how to move
     /// cards around." A card moves to any slot, the gun fires in slot
-    /// order, a bag card drops into a slot only if it fits, and the shop
+    /// order, a bag card drops into a slot if it fits or swaps with the card
+    /// there (2026-11-28), and the shop
     /// numbers the slots.
     #[test]
     fn cards_move_to_any_slot_and_the_gun_fires_them_in_slot_order() {
@@ -4391,10 +4422,23 @@ mod tests {
         assert!(r.pick(Pick::Move(quiet, 1)));
         assert_eq!(r.gun_text(), "gas+quiet+blast+wide");
         assert_eq!(rounds::casts(&r.gun()).len(), 3, "gas, then quiet blast, then a wide plain bullet");
-        // A bag card that does not fit stays in the bag.
-        r.guns = vec![Gun { budget: 9, slots: 5, ..first_gun() }];
+        // A bag card with no room dropped on a slot takes it, the card
+        // there going to the bag (2026-11-28); dropped past the end, or
+        // where even the swap is over the budget, it stays in the bag.
+        r.guns = vec![Gun { budget: 9, slots: 4, ..first_gun() }];
+        r.cards.push((Card::Rate, false));
+        let rate = r.cards.len() - 1;
+        assert!(!r.pick(Pick::Move(rate, 9)) && r.gun_text() == "gas+quiet+blast+wide");
+        assert!(!r.pick(Pick::Move(rate, 1)), "for the quiet (1), the rate (2) is over the budget");
+        assert!(r.pick(Pick::Move(rate, 3)));
+        assert_eq!(r.gun_text(), "gas+quiet+blast+rate");
+        assert!(r.cards.iter().any(|&(c, on)| c == Card::Wide && !on), "wide to the bag");
+        let wide = r.cards.iter().position(|c| c.0 == Card::Wide).unwrap();
+        assert!(r.pick(Pick::Move(wide, 3)));
+        assert_eq!(r.gun_text(), "gas+quiet+blast+wide");
         r.cards.push((Card::Bomb, false));
-        assert!(!r.pick(Pick::Move(r.cards.len() - 1, 0)) && r.gun_text() == "gas+quiet+blast+wide");
+        let bomb = r.cards.len() - 1;
+        assert!(!r.pick(Pick::Move(bomb, 3)) && r.gun_text() == "gas+quiet+blast+wide", "{:?}", r.gun_text());
         // The shop numbers the slots in firing order and says how to move.
         let rows: Vec<Row> = r.shop().into_iter().filter(|row| row.on && matches!(row.pick, Pick::Card(_))).collect();
         assert_eq!(rows.len(), 4);

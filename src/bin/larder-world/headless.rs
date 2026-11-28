@@ -945,6 +945,74 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let go = (m.centre.0 - m.to.0).hypot(m.centre.1 - m.to.1) / g.world.scale();
                     println!("  march t {:.0} s: lump {}, {} members (first {}), at {:.0},{:.0}, spread {tight:.2}, {go:.0} cells to go", g.time(), m.lump, m.members, m.first, m.centre.0, m.centre.1);
                 }
+                // The flow inside the slime's bodies (`LARDER_FLOW=1`,
+                // 2026-11-28, the Enemy lane's streaming-body experiment,
+                // `stream`): each walker's move over the last game second,
+                // in 4 x 4 fine-cell blocks at least 90% full; the share of
+                // their walkers that moved a cell or more, and how much the
+                // moves in a block run one way (|sum| over the sum of
+                // lengths, weighted by the moves; 0 milling, 1 one stream).
+                if std::env::var_os("LARDER_FLOW").is_some() {
+                    let wk = slime_mould::gpu::floats(&read_back(&device, &queue, &g.world.e.walkers));
+                    let en = slime_mould::gpu::floats(&read_back(&device, &queue, &g.world.e.energy));
+                    let alive: Vec<bool> = (0..g.world.e.n as usize).map(|q| !g.world.e.grows || en[q] >= 0.0).collect();
+                    FLOW_LAST.with(|last| {
+                        let mut last = last.borrow_mut();
+                        let (w, h) = (g.world.e.dish.w, g.world.e.dish.h);
+                        let (bw, bh) = (w.div_ceil(4), h.div_ceil(4));
+                        let mut count = vec![0u32; bw * bh];
+                        for q in 0..alive.len() {
+                            if alive[q] {
+                                let (x, y) = ((wk[4 * q].max(0.0) as usize).min(w - 1), (wk[4 * q + 1].max(0.0) as usize).min(h - 1));
+                                count[(y / 4) * bw + x / 4] += 1;
+                            }
+                        }
+                        if last.len() == alive.len() {
+                            let mut sum = vec![(0.0f32, 0.0f32, 0.0f32, 0.0f32, 0u32); bw * bh];
+                            let (mut dense, mut moved) = (0u32, 0u32);
+                            for q in 0..alive.len() {
+                                let Some((x0, y0)) = last[q] else { continue };
+                                if !alive[q] {
+                                    continue;
+                                }
+                                let (x, y) = (wk[4 * q], wk[4 * q + 1]);
+                                let b = ((y.max(0.0) as usize).min(h - 1) / 4) * bw + (x.max(0.0) as usize).min(w - 1) / 4;
+                                if count[b] < 15 {
+                                    continue;
+                                }
+                                dense += 1;
+                                let (dx, dy) = (x - x0, y - y0);
+                                let l = dx.hypot(dy);
+                                if (1.0..30.0).contains(&l) {
+                                    moved += 1;
+                                    sum[b].0 += dx;
+                                    sum[b].1 += dy;
+                                    sum[b].2 += l;
+                                    sum[b].3 += l * l;
+                                    sum[b].4 += 1;
+                                }
+                            }
+                            // Blocks with 6 movers or more; a random walk's
+                            // |sum| is about the root of the summed squares.
+                            let (mut num, mut den, mut rand) = (0.0f32, 0.0f32, 0.0f32);
+                            for &(sx, sy, sl, sq, n) in &sum {
+                                if n >= 6 {
+                                    num += sx.hypot(sy);
+                                    den += sl;
+                                    rand += sq.sqrt();
+                                }
+                            }
+                            // `LARDER_FLOW=PATH`: each block's sums too, rewritten each
+                            // second (x y sum_x sum_y length movers walkers).
+                            if let Some(path) = std::env::var_os("LARDER_FLOW").filter(|p| p != "1") {
+                                let rows: Vec<String> = sum.iter().enumerate().filter(|(_, v)| v.4 > 0).map(|(b, v)| format!("{} {} {:.2} {:.2} {:.2} {} {}", b % bw, b / bw, v.0, v.1, v.2, v.4, count[b])).collect();
+                                let _ = std::fs::write(path, rows.join("\n"));
+                            }
+                            println!("  flow t {:.0} s: {dense} walkers in full blocks, {:.1}% moved a cell or more, coherence {:.2} (random {:.2}), mean move {:.1}", g.time(), 100.0 * moved as f32 / dense.max(1) as f32, num / den.max(1e-6), rand / den.max(1e-6), den / moved.max(1) as f32);
+                        }
+                        *last = (0..alive.len()).map(|q| alive[q].then(|| (wk[4 * q], wk[4 * q + 1]))).collect();
+                    });
+                }
                 // The fruit ripening (`fruit.rs`, 2026-11-20): its members,
                 // centre, ripeness and nearest soldier (world units), and
                 // how the last one ended.
@@ -956,7 +1024,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 // at each of its points and within reach of the squad.
                 if let (Some(w), Some((at, front))) = (g.waves.live.as_ref(), g.wave_counts()) {
                     let pts: Vec<String> = w.points.iter().zip(&at).map(|(p, n)| format!("{:.0},{:.0}: {n}", p.0, p.1)).collect();
-                    println!("  wave t {:.0} s: {:?} ({} sent), points [{}], {front} walkers near the squad at {:.0},{:.0}", g.time(), w.phase, g.waves.sent, pts.join("; "), w.centre.0, w.centre.1);
+                    println!("  wave t {:.0} s: {:?}{} ({} sent), points [{}], {front} walkers near the squad at {:.0},{:.0}", g.time(), w.phase, if w.hunted { " hunted" } else { "" }, g.waves.sent, pts.join("; "), w.centre.0, w.centre.1);
                 }
                 // The condensed strikers (`strikers.rs`, 2026-11-20): how
                 // many live, what they hold, and the walkers taken in.
@@ -1420,6 +1488,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         );
         println!("  heard (pass two): payloads {}, raids {}, surges {}, bosses {} (broken {}), built {}, lost {}; coin ticks {}, drops emptied {}", s.payloads, s.raids, s.surges, s.bosses, s.broken, s.built, s.lost, s.coins, s.cashed);
         println!("  heard (kit): shells sent {}, landed {}, sprayer sweeps {}, line ripples {}, canister puffs {}, darts {}", s.launches, s.landings, s.sweeps, s.ripples, s.puffs, s.darts);
+        println!("  heard (walls eaten): gnaws {} (bites a second: mean {:.0}, most {:.0}), cells worn through {} in {} cracks", s.gnaws, s.chew_sum / s.gnaws.max(1) as f32, s.chew_peak, s.walls_broken, s.cracks);
         println!("  hits by kills (0, 1, 2, 3-4, 5-8, 9-16, 17-32, 33+): {:?}; full weight at {:.0} kills", s.kill_hist, s.full);
         let b = bank.stats;
         println!("  played: grains {} (touch {} stolen {} starve {} wither {} kills {}, verbs {}), bursts {}, alerts {}, steals {}", b.grains, b.grains_by_texture[0], b.grains_by_texture[1], b.grains_by_texture[2], b.grains_by_texture[3], b.grains_by_texture[4], b.verb_grains, b.bursts, b.alerts, b.steals);
@@ -1783,4 +1852,10 @@ fn path_log<W: slime_mould::mould::larder_world::World>(g: &slime_mould::mould::
     static LOG: std::sync::OnceLock<Option<std::sync::Mutex<std::io::BufWriter<std::fs::File>>>> = std::sync::OnceLock::new();
     let Some(m) = LOG.get_or_init(|| std::env::var("LARDER_PATHLOG").ok().and_then(|p| std::fs::File::create(p).ok()).map(|f| std::sync::Mutex::new(std::io::BufWriter::new(f)))) else { return };
     let _ = g.path_rows(&mut *m.lock().unwrap());
+}
+
+thread_local! {
+    /// The walkers' places a game second ago, for the flow line
+    /// (`LARDER_FLOW`).
+    static FLOW_LAST: std::cell::RefCell<Vec<Option<(f32, f32)>>> = const { std::cell::RefCell::new(Vec::new()) };
 }

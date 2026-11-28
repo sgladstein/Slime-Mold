@@ -3,7 +3,7 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
-## Now (2026-11-28 03:30Z, new thread after the account move)
+## Now (2026-11-28 09:30Z, new thread after the account move)
 
 This thread was rate-limited from 11-25 00:48Z to 11-27 23:04Z, then
 Scott paused all work (11-27 23:02Z) to move accounts. State:
@@ -66,6 +66,37 @@ Scott paused all work (11-27 23:02Z) to move accounts. State:
   (step 4 won in 1:15 on 11-28) are the measure. The Difficulty thread
   (weaker walls, softer soldiers) was told the rescue's door rings need
   their health kept or `rescue_thick` raised.
+- **Stronger slime (11-28, branch `claude/project-thread-ck0ucw`)**: Scott
+  picked A, B and D to see (07:07Z), wanted a squad standing and shooting
+  in the films (07:31Z; hand `hold@N`, run=2:3, scratch rig
+  `film2.sh`), then "focus on A but try to rework or fix D" (08:56Z).
+  **A, hunted waves, lands on** (`WaveRules::hunted`, key `hunt_wave`,
+  `run::FIRST_PLANET` 2 = step 3+): `near` 0.005 of the mass on the ring
+  just past the guns, `hunted_gather` 20 s, flank points 70 degrees,
+  `lead` 0.8, standing squads too (no walk gate), trail kept warm. B
+  (`hunt_armour`) and D (`hunt_tongues`) dropped, dead-ends lines;
+  Params word 1 of the hunt row is spare again. Page:
+  `Reports/stronger-slime-2026-11-28/`. On the bot with cards (step 3,
+  seeds 2-5) A did not make the game harder; 19 standing rifles lost no
+  one. Next lever if Scott wants it deadlier: a longer gather or a
+  bigger `near`.
+- **Streaming body (veins prototype), off by default**: switch `stream`
+  ("Streaming slime", Experiments tab, `try=stream`; Scott 08:26Z: "the
+  real veins is just a prototype or experimental option. It doesnt
+  default to on"). Packed calm walkers lean toward or away from food by
+  slot parity and two blocked walkers asking for each other's cell swap
+  (`sense`/`walk`, `intent.w`). Measured with `LARDER_FLOW=1 sort=off`
+  (headless flow line): packed walkers moving a cell a second 17-23% to
+  about 45%, but coherence stays at random (the two streams cancel), so
+  no lanes yet. Next: lane separation (the two directions in separate
+  tubes), then tell the Look lane which planet shows it at zoom 6.
+- **KEEP_MOST 0.998** (scents review #911 finding 1): the trail's keep
+  times `soil_keep` is capped in both trail branches, so clay no longer
+  keeps a trail forever.
+- **Rescue rings after the walls PR (#907)**: rings stay
+  `rescue::RING_HP` 400 a cell, and `thick` 1 is one band, the same
+  ring the Lab timed, so the rescue's timing at thick 1 is unchanged by
+  the weaker player walls; no re-film needed.
 - **Still waiting:** the Lab's strikers settle patch for lap two
   (`Reports/lab-lap-two-2026-11-24/raw/strikers-settle.patch`).
 - **Twists** (#830) and their hooks (`Run::twist`, `Game::twist_now`) are

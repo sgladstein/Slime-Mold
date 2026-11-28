@@ -878,6 +878,9 @@ impl World for Later {
     fn wall_cell(&self, i: usize) -> bool {
         World::wall_cell(&self.d, i)
     }
+    fn wall_wear(&self) -> (u64, usize) {
+        World::wall_wear(&self.d)
+    }
     fn stop_births(&mut self) {
         World::stop_births(&mut self.d)
     }
