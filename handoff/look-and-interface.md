@@ -40,6 +40,14 @@ the dug-outs' plates (draw.rs) and tiles (`squadmode.rs`, Squad's file,
 one line: state "dug in", no AUTO) and the pill's `Icon::Group`. Film:
 `run=3 menu=stars@3`, `run=3:3 centre=124,170,4 at=60`.
 
+**11-28, Look D review:** filmed main (`menu=main-run`), shop (`shop-mid`,
+also 1920x1080 `ui=200%`), options, past runs, the loss card. One fault:
+the menus' left shade (40 strips) and the main page's top and foot shades
+(24) were drawn with half a pixel of overlap, so every seam was covered
+twice: a dark vertical line every 18 px across the dimmed planet. Now on
+whole pixels, edge to edge (`start.rs`). The star map's route merged as
+#920.
+
 **11-28, star map route (Scott 09:04Z: "It does not at all look like you
 are selecting a path of planets"):** mock-ups A branching trail / B fog
 ahead / C today sharpened on `Reports/star-route-options-2026-11-28/`;
