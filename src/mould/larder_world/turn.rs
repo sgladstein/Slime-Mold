@@ -522,6 +522,7 @@ impl<W: World> Game<W> {
             self.costed("time_starfall", |g| g.time_starfall());
             self.costed("time_origin", |g| g.time_origin());
             self.costed("time_stand", |g| g.time_stand());
+            self.costed("time_rescue", |g| g.time_rescue());
         }
         self.campaign_rules(now - t);
         self.check_end();

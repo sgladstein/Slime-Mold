@@ -1739,6 +1739,9 @@ impl PlanetTwist {
     }
 }
 
+/// The rescue's line on the landing card (the Lab's report, round two).
+pub const RESCUE_CARD: &str = "Distress call: two squads are dug in deep in the Trunk. Reach both and walk them home at a wounded pace for the contract. The slime wakes when you find them, and its rings won't hold past five minutes.";
+
 /// The twist a run of `seed` rolls on planet `depth` (before the star
 /// map; its Fair planets keep the odds, `Run::twist_of`).
 #[cfg(test)]
@@ -1910,6 +1913,11 @@ impl Run {
             return None;
         }
         let n = self.node_in(map, step);
+        // A rescue planet has no twist: its line takes the twist's place
+        // on the landing card and the HUD.
+        if n.contracts.contains(&route::Contract::Rescue) {
+            return None;
+        }
         let z = mix(n.seed ^ 0x5457_4953_5400_0000);
         let roll = || {
             let kind = if (z >> 8).is_multiple_of(2) { Twist::Cold } else { Twist::Wind };
@@ -1921,6 +1929,21 @@ impl Run {
             Pip::Fair if self.twist_of(step - 1, map).is_some() || !z.is_multiple_of(TWIST_ODDS) => None,
             Pip::Fair => roll(),
         }
+    }
+
+    /// The current planet carries the rescue contract
+    /// (`route::Contract::Rescue`, `larder_world::rescue`).
+    pub fn rescue(&self) -> bool {
+        !self.range && self.node().contracts.contains(&route::Contract::Rescue)
+    }
+
+    /// The planet's own line on its card and the landing card, as a name
+    /// and its words: the rescue's, else the twist's (`PlanetTwist::card`).
+    pub fn planet_line(&self) -> Option<(String, String)> {
+        if self.rescue() {
+            return Some(("Rescue".to_string(), RESCUE_CARD.to_string()));
+        }
+        self.twist().map(|t| (t.name().to_string(), t.card()))
     }
 
     /// The run's star map (`route::star_map`), from its seed.
@@ -2166,6 +2189,8 @@ impl Run {
                 r.twist.kind = t.kind;
                 r.twist.wind_angle = t.angle;
             }
+            // A Rescue planet's dug-outs (`larder_world::rescue`).
+            r.rescue.on = self.rescue();
             r.ceiling_grow = at(&CEILING_GROW);
             r.raid.gap_min = at(&RAID_GAP_MIN) * STRETCH;
             r.strikers.army_most = at(&STRIKER_ARMY);

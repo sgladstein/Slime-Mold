@@ -736,6 +736,11 @@ pub struct Rules {
     /// level, rolled by the run (`run::LEVEL_MAX`). Off here. GPU only.
     #[serde(default)]
     pub levels: super::LevelRules,
+    /// **The rescue planet** (2026-11-28; `rescue.rs`): two dug-in squads
+    /// to walk home, on a Rescue node of the star map
+    /// (`run::Run::rescue`). Off here.
+    #[serde(default)]
+    pub rescue: super::RescueRules,
 }
 
 /// `Rules::ceiling_grow`'s default: a slime on the crystals it landed on
@@ -877,6 +882,20 @@ impl Rules {
                 self.levels.max = v.clamp(0.0, 7.0) as u32;
                 return true;
             }
+            // The rescue planet's dug-outs (`rescue.rs`).
+            "rescue" => {
+                self.rescue.on = v > 0.0;
+                return true;
+            }
+            "rescue_thick" => {
+                // 0 reads as 1 where the ring is dug (`rescue_dig`).
+                self.rescue.thick = v.clamp(0.0, f32::from(super::WALL_LEVELS)) as u32;
+                return true;
+            }
+            "rescue_sites" => {
+                self.rescue.sites = v.clamp(1.0, 4.0) as u32;
+                return true;
+            }
             // 0 none, 1 the cold snap, 2 the wind (`twist.rs`).
             "twist" => {
                 self.twist.kind = match v as u32 {
@@ -948,6 +967,9 @@ impl Rules {
             "origin_armour" => self.origin.armour as f32,
             "level_max" => self.levels.max as f32,
             "twist" => self.twist.kind as u32 as f32,
+            "rescue" => on(self.rescue.on),
+            "rescue_thick" => self.rescue.thick as f32,
+            "rescue_sites" => self.rescue.sites as f32,
             "origin_bite" => self.origin.bite as f32,
             "stand_armour" => self.stand.armour as f32,
             "stand_bite" => self.stand.bite as f32,
@@ -1067,6 +1089,11 @@ impl Rules {
             "origin_floor" => &mut self.origin.floor,
             "origin_floor_min" => &mut self.origin.floor_min,
             "origin_near" => &mut self.origin.near,
+            "rescue_hide" => &mut self.rescue.hide,
+            "rescue_out" => &mut self.rescue.out,
+            "rescue_alarm" => &mut self.rescue.alarm,
+            "rescue_ring" => &mut self.rescue.ring,
+            "rescue_wound" => &mut self.rescue.wound,
             "origin_call_loss" => &mut self.origin.call_loss,
             "origin_call_every" => &mut self.origin.call_every,
             "origin_dense" => &mut self.origin.dense,
@@ -1318,6 +1345,7 @@ impl Default for Rules {
             stand: super::StandRules::default(),
             origin: super::OriginRules::default(),
             twist: super::TwistRules::default(),
+            rescue: super::RescueRules::default(),
             levels: super::LevelRules::default(),
         }
     }

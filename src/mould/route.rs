@@ -111,6 +111,11 @@ pub enum Contract {
     Pump(u32),
     /// Pick up this many points of starfall ore and cores.
     Forage(u32),
+    /// Bring both dug-in squads home (`larder_world::rescue`; the owner,
+    /// 11-28 03:38Z: "The rescue is one of the optional objectives/bonuses
+    /// that we already have in the star map"). Drawn on its own roll
+    /// (`RESCUE_STEP`), never from the pool, since it changes the planet.
+    Rescue,
 }
 
 /// What a planet's end tells a contract (the window fills it from the
@@ -127,6 +132,8 @@ pub struct Outcome {
     pub broken: u32,
     pub pumped: f32,
     pub found: u32,
+    /// Every dug-out of a rescue brought home (`Game::rescued`).
+    pub rescued: bool,
 }
 
 impl Contract {
@@ -140,6 +147,7 @@ impl Contract {
             Contract::Breaker(n) => format!("Break {n} mini-bosses"),
             Contract::Pump(f) => format!("Pump {f} food"),
             Contract::Forage(p) => format!("Pick up {p} points of ore and cores"),
+            Contract::Rescue => "Rescue both dug-in squads".into(),
         }
     }
 
@@ -152,6 +160,7 @@ impl Contract {
                 Contract::Breaker(n) => o.broken >= n,
                 Contract::Pump(f) => o.pumped >= f as f32,
                 Contract::Forage(p) => o.found >= p,
+                Contract::Rescue => o.rescued,
             }
     }
 
@@ -162,6 +171,9 @@ impl Contract {
         let base = 60.0 + 20.0 * (e - 1.0).max(0.0);
         let k = match self {
             Contract::LoseAtMost(0) | Contract::Quick(..=60) | Contract::Breaker(2..) => 1.6,
+            // A planet's own errand, two pushes into the body and a slow
+            // walk home: twice a plain one (a first guess).
+            Contract::Rescue => 2.0,
             _ => 1.0,
         };
         ((base * k / 5.0).round() * 5.0) as u32
@@ -191,6 +203,7 @@ impl Contract {
             Contract::Breaker(n) => format!("break{n}"),
             Contract::Pump(f) => format!("pump{f}"),
             Contract::Forage(p) => format!("forage{p}"),
+            Contract::Rescue => "rescue".into(),
         }
     }
 }
@@ -212,6 +225,16 @@ pub struct Node {
     pub seed: u64,
     pub contracts: Vec<Contract>,
 }
+
+/// **The rescue's place** (Direction, 2026-11-27 23:41Z; a contract since
+/// the owner's 11-28 03:38Z): in about one run in `RESCUE_ODDS`, one planet
+/// at the step that meets the Trunk carries the rescue contract
+/// (`Contract::Rescue`) beside its own, keeping its pip and pay. Only that step until the
+/// Lab's planets 4 and 5 work lands (the Swarmer wiped the Lab's hand
+/// before it could go; the Sporer's body killed every march home with the
+/// alarm on).
+pub const RESCUE_STEP: u32 = 3;
+pub const RESCUE_ODDS: u64 = 3;
 
 /// The run's star map: `steps[s - 1]` holds step `s`'s nodes, by `k`.
 #[derive(Clone, Debug, PartialEq)]
@@ -299,6 +322,12 @@ pub fn star_map(seed: u64, planets: u32, curve: impl Fn(u32) -> f32) -> StarMap 
                 Node { step, k: k as u8, pip: pips[k], lane, to: Vec::new(), seed: node_seed(seed, step, k as u8), contracts }
             })
             .collect();
+        let mut nodes: Vec<Node> = nodes;
+        let r = mix(seed ^ 0x5245_5343_5545 ^ u64::from(step));
+        if step == RESCUE_STEP && step < planets && r.is_multiple_of(RESCUE_ODDS) {
+            let k = ((r >> 8) % n as u64) as usize;
+            nodes[k].contracts.push(Contract::Rescue);
+        }
         steps.push(nodes);
     }
     // The lanes: each node leads to the next step's nodes beside it (at
@@ -375,6 +404,20 @@ mod tests {
         }
     }
 
+    /// About one run in three has one Rescue planet, at `RESCUE_STEP` only.
+    #[test]
+    fn about_one_run_in_three_has_a_rescue_planet() {
+        let mut runs = 0;
+        for seed in 0..900 {
+            let m = star_map(seed, 12, curve);
+            let at: Vec<(u32, u8)> = m.steps.iter().flatten().filter(|n| n.contracts.contains(&Contract::Rescue)).map(|n| (n.step, n.k)).collect();
+            assert!(at.len() <= 1, "seed {seed}: two rescue planets");
+            assert!(at.iter().all(|&(s, _)| s == RESCUE_STEP), "seed {seed}: a rescue off its step");
+            runs += at.len();
+        }
+        assert!((240..=360).contains(&runs), "{runs} of 900 runs have a rescue planet");
+    }
+
     #[test]
     fn the_map_comes_from_the_seed() {
         assert_eq!(star_map(5, 12, curve), star_map(5, 12, curve));
@@ -383,12 +426,13 @@ mod tests {
 
     #[test]
     fn contracts_need_a_win_and_their_goal() {
-        let o = Outcome { won: true, at: 200.0, par: 480.0, lost: 1, broken: 1, pumped: 900.0, found: 120 };
+        let o = Outcome { won: true, at: 200.0, par: 480.0, lost: 1, broken: 1, pumped: 900.0, found: 120, rescued: false };
         assert!(Contract::LoseAtMost(2).met(&o) && !Contract::LoseAtMost(0).met(&o));
         assert!(Contract::Quick(60).met(&o) && !Contract::Quick(40).met(&o));
         assert!(Contract::Breaker(1).met(&o) && !Contract::Breaker(2).met(&o));
         assert!(!Contract::Pump(1000).met(&o) && Contract::Forage(100).met(&o));
         assert!(!Contract::Forage(100).met(&Outcome { won: false, ..o }), "a lost planet pays nothing");
         assert!(Contract::Pump(2000).pay(4.0) > Contract::Pump(2000).pay(1.0));
+        assert!(!Contract::Rescue.met(&o) && Contract::Rescue.met(&Outcome { rescued: true, ..o }));
     }
 }
