@@ -226,7 +226,7 @@ impl ApplicationHandler for App {
                     }
                     return;
                 }
-                if self.viewer_wheel(notches) || self.squad_wheel(notches) || self.squad_zoom(notches) {
+                if self.viewer_wheel(notches) || self.split_wheel(notches) || self.squad_wheel(notches) || self.squad_zoom(notches) {
                     return;
                 }
                 self.controls.wheel(notches, &mut self.camera);
