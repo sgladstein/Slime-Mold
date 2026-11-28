@@ -36,7 +36,12 @@ build it in `level_rgb` and `LEVEL_INKS` together, tune its glow (0.2 of
 it in motion at zoom 6 and 12 on steps 4 and 10. Enemy's rescue contract
 is PR #891 (`Contract::Rescue`, `Game::rescue_now()` takes the twist
 pill, `Run::planet_line()` feeds the cards' twist line; run seed 3, step
-3, node 0 has one): badge and screens are this lane's next.
+3, node 0 has one): badge and screens are this lane's next. Built
+11-28 after #891 merged: `ui::RESCUE` cream, `stars::rescue_badge` on the
+map node and beside the card's pip, the card's twist row reads "Rescue";
+the dug-outs' plates (draw.rs) and tiles (`squadmode.rs`, Squad's file,
+one line: state "dug in", no AUTO) and the pill's `Icon::Group`. Film:
+`run=3 menu=stars@3`, `run=3:3 centre=124,170,4 at=60`.
 
 ## State (2026-11-20)
 

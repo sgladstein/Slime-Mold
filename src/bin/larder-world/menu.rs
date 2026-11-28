@@ -686,6 +686,7 @@ pub(super) fn star_view(r: &Run) -> slime_mould::world::start::StarView {
                         slime: title_case(l.tier.name()),
                         biome: p.biome.name().to_string(),
                         twist: at.planet_line(),
+                        rescue: n.contracts.contains(&slime_mould::mould::route::Contract::Rescue),
                         size: l.walkers,
                         hits: run::blows(e),
                         level_top: run::level_max(e),

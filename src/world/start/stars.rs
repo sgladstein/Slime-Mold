@@ -45,6 +45,9 @@ pub struct StarNode {
     pub biome: String,
     /// The twist's name and line.
     pub twist: Option<(String, String)>,
+    /// It carries the rescue contract (`route::Contract::Rescue`): two of
+    /// your squads dug in under its slime.
+    pub rescue: bool,
     /// The slime's size as a factor on the first planet's (the cards
     /// compare it with `StarView::last_size`).
     pub size: f32,
@@ -207,6 +210,18 @@ fn planet(c: &mut Canvas, cx: f32, cy: f32, r: f32, biome: &str, pips: u8, fade:
         let px = w0 + gap * p as f32;
         c.rrect(Rect::new(px - pr, cy - pr, 2.0 * pr, 2.0 * pr), pr, with_alpha([240, 244, 248, 255], 0.9 * fade));
     }
+}
+
+/// The rescue contract's badge (11-28): your squad's sign in its cream on
+/// a dark disc, at `(cx, cy)`, radius `r`, so a Rescue planet reads on the
+/// map before its card is opened.
+fn rescue_badge(c: &mut Canvas, cx: f32, cy: f32, r: f32, fade: f32, s: f32) {
+    let ink = crate::world::ui::RESCUE;
+    let disc = Rect::new(cx - r, cy - r, 2.0 * r, 2.0 * r);
+    c.rrect(disc.inset(-s), r + s, [8, 11, 14, (230.0 * fade) as u8]);
+    c.outline(disc, r, 1.3 * s, with_alpha(ink, fade));
+    let d = r * 1.3;
+    c.icon(Icon::Group, (cx - d / 2.0, cy - d / 2.0), d, with_alpha(ink, fade));
 }
 
 /// "+30%", "-20%" or "same": `now` against `last`, and its colour (more
@@ -495,6 +510,9 @@ impl StartMenu {
                     c.outline(r.inset(-5.0 * s), rad + 5.0 * s, 1.5 * s, [236, 240, 244, 200]);
                 }
                 planet(c, cx, cy, rad, &nd.biome, nd.pips, fade, s);
+                if nd.rescue {
+                    rescue_badge(c, cx + rad * 0.78, cy - rad * 0.78, (rad * 0.62).max(6.0 * s), fade, s);
+                }
                 // Under it: its stars once freed; the planets to pick
                 // from, their names; a column of mixed slimes, each one's.
                 let below = cy + rad + if nd.open && now { 22.0 } else { 14.0 } * s;
@@ -551,7 +569,14 @@ impl StartMenu {
         planet(c, r.right() - p - pr, r.y + 24.0 * s + pr, pr, &nd.biome, nd.pips, 1.0, s);
         let nw = tw - 2.0 * pr - 12.0 * s;
         let mut y = r.y + 34.0 * s;
-        c.text(Weight::SemiBold, 14.0 * s, (px, y), Align::Left, &pip_name(nd.pips).to_uppercase(), ink);
+        let pw = c.text(Weight::SemiBold, 14.0 * s, (px, y), Align::Left, &pip_name(nd.pips).to_uppercase(), ink);
+        if nd.rescue {
+            // A rescue planet says so at the card's top, as its pip does
+            // (11-28: it showed only as the twist's line and a bonus row).
+            let tx = px + pw + 10.0 * s;
+            rescue_badge(c, tx + 7.0 * s, y - 5.0 * s, 8.0 * s, 1.0, s);
+            c.text(Weight::SemiBold, 14.0 * s, (tx + 19.0 * s, y), Align::Left, "RESCUE", crate::world::ui::RESCUE);
+        }
         y += 30.0 * s;
         c.text_fit(Weight::SemiBold, 24.0 * s, (px, y), Align::Left, &nd.name, nw, TEXT);
         // Its pip's line in words, where the card has its full height (the
@@ -614,7 +639,11 @@ impl StartMenu {
         if y <= limit {
             match &nd.twist {
                 Some((name, line)) => {
-                    fact(c, y, "Twist", name, None, crate::world::ui::TWIST);
+                    if nd.rescue {
+                        fact(c, y, "Rescue", "two squads dug in under the slime", None, crate::world::ui::RESCUE);
+                    } else {
+                        fact(c, y, "Twist", name, None, crate::world::ui::TWIST);
+                    }
                     y += 19.0 * s;
                     // A third line's words join the second and end in an
                     // ellipsis: at 4K, 250% the wind's line stopped on
