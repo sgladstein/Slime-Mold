@@ -1213,6 +1213,12 @@ fn move_tour(g: &mut Game<GpuWorld>, spec: &str) {
     let half = by.len().div_ceil(2).max(1);
     let c = by[SENT.fetch_add(1, Ordering::Relaxed) * 7 % half];
     g.apply(Cmd::SquadOrder(0, Order::Move(c.0, c.1)));
+    if flags.contains(&"queue") {
+        let c2 = by[(SENT.load(Ordering::Relaxed) * 7 + 3) % by.len()];
+        let c3 = by[(SENT.load(Ordering::Relaxed) * 7 + 5) % by.len()];
+        g.apply(Cmd::SquadQueue(0, Order::Move(c2.0, c2.1)));
+        g.apply(Cmd::SquadQueue(0, Order::Fight(c3.0, c3.1)));
+    }
     if fire {
         // `fire`: a burn 6 dish cells round the middle of its way, as a
         // Scorch round lights it (`Rounds::flush` marks it hot the same).
