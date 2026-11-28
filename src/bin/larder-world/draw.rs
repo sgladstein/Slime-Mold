@@ -644,6 +644,11 @@ impl App {
                 self.marks.ring(c, g.world.crystal_r(i) + 2.0 * sc, [94, 214, 132, 170]);
             }
         }
+        // The squads' number plates, drawn after every figure (Look A,
+        // 11-28): pushed here they went under the soldiers drawn later,
+        // and at zoom 12 on planet 4 a neighbour's gun barrel lay across
+        // the selected squad's "1 *".
+        let mut plates: Vec<OverLabel> = Vec::new();
         if g.rules.squads {
             // Each squad's number over its middle (the key that controls
             // it: its id + 1, kept while it lives), the controlled one bright,
@@ -703,8 +708,7 @@ impl App {
                     // and read as part of it).
                     let scale = if lit { 2.0 } else { 1.5 };
                     let off = (-4.0, -(3.0 * sc * zoom).clamp(24.0, 48.0));
-                    self.marks.plate((x, top), off, &label, scale, LABEL_PLATE);
-                    self.marks.label((x, top), off, &label, scale, colour);
+                    plates.push(((x, top), off, label, scale, colour));
                 }
             }
         }
@@ -1739,6 +1743,12 @@ impl App {
         let units = self.units();
         self.controls.prune(&units);
         self.controls.marks(&units, &self.camera, r, &mut self.marks);
+        // Over the selection rings too, so a ring's line never runs
+        // through the number (polish review 11-23, finding 5).
+        for (at, off, text, scale, colour) in plates {
+            self.marks.plate(at, off, &text, scale, LABEL_PLATE);
+            self.marks.label(at, off, &text, scale, colour);
+        }
         // Y held (Squad and arsenal, 2026-11-28): the soldiers a split
         // would take, ringed, and "2 of 9" at the cursor.
         let going = self.split_preview();
