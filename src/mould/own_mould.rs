@@ -631,6 +631,10 @@ impl World for Garden {
         World::wall_cell(&self.dish, i)
     }
 
+    fn wall_wear(&self) -> (u64, usize) {
+        World::wall_wear(&self.dish)
+    }
+
     /// The enemy's births stop (its cap goes to 0); the player's mould
     /// keeps growing.
     fn stop_births(&mut self) {

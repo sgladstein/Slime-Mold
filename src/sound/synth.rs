@@ -164,6 +164,26 @@ pub struct Spec {
 
 /// Every grain's low-pass when its recipe sets none: takes the edge off.
 const LP_HZ: f32 = 12_000.0;
+/// **The mix's balance** (2026-11-28, the owner's pick of five mixes of one
+/// planet 2 fight, "E"): the guns and hits came to 56% of the energy, the
+/// music 8%, the slime's drone 7% and every other slime sound 1-2%, so a
+/// fight was gunshots and little else. Each command's level is scaled here,
+/// once, so the listener's own numbers keep their relative sense: the guns
+/// down 6 dB, the hits 3 dB, the slime's bodies (its drone), textures (kill
+/// pops, withering) and single grains up (the score's own rise is
+/// `score::SCORE_LEVEL`). Measured with E: guns 13%, hits 4%, music 42%,
+/// drone 17%.
+pub const BAL_GUN: f32 = 0.5;
+/// Hits on slime (`SoundCmd::Impact`), see `BAL_GUN`.
+pub const BAL_IMPACT: f32 = 0.7;
+/// The slime's bodies (`SoundCmd::Body`, its drone), see `BAL_GUN`.
+pub const BAL_BODY: f32 = 2.0;
+/// Textures (kill pops, withering, feeding), see `BAL_GUN`.
+pub const BAL_TEXTURE: f32 = 2.0;
+/// Single grains and bursts (tears, snarls, the squad's pulse, clanks), see
+/// `BAL_GUN`.
+pub const BAL_GRAIN: f32 = 1.6;
+
 /// The least low-pass of a sound far off screen (`SoundCmd::Gun`'s
 /// `far` 1): air takes the top off a distant sound before its body, so a
 /// fight across the map is duller, not only quieter.
@@ -949,6 +969,15 @@ impl VoiceBank {
             self.stats.refused += 1;
             return;
         }
+        let cmd = match cmd {
+            SoundCmd::Gun { voice, pan, gain, delay, far } => SoundCmd::Gun { voice, pan, gain: gain * BAL_GUN, delay, far },
+            SoundCmd::Impact { weight, pan, gain, delay, far } => SoundCmd::Impact { weight, pan, gain: gain * BAL_IMPACT, delay, far },
+            SoundCmd::Body { slot, level, pitch, breath, rough, bright, pan } => SoundCmd::Body { slot, level: (level * BAL_BODY).min(1.0), pitch, breath, rough, bright, pan },
+            SoundCmd::Texture { kind, rate, level, pan, spread } => SoundCmd::Texture { kind, rate, level: level * BAL_TEXTURE, pan, spread },
+            SoundCmd::Grain { kind, pan, gain, delay } => SoundCmd::Grain { kind, pan, gain: gain * BAL_GRAIN, delay },
+            SoundCmd::Burst { kind, rate, secs, pan, spread, gain } => SoundCmd::Burst { kind, rate, secs, pan, spread, gain: gain * BAL_GRAIN },
+            c => c,
+        };
         match cmd {
             SoundCmd::Texture { kind, rate, level, pan, spread } => {
                 let t = &mut self.textures[kind as usize];
@@ -1653,7 +1682,8 @@ mod tests {
             x.extend(render(&mut b, 0.01));
         }
         let jump = x.windows(4).map(|w| (w[2] - w[0]).abs()).fold(0.0f32, f32::max);
-        assert!(jump < 0.5, "a sample jumped by {jump}");
+        // A grain plays at `BAL_GRAIN` times its gain, so its steps scale too.
+        assert!(jump < 0.5 * BAL_GRAIN, "a sample jumped by {jump}");
     }
 
     /// Every gun makes a bounded sound; the long gun rings on longest and

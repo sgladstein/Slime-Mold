@@ -158,6 +158,8 @@ struct Read {
     /// Crystal cells with charge and a walker on them, pile by pile.
     covered: Vec<usize>,
     broken: u32,
+    /// The bites walls took, the engine's running count (`wstat[0]`).
+    bites: u32,
     living: u32,
     /// The player's own mould's living walkers (a garden's; 0 otherwise).
     own: u32,
@@ -221,6 +223,10 @@ pub struct GpuWorld {
     lumps: [(u32, u32, u32); crate::mould::big::LUMPS],
     /// Wall cells broken as of the mirror's last agar read.
     broken: u32,
+    /// The bites walls took (`World::wall_wear`): the engine's counter at
+    /// the last readout, and the running total from the readouts.
+    bites_mark: u32,
+    bites: u64,
     /// The mirror's wall cells and a gather of their words, so `keep`
     /// reads back only their agar when one breaks; None until the first
     /// break, and again after a wall goes up (its cells are new).
@@ -493,7 +499,7 @@ impl GpuWorld {
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
         let sort = s.sort;
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, sort, own: 0, asleep: 0, step_base: None, scarred: 0, shrug: Shrug::default(), lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, setc: SetCells::default(), want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, sort, own: 0, asleep: 0, step_base: None, scarred: 0, shrug: Shrug::default(), lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, bites_mark: 0, bites: 0, walls: None, walls_new: false, ro, setc: SetCells::default(), want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -664,7 +670,7 @@ impl GpuWorld {
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
         let ate = (0..self.e.npiles as usize).fold(0u32, |a, p| a.wrapping_add(piles[p * PILE_WORDS + 7]));
         let covered = (0..self.e.npiles as usize).map(|p| piles[p * PILE_WORDS + 8] as usize).collect();
-        Read { out, sums, ate, covered, broken: st[1], living: st[4], own: st[5], asleep: st[12], scarred: st[13], shrugged: st[14], grid, struck: st[3], lumps }
+        Read { out, sums, ate, covered, broken: st[1], bites: st[0], living: st[4], own: st[5], asleep: st[12], scarred: st[13], shrugged: st[14], grid, struck: st[3], lumps }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -702,6 +708,13 @@ impl GpuWorld {
             self.fire_new += moved;
         }
         self.struck = r.struck;
+        // The walls' bites, as the kills: a counter behind ours (a fresh
+        // dish) starts the count again.
+        let bit = r.bites.wrapping_sub(self.bites_mark);
+        if bit < 1 << 31 {
+            self.bites += u64::from(bit);
+        }
+        self.bites_mark = r.bites;
         self.burn_dirty = false;
         if let Some(g) = r.grid.take() {
             self.grid = Some((self.e.grid as usize, self.ticks(), g));
@@ -1178,6 +1191,10 @@ impl World for GpuWorld {
 
     fn clear(&self, x: f32, y: f32) -> bool {
         World::clear(&self.e.dish, x, y)
+    }
+
+    fn wall_wear(&self) -> (u64, usize) {
+        (self.bites, self.broken as usize)
     }
 
     fn wall_cell(&self, i: usize) -> bool {
@@ -1710,6 +1727,9 @@ mod tests {
         }
         fn wall_cell(&self, i: usize) -> bool {
             self.g.wall_cell(i)
+        }
+        fn wall_wear(&self) -> (u64, usize) {
+            self.g.wall_wear()
         }
         fn stop_births(&mut self) {
             self.g.stop_births()

@@ -106,6 +106,13 @@ pub trait World {
     /// (`Game::mark_doors`). No default, so a world that wraps another
     /// can't forget to pass it on and leave its doors shut.
     fn wall_cell(&self, i: usize) -> bool;
+    /// **The walls' wear so far** (2026-11-28, for the sound of a wall
+    /// being eaten): the bites the slime has taken out of built walls and
+    /// the wall cells worn to rubble, both running totals since the world
+    /// was made. A world without walls reads (0, 0).
+    fn wall_wear(&self) -> (u64, usize) {
+        (0, 0)
+    }
     /// The mould's core is taken: no more births.
     fn stop_births(&mut self);
     /// The mould's upkeep a fine step (`BigParams::upkeep`; 0 with growth
@@ -474,6 +481,10 @@ impl World for BigDish {
 
     fn wall_cell(&self, i: usize) -> bool {
         self.wall.get(i).copied().unwrap_or(false)
+    }
+
+    fn wall_wear(&self) -> (u64, usize) {
+        (self.wall_hits, self.broken)
     }
 
     fn stop_births(&mut self) {
