@@ -647,7 +647,11 @@ fn flora_form(fl: u32, k: u32) -> Form {
         if (k == 0u) { f.s = 0.55; f.r0 = 0.65; f.relief = 0.6; f.col = vec3<f32>(70.0, 62.0, 72.0); }
         else if (k == 1u) { f.s = 1.9; f.r0 = 0.85; f.relief = 1.0; f.col = vec3<f32>(78.0, 66.0, 82.0); }
         else if (k == 3u) { f.s = 1.0; f.col = vec3<f32>(66.0, 60.0, 62.0); }
-        else { f.shape = 1u; f.col = vec3<f32>(60.0, 56.0, 66.0); }
+        // Reeds as pale stalks in tussocks, as the fen's (Look C 11-28):
+        // they kept the default reeds' stretch (2.4), so every blade stood
+        // up the screen and a pond's edge read as falling rain at zoom 12
+        // (planet 10).
+        else { f.shape = 1u; f.s = 0.55; f.r0 = 0.9; f.stretch = 1.0; f.relief = 0.45; f.clump = 0.55; f.col = vec3<f32>(48.0, 45.0, 54.0); f.tip = vec3<f32>(80.0, 74.0, 88.0); f.fall = 0.6; }
     } else if (fl == 7u) {
         // The core: alien growth. Coral rings, thorned crowns; purple-
         // magenta, hue 290-320, the only purple on the map (art lead

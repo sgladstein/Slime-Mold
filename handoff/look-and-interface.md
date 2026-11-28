@@ -40,6 +40,19 @@ the dug-outs' plates (draw.rs) and tiles (`squadmode.rs`, Squad's file,
 one line: state "dug in", no AUTO) and the pill's `Icon::Group`. Film:
 `run=3 menu=stars@3`, `run=3:3 centre=124,170,4 at=60`.
 
+**11-28, star map route (Scott 09:04Z: "It does not at all look like you
+are selecting a path of planets"):** mock-ups A branching trail / B fog
+ahead / C today sharpened on `Reports/star-route-options-2026-11-28/`;
+he picked A (09:29Z). Built in `route_map` (`start/stars.rs`): `jitter`
+by step and lane (`JIT_X` 0.16 of a column, `JIT_Y` 0.08 of the map,
+none on a short map), cubic lanes level out and in, ranks 2-4 solid with
+chevron heads on the ways on, faint lanes and future planets fading by
+steps ahead, "YOU" over the planet just won, the column band dropped and
+the heads quieter. Film `run=3 menu=stars@3 screen=1536x864`, and
+`screen=1920x1080 ui=200%` for the short map. Also Look C: the caves'
+reeds (flora 6, kind 2) kept the default reeds' stretch 2.4 and stood up
+the screen like rain at zoom 12 (planet 10); now tussocks as the fen's.
+
 **11-28, Look C (planets and terrain):** survey `run=1:STEP hand=idle
 at=5 centre=squad,6 screen=1536x864` on steps 1, 3, 5, 8, 10, 12, ground
 kinds masked with a debug copy of the shader (`LARDER_VIEW_WGSL`, each
