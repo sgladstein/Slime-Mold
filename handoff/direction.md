@@ -8,11 +8,11 @@ end.
 
 ## State (2026-11-27 23:55Z), read this first
 
-- **Gap:** this project's threads were out of usage 11-25 01:00Z to 11-27 23:00Z. Meanwhile Scott's other project built the star map (#860), hearts as a crystal mini-boss (#858), slime levels and toughness (#862 #864 #865), the early lift (#868), Hard +2.5 (#870), harder from step 2 (#873), turrets on loadout guns and bought like guns (#871 #875 #876) and the HUD slime bar (#872), all on his chat rulings, recorded in `wiki/decisions-game.md`. Review [doc](https://claude.ai/artifact/6dmCXQ5GC3H1w8LN4ZWGrE), plan [doc](https://claude.ai/artifact/57RBPNiFdCkUk4DZwN28nG) (thread "Plan next steps after the 11-25 gap"; his card on five lanes, Lab paused, this project as home, pending).
-- **NOW.md re-anchored** to twelve steps (this commit): tests 1, 3, 4, 5 reworded; lane table from the plan; the difficulty hold; the rescue planet as a star-map node.
-- **Told Enemy (23:45Z):** dropping P5 spore 0.05 and P4 heart 900 is right; #848 and the Grudge readout stand; the rescue planet is a node at the Trunk's step, heart rule dropped; no difficulty raises until his log or his card.
+- **Gap:** this project's threads were out of usage 11-25 01:00Z to 11-27 23:00Z. Meanwhile Scott's other project built the star map (#860), hearts as a crystal mini-boss (#858), slime levels and toughness (#862 #864 #865), the early lift (#868), Hard +2.5 (#870), harder from step 2 (#873), turrets on loadout guns and bought like guns (#871 #875 #876) and the HUD slime bar (#872), all on his chat rulings, recorded in `wiki/decisions-game.md`. Review [doc](https://claude.ai/artifact/6dmCXQ5GC3H1w8LN4ZWGrE), plan [doc](https://claude.ai/artifact/57RBPNiFdCkUk4DZwN28nG) (his card 23:55Z: five lanes, Lab paused, no freeze; in the repo as `Reports/plan-2026-11-27/`, #882). He paused all work at 23:02Z and moved it to a new account (23:36Z); see `handoff/account-move-2026-11-27.md`.
+- **NOW.md re-anchored** to twelve steps (#881): tests 1, 3, 4, 5 reworded; lane table from the plan; a difficulty hold (since dropped by his card); the rescue planet as a star-map node.
+- **Told Enemy (23:45Z):** dropping P5 spore 0.05 and P4 heart 900 is right; #848 and the Grudge readout stand; the rescue planet is a node at the Trunk's step, heart rule dropped. The difficulty hold I gave with it was overruled by his card at 23:55Z ("Five lanes, no freeze"): lanes keep raising difficulty on his notes, one retune pass a run log.
 - **D7 is moot as a rush brake:** a heart snipe no longer wins a planet.
-- **Next:** once he answers the plan's card, send each lane its first job (NOW.md's table) and ask each to rewrite its handoff from its own commits since 11-24. After his next run's log, the one retune. Then D8.
+- **Next (on the new account):** send each lane its first job (NOW.md's table) and ask each to rewrite its handoff from its own commits since 11-24. After his next run's log, the one retune. Then D8.
 
 ## State (2026-11-24 20:10Z), read this first
 
