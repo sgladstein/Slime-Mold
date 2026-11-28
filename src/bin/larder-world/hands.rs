@@ -111,6 +111,14 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     if hand == "pumps" {
         return pumps_hand(g);
     }
+    // The rescue planet (`larder_world::rescue`; the Lab's hand, 11-24):
+    // `rescue[@T]` plays greedy until game second T (0), then everyone on
+    // free fire walks to the first dug-out not yet reached and, once all
+    // are reached, home as squads, so each keeps to its wounded's pace. Off
+    // a rescue planet, or once the rescue is over, it plays greedy.
+    if hand == "rescue" || hand.starts_with("rescue@") {
+        return rescue_hand(g, hand.strip_prefix("rescue@").and_then(|t| t.parse().ok()).unwrap_or(0.0));
+    }
     if hand == "greedy" {
         return greedy_hand(g);
     }
@@ -1246,4 +1254,40 @@ fn steer_hand(g: &mut Game<GpuWorld>, spec: &str) {
     }
     let oct = (dy.atan2(dx) / std::f32::consts::FRAC_PI_4).round() * std::f32::consts::FRAC_PI_4;
     g.apply(Cmd::Steer(0, (oct.cos(), oct.sin())));
+}
+
+/// `rescue[@T]` (above).
+fn rescue_hand(g: &mut Game<GpuWorld>, go: f32) {
+    let r = g.rescue.clone().filter(|r| r.live());
+    let Some(r) = r.filter(|_| g.time() >= go.max(1.0)) else { return greedy_hand(g) };
+    while g.alive() < g.rules.max_squad && g.bank >= g.rules.soldier_cost {
+        if !g.apply(Cmd::Buy) {
+            break;
+        }
+    }
+    let goal = r.next().unwrap_or(g.larder);
+    for k in 0..g.soldiers.len() {
+        if g.soldiers[k].alive && !r.pinned(k) && g.soldiers[k].stance != Stance::Free {
+            g.apply(Cmd::Stance(k, Stance::Free));
+        }
+    }
+    let at = |o: Order| matches!(o, Order::Move(x, y) if (x - goal.0).abs() < 0.5 && (y - goal.1).abs() < 0.5);
+    if r.sites.iter().any(|s| s.reached.is_some()) {
+        let qs: Vec<usize> = g.live_squads().into_iter().filter(|&q| !g.members(q).iter().any(|&k| r.pinned(k))).collect();
+        for q in qs {
+            if !g.squads[q].dest.is_some_and(|d| (d.0 - goal.0).abs() < 0.5 && (d.1 - goal.1).abs() < 0.5) {
+                g.apply(Cmd::SquadOrder(q as u8, Order::Move(goal.0, goal.1)));
+            }
+        }
+        return;
+    }
+    for k in 0..g.soldiers.len() {
+        if !g.soldiers[k].alive || r.pinned(k) {
+            continue;
+        }
+        let far = (g.soldiers[k].x - goal.0).hypot(g.soldiers[k].y - goal.1) > 3.0 * g.world.scale();
+        if far && !at(g.soldiers[k].order) {
+            g.apply(Cmd::Order(k, Order::Move(goal.0, goal.1)));
+        }
+    }
 }

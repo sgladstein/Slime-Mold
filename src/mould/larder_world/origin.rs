@@ -352,7 +352,7 @@ impl<W: World> Game<W> {
         let home = self.origin.home;
         let cr = self.crystal_at(home).map_or(0.0, |(c, _)| self.world.crystal_r(c));
         let reach = cr + self.rules.origin.near * sc;
-        (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive).map(|k| (k, (self.soldiers[k].x - home.0).hypot(self.soldiers[k].y - home.1))).filter(|&(_, d)| d <= reach).min_by(|a, b| a.1.total_cmp(&b.1)).map(|(k, _)| k)
+        (0..self.soldiers.len()).filter(|&k| self.soldiers[k].alive && self.soldiers[k].smell > 0.0).map(|k| (k, (self.soldiers[k].x - home.0).hypot(self.soldiers[k].y - home.1))).filter(|&(_, d)| d <= reach).min_by(|a, b| a.1.total_cmp(&b.1)).map(|(k, _)| k)
     }
 
     /// Whether soldier `k` stands within the origin's reach (`origin_near`'s
@@ -362,7 +362,11 @@ impl<W: World> Game<W> {
         let home = self.origin.home;
         let cr = self.crystal_at(home).map_or(0.0, |(c, _)| self.world.crystal_r(c));
         let s = self.soldiers[k];
-        s.alive && (s.x - home.0).hypot(s.y - home.1) <= cr + self.rules.origin.near * sc
+        // A soldier the slime cannot smell (smell 0: the toolkit's mask,
+        // the rescue planet's hidden squads) is not one a heart lunges at
+        // (Lab, rescue planet 11-24: the heart hunted a hidden squad down
+        // from 50 cells in 2:20).
+        s.alive && s.smell > 0.0 && (s.x - home.0).hypot(s.y - home.1) <= cr + self.rules.origin.near * sc
     }
 
     /// The heart breaks: its lump lets go and what is left of it is

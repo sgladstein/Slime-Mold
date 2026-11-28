@@ -2429,7 +2429,11 @@ impl App {
         let run = self.args.run.as_ref().filter(|r| !r.range);
         let tier = run.map(|r| r.level().tier);
         m.tell = tier.and_then(|t| slime_tell(g, t));
-        m.twist = run.and_then(|r| r.twist()).and_then(|t| twist_tell(g, &t));
+        // A Rescue planet's line takes the twist's pill (it has no twist).
+        m.twist = match g.rescue_now() {
+            Some(now) => Some((Icon::Clock, now, slime_mould::mould::run::RESCUE_CARD.to_string())),
+            None => run.and_then(|r| r.twist()).and_then(|t| twist_tell(g, &t)),
+        };
         // A run's middle (owner, 11-27): the slime's size as a bar in the
         // goal line's place, the heart and the stalemate as red pills. The
         // goal stays in the model for the pause menu, as its own words
