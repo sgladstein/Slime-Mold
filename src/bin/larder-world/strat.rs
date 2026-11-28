@@ -339,7 +339,13 @@ pub(super) struct Plan {
     /// home (9,600 walkers) and one other crystal (7,400) and regrew as
     /// fast as the squad's stand killed it: 2:30 with the slime at 12,500
     /// give or take 300, then the heart siege; CI's seed 2 lost at 7:56
-    /// with a 3:44 stall. 0: off.
+    /// with a 3:44 stall. 0: off. On at 40 since the arms batch of 11-28
+    /// (GitHub, f147c81a, planet 3 on run seeds 1 to 8 and the nightly's
+    /// runs 2 and 3, as is against 40): the longest stall fell in 7 pairs,
+    /// rose in none, 3 tied (sign test p 0.008); planet 3 seed 4 went from
+    /// a loss at 8:42 (stall 316 s) to a win at 5:34, no win was lost; the
+    /// push costs soldiers (seed 3 lost 38 against 17, seed 7 41 against
+    /// 14). Stalls over a minute remain on 5 of 10 (64 to 154 s).
     pub push: f32,
 }
 
@@ -404,7 +410,7 @@ impl Default for Plan {
             storm: 0.5,
             army: 0,
             clock: 480.0,
-            push: 0.0,
+            push: 40.0,
         }
     }
 }

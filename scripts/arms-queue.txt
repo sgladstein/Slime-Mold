@@ -5,29 +5,26 @@
 # or a whole run from planet 1 to N when DEPTH is `runN`. Line i goes to
 # shard i mod 8.
 #
-# 2026-11-28 (Engine, the nightly's red Trunk): planet 3 on run seeds 1 to 8,
-# the bot as is against `push=40` (clear the slime's thinnest crystal after
-# 40 s with no harvest and no new 1% low), capped at 12 game minutes; and
-# the nightly's run seeds 2 and 3, planets 1 to 3, both arms. Deciding
-# measure: the league's `stall=` (seconds), paired by seed, then wins.
-# `dials=` adds dials to the plan; `runN.PIP` takes that pip at each fork.
-base 3 1 720
-push40 3 1 720 dials=push=40
-base 3 2 720
-push40 3 2 720 dials=push=40
-base 3 3 720
-push40 3 3 720 dials=push=40
-base 3 4 720
-push40 3 4 720 dials=push=40
-base 3 5 720
-push40 3 5 720 dials=push=40
-base 3 6 720
-push40 3 6 720 dials=push=40
-base 3 7 720
-push40 3 7 720 dials=push=40
-base 3 8 720
-push40 3 8 720 dials=push=40
-base run3 2 0
-push40 run3 2 0 dials=push=40
-base run3 3 0
-push40 run3 3 0 dials=push=40
+# 2026-11-28, second batch (Engine): `push` is 40 by default now (the first
+# batch, in the commit). Planet 3 on the seeds that still stalled or lost,
+# push=20 against 40, and the first whole runs by pip: planets 1 to 3
+# taking Safe, then Hard, at each fork (run seeds 1 to 3). Deciding measure:
+# `stall=` paired by seed; the pip runs are the first rows for test 3.
+push40 3 2 720
+push20 3 2 720 dials=push=20
+push40 3 3 720
+push20 3 3 720 dials=push=20
+push40 3 4 720
+push20 3 4 720 dials=push=20
+push40 3 5 720
+push20 3 5 720 dials=push=20
+push40 3 7 720
+push20 3 7 720 dials=push=20
+push40 3 8 720
+push20 3 8 720 dials=push=20
+safe run3.safe 1 0
+hard run3.hard 1 0
+safe run3.safe 2 0
+hard run3.hard 2 0
+safe run3.safe 3 0
+hard run3.hard 3 0

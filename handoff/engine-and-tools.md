@@ -29,9 +29,14 @@ and resume of a star-map run), 5 (60 fps at 4K on the GTX 1070).
   and the bot's stand kills only what regrows: stall 2:01 to 3:44 (run
   46087963392; lavapipe repeat on 9a5ec6c: 1:40, won at 10:38).
 - **Branch `claude/project-thread-8iu6no`** (this thread), open PR:
-  - `push=SECS` dial (`strat.rs`, off until the arms batch says): after SECS
-    with no harvest and no new 1% low, clear the slime's crystal with the
-    fewest walkers until it is dry or the stall ends.
+  - `push=SECS` dial (`strat.rs`, on at 40): after SECS with no harvest and
+    no new 1% low, clear the slime's crystal with the fewest walkers until
+    it is dry or the stall ends. First arms batch (f147c81a): the longest
+    stall fell in 7 pairs, rose in none, 3 tied (p 0.008); planet 3 seed 4
+    loss to win; pushes cost soldiers. Still over a minute on 5 of 10.
+    Second batch: push=20 against 40, and the first Safe and Hard runs.
+  - The heart siege clears the live heart's own crystal (any crystal since
+    #858), not crystal 0.
   - Star-map picks: `league=run:SEED[:TO[:SECS[:PIP]]]` takes that pip at
     each fork (`league::pick_pip`: that pip, else Fair, else the first); every
     league line carries `pip=`. Arms rows `runN.PIP` and `dials=A=1,B=2`.
@@ -39,8 +44,6 @@ and resume of a star-map run), 5 (60 fps at 4K on the GTX 1070).
     alert held back while the run's Starfall note shows; `main.rs`).
   - Lint: a pull request changing `src/` with no `handoff/*.md` change fails
     unless a commit says `No-handoff: <why>` (`wiki/lint.py handoff_kept`).
-  - Arms batch queued in `scripts/arms-queue.txt`: planet 3 seeds 1 to 8 and
-    run seeds 2 and 3, as is against `push=40`.
 - **PC strategy league** (`C:\Users\Scott\Code\slime-league`, detached HEAD,
   src tree `cb8d00f3`, the 11-22 build): paused 11-28 03:27Z with a `PAUSE`
   file (Scott allowed the Remote Control card). Two worker Pythons were
@@ -50,11 +53,11 @@ and resume of a star-map run), 5 (60 fps at 4K on the GTX 1070).
 
 ## Next, in order
 
-1. Read the arms batch; default `push` on if it cuts the stall without
-   costing wins; run-bot.yml green or naming a real wall.
-2. The heart siege for hearts on any crystal (hearts are not the win,
-   #858): today `hunt`'s siege clears crystal 0 and stands at the live
-   heart, as when the heart was the home's origin.
+1. Read the second arms batch; run-bot.yml green or naming a real wall
+   (planet 3 seed 2 loses all 31 soldiers by 4:44 in every arm: the Trunk
+   is a real wall for this plan there).
+2. Whether the heart siege should stay at all (hearts are not the win,
+   #858): an arms pair with the siege's heart block off.
 3. The builder arm (pumps plus a turret each) now that #887 builds rolled
    designs.
 4. run-bot.yml by pip (Safe, Fair, Hard); the curve on twelve steps (PC
