@@ -1769,8 +1769,12 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
         || (p.army > 0 && g.alive() >= p.army)
         || (p.clock > 0.0 && t >= p.clock && g.alive() >= STORM_ARMY);
     if let Some(h) = origin.filter(|_| p.siege > 0.0 && (rest_dry || storming) && !mopping) {
-        if cs[0].1 > DRY && home_ok {
-            let o = Order::Clear(cs[0].0 .0, cs[0].0 .1);
+        // The heart's own crystal (since 11-26 a heart forms on any
+        // crystal the slime holds thick, not only the home, #858): drained
+        // while it holds under `per` walkers a soldier, as the home was.
+        let hc = (0..cs.len()).min_by(|&a, &b| dist(cs[a].0, h.centre).total_cmp(&dist(cs[b].0, h.centre))).unwrap_or(0);
+        if cs[hc].1 > DRY && takeable(hc) {
+            let o = Order::Clear(cs[hc].0 .0, cs[hc].0 .1);
             if fresh(g, o) {
                 g.apply(Cmd::SquadOrder(q as u8, o));
             }
