@@ -695,19 +695,6 @@ pub struct Rules {
     /// (`gpu::Settings::hunt_pull`).
     pub hunt_reach: f32,
     pub hunt_lag: f32,
-    /// **Several tongues** (2026-11-28, the Enemy lane; the owner's pick
-    /// to see, 07:07Z, "A, B, and D"; `hunt.rs`): with `hunt_tongues` over
-    /// 0 the trail gets two branches from the squad, `hunt_tongue_angle`
-    /// degrees either side of the way to the slime near it and
-    /// `hunt_tongue_len` dish cells long, each cell's age `hunt_tongue_age`
-    /// of its distance from the squad. Under 1, walking to a branch and in
-    /// along it is shorter down the field than walking straight in, so the
-    /// slime near the squad gathers onto the branches and comes in down
-    /// them from the sides. 0 off, as here.
-    pub hunt_tongues: f32,
-    pub hunt_tongue_angle: f32,
-    pub hunt_tongue_len: f32,
-    pub hunt_tongue_age: f32,
     /// **Mini-bosses** (2026-11-16, the mini-boss thread; `bosses.rs`):
     /// slime at a crowded knot or a big part cut off from food clenches
     /// into a lump that hunts the nearest soldier. Off here (`boss_every`
@@ -1036,10 +1023,6 @@ impl Rules {
             "raid_march_size" => &mut self.raid.march_size,
             "lure_reach" => &mut self.lure_reach,
             "hunt_reach" => &mut self.hunt_reach,
-            "hunt_tongues" => &mut self.hunt_tongues,
-            "hunt_tongue_angle" => &mut self.hunt_tongue_angle,
-            "hunt_tongue_len" => &mut self.hunt_tongue_len,
-            "hunt_tongue_age" => &mut self.hunt_tongue_age,
             "hunt_lag" => &mut self.hunt_lag,
             "star_tail" => &mut self.star.tail,
             "star_first" => &mut self.star.first,
@@ -1157,7 +1140,6 @@ impl Rules {
             "wave_flank" => &mut self.wave.flank,
             "wave_lead" => &mut self.wave.lead,
             "wave_hunted_gather" => &mut self.wave.hunted_gather,
-            "wave_cold" => &mut self.wave.cold,
             "fight_hold" => &mut self.fight_hold,
             "boss_every" => &mut self.boss.every,
             "boss_every_sd" => &mut self.boss.every_sd,
@@ -1378,10 +1360,6 @@ impl Default for Rules {
             lure_reach: 60.0,
             hunt_reach: 80.0,
             hunt_lag: 4.0,
-            hunt_tongues: 0.0,
-            hunt_tongue_angle: 50.0,
-            hunt_tongue_len: 60.0,
-            hunt_tongue_age: 0.25,
             boss: super::BossRules::default(),
             fruit: super::FruitRules::default(),
             wave: super::WaveRules::default(),

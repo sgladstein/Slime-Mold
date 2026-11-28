@@ -682,10 +682,12 @@ pub const CEILING: f32 = 12.0;
 ///
 /// **The hunt comes in wide** (`hunt_wave`, 2026-11-28, the Enemy lane, on
 /// the owner's 11-28 ask for a stronger slime; `larder_world/waves.rs`):
-/// once a walking squad's trail has brought 6% of the slime up to
-/// the ring past the guns' reach, the trail goes cold, that slime masses
-/// there for 8 s, splitting to points 70 degrees either side, and comes
-/// in from all of them at once. One planet before the losing waves.
+/// once the squad's trail has brought half a percent of the slime up to
+/// the ring just past the guns' reach, that slime masses there for 20 s
+/// (12 at first, longer on the owner's 08:56Z "focus on A" so the masses
+/// are bigger), splitting to points 70 degrees either side, and comes in
+/// from all of them at once. Standing or walking: the owner's films had
+/// a squad standing still. One planet before the losing waves.
 ///
 /// **The slime beats** (`heart`, 2026-11-20, the same thread;
 /// `larder_world/heart.rs`): every 6 s a beat runs out from its home

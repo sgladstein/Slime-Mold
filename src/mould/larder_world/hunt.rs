@@ -60,7 +60,6 @@ impl Hunt {
         let (a, b) = (mid(&a.1)?, mid(&b.1)?);
         Some((a.0 - b.0).hypot(a.1 - b.1))
     }
-
 }
 
 impl<W: World> Game<W> {
@@ -70,17 +69,11 @@ impl<W: World> Game<W> {
         if !self.world.hunt_pull() {
             return;
         }
-        // With `WaveRules::cold`, a wave gathering (`waves.rs`) holds the
-        // slime past the guns' reach: the trail is cold until it strikes
-        // (the places are still kept). Off since the 11-28 standing films:
-        // with the trail cold the stream behind stopped coming and the
-        // gathering was the few walkers already near; with it warm the
-        // stream keeps coming down the trail into the gathering's pull and
-        // piles up there.
-        let gathering = self.rules.wave.cold > 0.0 && self.waves.live.as_ref().is_some_and(|w| w.phase == super::WavePhase::Gather);
-        if gathering {
-            self.hunt.way = None;
-        }
+        // A gathering hunted wave (`waves.rs`) keeps the trail warm: with
+        // it cold while the wave gathered (tried 11-28) the stream behind
+        // stopped coming and the gathering was the few walkers already
+        // near; warm, the stream keeps coming down the trail into the
+        // gathering's pull and piles up there.
         if let Some(way) = self.hunt.way.take() {
             self.world.set_hunt_field(way.finish());
         } else if self.hunt.set {
@@ -102,77 +95,24 @@ impl<W: World> Game<W> {
         while self.hunt.places.front().is_some_and(|p| !warm(p.0)) {
             self.hunt.places.pop_front();
         }
-        let mut from: Vec<(u32, u32)> = self.hunt.places.iter().flat_map(|(at, cells)| {
+        let from: Vec<(u32, u32)> = self.hunt.places.iter().flat_map(|(at, cells)| {
             let age = ((now - at) as f32 * lag).round() as u32;
             cells.iter().map(move |&c| (c, age))
         }).collect();
-        // **Several tongues** (`Rules::hunt_tongues`, 2026-11-28): two
-        // branches from the squad's middle toward the slime near it,
-        // `hunt_tongue_angle` either side of the way to it, cheaper to come
-        // in along than straight (a cell's age is `hunt_tongue_age` of its
-        // distance), so the slime coming at the squad splits onto them
-        // and comes in as two tongues from either side. Aimed at the
-        // slime, not along the path: a squad standing still has no path,
-        // and it is the one the owner wants to see it against (11-28
-        // 07:31Z: "It would be much easier to tell in all if the squad was
-        // just standing shooting at the slime").
-        if r.hunt_tongues > 0.0 {
-            if let Some((c, to)) = self.slime_way(reach) {
-                let len = (r.hunt_tongue_len.max(0.0) * sc) as u32;
-                let age = r.hunt_tongue_age.max(0.0);
-                for side in [1.0f32, -1.0] {
-                    let a = side * r.hunt_tongue_angle.to_radians();
-                    let (dx, dy) = (to.0 * a.cos() - to.1 * a.sin(), to.0 * a.sin() + to.1 * a.cos());
-                    for d in (sc.max(1.0) as u32..=len).step_by(sc.max(1.0) as usize) {
-                        let p = (c.0 + dx * d as f32, c.1 + dy * d as f32);
-                        if p.0 < 0.0 || p.1 < 0.0 || p.0 >= w as f32 || p.1 >= h as f32 {
-                            break;
-                        }
-                        from.push((cell(p.0, p.1), (d as f32 * age).round() as u32));
-                    }
-                }
-            }
-        }
+        // **Several tongues** (D of the owner's three to see, 11-28 07:07Z;
+        // tried and dropped the same morning, Reports/dead-ends.md): the
+        // trail started at two points beside the squad, either side of the
+        // way to the slime near it, so the slime would come round at it as
+        // two tongues. As two lines out from the squad the field was flat
+        // along them and the slime stalled in one body out of reach; as two
+        // start points with the squad's own trail set back, it read like
+        // the hunt without it on the films.
         if from.is_empty() {
-            return;
-        }
-        if gathering {
             return;
         }
         let Some((agar, gw, gh)) = self.slime_ground() else { return };
         let limit = reach as u32;
         self.hunt.way = Some(Way::start_with(move || round_walk_from(&agar, gw, gh, &from, limit)));
         self.hunt.set = true;
-    }
-
-    /// The squad's middle (the living soldiers') and the way from it to
-    /// the slime within `reach` fine cells of it (a unit vector, toward
-    /// the walkers' middle there), for the tongues; None with no soldier
-    /// or no slime near.
-    fn slime_way(&self, reach: f32) -> Option<((f32, f32), (f32, f32))> {
-        let live: Vec<(f32, f32)> = self.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
-        let n = live.len() as f32;
-        if n == 0.0 {
-            return None;
-        }
-        let c = (live.iter().map(|p| p.0).sum::<f32>() / n, live.iter().map(|p| p.1).sum::<f32>() / n);
-        let bin = (self.world.scale() as usize).max(1);
-        let g = self.world.mould_grid(bin)?;
-        let gw = self.world.size().0.div_ceil(bin);
-        let b = bin as f32;
-        let (mut sx, mut sy, mut m) = (0.0f32, 0.0f32, 0.0f32);
-        for (i, &k) in g.iter().enumerate() {
-            if k == 0 {
-                continue;
-            }
-            let (x, y) = (((i % gw) as f32 + 0.5) * b, ((i / gw) as f32 + 0.5) * b);
-            if (x - c.0).hypot(y - c.1) <= reach {
-                sx += k as f32 * (x - c.0);
-                sy += k as f32 * (y - c.1);
-                m += k as f32;
-            }
-        }
-        let d = sx.hypot(sy);
-        (m > 0.0 && d > 0.0).then(|| (c, (sx / d, sy / d)))
     }
 }

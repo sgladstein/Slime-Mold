@@ -31,16 +31,19 @@
 //! easy to beat without them ... trying to make the slime enemy
 //! stronger"). The hunt (`hunt.rs`) brought the slime along the squad's
 //! trail, but it came in a single file down the trail, into the guns at
-//! the back, and died a few walkers at a time. Now, once the squad has
-//! walked (`moved` dish cells over the trail's warm seconds) and at least
-//! `near` of the slime's mass has caught up to the ring past the guns'
-//! reach, the trail goes cold and a wave starts: the slime that caught up
-//! masses where it is, and the points it lacks are filled `flank` degrees
+//! the back, and died a few walkers at a time. Now, once at least `near`
+//! of the slime's mass has caught up to the ring past the guns' reach (and,
+//! with `moved` over 0, the squad has walked that many dish cells over the
+//! trail's warm seconds; 0 since the owner's 07:31Z note, so a squad
+//! standing and shooting meets it too), a wave starts: the slime that
+//! caught up masses where it is (the trail stays warm, so the stream
+//! keeps feeding the masses), and the points it lacks are filled `flank` degrees
 //! either side of the biggest mass, so the wave comes in wide even from
 //! one trail. The massed point's field starts `lead` of the way to its
 //! nearest flank, so the mass splits: the walkers nearer a flank go round
-//! to it. `hunted_gather` seconds (shorter than the losing wave's, as the
-//! squad is walking), then the strike as any wave's. No losses needed,
+//! to it. `hunted_gather` seconds (20, longer than the losing wave's 12
+//! since the owner's 08:56Z "focus on A", for bigger masses), then the
+//! strike as any wave's. No losses needed,
 //! the `every` gap and the one-at-a-time rule with fruits as any wave.
 
 use super::raids::Way;
@@ -96,10 +99,6 @@ pub struct WaveRules {
     pub lead: f32,
     #[serde(default = "hunted_gather")]
     pub hunted_gather: f32,
-    /// Over 0, the hunt's trail goes cold while a wave gathers
-    /// (`hunt.rs`); 0 since the 11-28 standing films.
-    #[serde(default)]
-    pub cold: f32,
 }
 
 fn hunted_moved() -> f32 {
@@ -120,7 +119,9 @@ fn hunted_lead() -> f32 {
     0.8
 }
 fn hunted_gather() -> f32 {
-    12.0
+    // 20 since the owner's 08:56Z "focus on A": at 12 the masses came in
+    // too small to hurt 19 rifles.
+    20.0
 }
 
 impl Default for WaveRules {
@@ -147,7 +148,6 @@ impl Default for WaveRules {
             flank: hunted_flank(),
             lead: hunted_lead(),
             hunted_gather: hunted_gather(),
-            cold: 0.0,
         }
     }
 }
