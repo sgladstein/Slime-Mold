@@ -100,6 +100,10 @@ function PushRows {
     if (-not $Push -or $DryRun) { return }
     $git = Join-Path $Out "git"
     if (-not (Test-Path $git)) { git clone --branch curve-out https://github.com/sgladstein/Slime-Mold $git 2>$null; if (-not (Test-Path $git)) { git clone https://github.com/sgladstein/Slime-Mold $git; git -C $git checkout --orphan curve-out; git -C $git rm -rf --quiet . } }
+    # Its own name and address in this clone only: the PC's git had none, so
+    # every commit and push failed (11-28, 33 pushes, 203 rows kept local).
+    git -C $git config user.name "Plasmodia curve bot"
+    git -C $git config user.email "curve-bot@users.noreply.github.com"
     git -C $git pull --quiet origin curve-out 2>$null
     Copy-Item $rows (Join-Path $git "curve-$sha.txt") -Force
     git -C $git add "curve-$sha.txt"
