@@ -3,7 +3,7 @@
 State first, kept current after every merged batch; the brief the lane was
 given on 2026-11-17 is below it, unchanged.
 
-## Now (2026-11-28 00:15Z, at the account move)
+## Now (2026-11-28 03:30Z, new thread after the account move)
 
 This thread was rate-limited from 11-25 00:48Z to 11-27 23:04Z, then
 Scott paused all work (11-27 23:02Z) to move accounts. State:
@@ -14,17 +14,16 @@ Scott paused all work (11-27 23:02Z) to move accounts. State:
   took 954 of its 1,575 members; an engine guard "a lump never takes
   another's members" was tried first and failed the CPU mortar test, since
   a mortar takes back its thrown members).
-- **Built, not landed: the Grudge's readout** (Direction's pick 11-25):
-  the HUD reads "N% of hits shrugged off by scar" over the last 10 s, where
-  the share of the body on full scar stayed at 0.5-1.5% of planet 7's
-  slime at 2:00 whatever the lever (the scar is the kill zone). Engine
-  `wstat[14]` counts blows scar tissue turns aside (the mould grid moves to
-  word 15, `WSTAT_BYTES` 60), `GpuWorld::shrugged(ticks)`, the tell in
-  draw.rs (Look's file), a report folder. Holding one spot on planet 7: 21%
-  at 0:30, 47-52% from 0:40 to 3:00. It is the patch
-  [`enemy-grudge-readout-2026-11-25.patch`](enemy-grudge-readout-2026-11-25.patch)
-  (`git am` it on main; rebased 11-27 on `7a88a5a7`; clippy and the scar
-  tests passed). Squad then films Tinder and a Torch against it.
+- **The Grudge's readout: in a PR 11-28** (Direction's pick 11-25, from
+  the 11-25 patch, which applied clean on main 9a5ec6c): the HUD reads "N%
+  of hits shrugged off by scar" over the last 10 s, where the share of the
+  body on full scar stayed at 0.5-1.5% of planet 7's slime at 2:00 whatever
+  the lever (the scar is the kill zone). Engine `wstat[14]` counts blows
+  scar tissue turns aside (the mould grid moves to word 15, `WSTAT_BYTES`
+  60), `GpuWorld::shrugged(ticks)`, the tell in draw.rs (Look's file),
+  [the report](../Reports/grudge-readout-2026-11-25/README.md). Holding one
+  spot on planet 7: 21% at 0:30, 47-52% from 0:40 to 3:00. Squad then
+  films Tinder and a Torch against it.
 - **Dropped** (Direction agreed 11-27): planet 5's spore burst 0.05 and
   planet 4's heart at 900. Both were tuned to win the siege on the heart,
   which no longer decides a planet (#858), and both made the slime easier.

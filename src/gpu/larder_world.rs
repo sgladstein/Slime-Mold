@@ -164,6 +164,8 @@ struct Read {
     /// The walkers asleep (`wstat[12]`) and on full scar (`wstat[13]`).
     asleep: u32,
     scarred: u32,
+    /// The blows scar tissue shrugged off, a running total (`wstat[14]`).
+    shrugged: u32,
     /// The mould grid, if the frame summed one.
     grid: Option<Vec<u32>>,
     /// The engine's kill counter at the frame's end (`Engine::struck`,
@@ -210,6 +212,11 @@ pub struct GpuWorld {
     /// (`World::set_twist`); None until the first twist.
     step_base: Option<f32>,
     scarred: usize,
+    /// The scar's shrugged blows and the kills, running totals from the
+    /// readouts (`wstat[14]` and `wstat[3]`), the counters' last words, and
+    /// a sample of both totals at each readout's tick for the last
+    /// `SHRUG_KEEP` ticks (`GpuWorld::shrugged`).
+    shrug: Shrug,
     /// Each lump's sums at the last readout (`World::lumps`).
     lumps: [(u32, u32, u32); crate::mould::big::LUMPS],
     /// Wall cells broken as of the mirror's last agar read.
@@ -438,6 +445,16 @@ impl GpuWorld {
         self.scarred
     }
 
+    /// The blows scar tissue shrugged off and the walkers killed over
+    /// about the last `ticks` ticks (at most `SHRUG_KEEP`), from the
+    /// readouts: the Grudge's readout, the share of the squad's hits the
+    /// scar turned aside where it acts (Direction, 11-25). Kills count
+    /// every cause the engine's kill counter does (shots, blasts, fire);
+    /// both are 0 with scar tissue off.
+    pub fn shrugged(&self, ticks: u64) -> (u64, u64) {
+        self.shrug.over(self.ticks(), ticks)
+    }
+
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, s: Settings, scale: usize) -> Self {
         // The flinch folds into the alarm here, as `BigDish` folds its
         // params when made, so the keys may come in any order.
@@ -476,7 +493,7 @@ impl GpuWorld {
         let buf = e.device.create_buffer(&wgpu::BufferDescriptor { label: Some("readout"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ro = Readout { buf, ready: Arc::new(AtomicBool::new(false)), busy: false, sub: RefCell::new(None) };
         let sort = s.sort;
-        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, sort, own: 0, asleep: 0, step_base: None, scarred: 0, lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, setc: SetCells::default(), want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
+        let mut g = GpuWorld { e, shared, s, sub: scale as u32, crystals: Vec::new(), living: 0, ate: 0.0, ate_mark: None, covered: Vec::new(), cells: Vec::new(), garden: None, sort, own: 0, asleep: 0, step_base: None, scarred: 0, shrug: Shrug::default(), lumps: [(0, 0, 0); crate::mould::big::LUMPS], broken: 0, walls: None, walls_new: false, ro, setc: SetCells::default(), want: Cell::new(0), grid: None, stamps: None, profile: None, spread: 0, later: RefCell::new(VecDeque::new()), waits: 0, wait_ms: 0.0, struck: 0, fire_new: 0, burn_dirty: false, snaps: None };
         g.read_now();
         g
     }
@@ -647,7 +664,7 @@ impl GpuWorld {
         let grid = (gw * gh > 0).then(|| words[at(RO_GRID)..at(RO_GRID) + gw * gh].to_vec());
         let ate = (0..self.e.npiles as usize).fold(0u32, |a, p| a.wrapping_add(piles[p * PILE_WORDS + 7]));
         let covered = (0..self.e.npiles as usize).map(|p| piles[p * PILE_WORDS + 8] as usize).collect();
-        Read { out, sums, ate, covered, broken: st[1], living: st[4], own: st[5], asleep: st[12], scarred: st[13], grid, struck: st[3], lumps }
+        Read { out, sums, ate, covered, broken: st[1], living: st[4], own: st[5], asleep: st[12], scarred: st[13], shrugged: st[14], grid, struck: st[3], lumps }
     }
 
     /// Keeps a readout's world counts: the crystals, the living walkers,
@@ -673,6 +690,9 @@ impl GpuWorld {
         self.own = r.own as usize;
         self.asleep = r.asleep as usize;
         self.scarred = r.scarred as usize;
+        let t = self.ticks();
+        let shot_kills = r.out.shots.iter().map(|o| o.killed as u64).sum();
+        self.shrug.read(t, r.shrugged, r.struck, shot_kills);
         self.lumps = r.lumps;
         // What the frame (and any burn before it) killed on the shared
         // counter is fire's. A counter behind ours (a fresh dish, an
@@ -1480,6 +1500,50 @@ impl World for GpuWorld {
 /// mirror's), for comparing a GPU world with its CPU twin.
 pub fn engine_params(s: &Settings, scale: usize) -> BigParams {
     super::big_params(s, scale, s.crowd)
+}
+
+/// How many ticks of shrugged-blow samples a world keeps
+/// (`GpuWorld::shrugged`): 10 s at 200 ticks a second.
+pub const SHRUG_KEEP: u64 = 2000;
+
+/// The scar's shrugged blows against the kills (shots', bursts' and
+/// fire's), as running totals with a sample at each readout (`GpuWorld::shrugged`). The engine's counters
+/// are u32 words that a fresh dish zeroes; a count that went back starts
+/// again from there, as the struck's does.
+#[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
+struct Shrug {
+    last: Option<(u32, u32)>,
+    total: (u64, u64),
+    samples: VecDeque<(u64, u64, u64)>,
+}
+
+impl Shrug {
+    /// A readout's counters, and its frame's shots' kills: a shot's kill
+    /// is counted on its own (`kills`), the struck counter holds bursts'
+    /// and fire's.
+    fn read(&mut self, t: u64, shrugged: u32, struck: u32, shot_kills: u64) {
+        if let Some((s0, k0)) = self.last {
+            let (ds, dk) = (shrugged.wrapping_sub(s0), struck.wrapping_sub(k0));
+            if ds < 1 << 31 && dk < 1 << 31 {
+                self.total.0 += ds as u64;
+                self.total.1 += dk as u64;
+            }
+        }
+        self.total.1 += shot_kills;
+        self.last = Some((shrugged, struck));
+        if self.samples.back().is_none_or(|b| b.0 < t) {
+            self.samples.push_back((t, self.total.0, self.total.1));
+        }
+        while self.samples.front().is_some_and(|f| f.0 + SHRUG_KEEP < t) {
+            self.samples.pop_front();
+        }
+    }
+
+    fn over(&self, now: u64, ticks: u64) -> (u64, u64) {
+        let from = now.saturating_sub(ticks.min(SHRUG_KEEP));
+        let base = self.samples.iter().find(|s| s.0 >= from).or(self.samples.back());
+        base.map_or((0, 0), |b| (self.total.0 - b.1, self.total.1 - b.2))
+    }
 }
 
 #[cfg(test)]
@@ -3503,7 +3567,7 @@ mod tests {
         use crate::mould::kit::KitRules;
         let Some((device, queue)) = test_gpu() else { return };
         let (seed, scale, walkers) = (5, 1, 4_000);
-        let play = |tough: &str| -> (usize, usize, usize) {
+        let play = |tough: &str| -> (usize, usize, usize, (u64, u64)) {
             let mut s = race_settings(seed, scale, walkers);
             for (k, v) in [("alarm_keep", "0.95"), ("scar_keep", "0.9999"), ("scar_gain", "0.01"), ("scar_tough", tough), ("scar_tough_full", "2000")] {
                 crate::gpu::set(&mut s, k, v).unwrap();
@@ -3537,18 +3601,22 @@ mod tests {
             let after = near(&g);
             // The interface's count of walkers on full scar (every cell's
             // scar is over full here): all of the living with scar tissue
-            // on, none with it off.
+            // on, none with it off. And the Grudge's readout (11-25): the
+            // blows shrugged off against the kills, about half of the hits.
             g.step();
-            (before, after, g.world.scarred())
+            (before, after, g.world.scarred(), g.world.shrugged(SHRUG_KEEP))
         };
         let off = play("0");
         let on = play("0.5");
-        eprintln!("scar tissue: off {} -> {}, on {} -> {} ({} on full scar)", off.0, off.1, on.0, on.1, on.2);
+        eprintln!("scar tissue: off {} -> {}, on {} -> {} ({} on full scar; shrugged off {} of {} hits)", off.0, off.1, on.0, on.1, on.2, on.3 .0, on.3 .0 + on.3 .1);
         assert!(off.2 == 0 && on.2 > walkers / 2, "the walkers on full scar counted: {off:?} {on:?}");
         assert!(off.0 > 50 && on.0 > 50, "slime on the crystal: {off:?} {on:?}");
         assert!(off.1 * 10 < off.0, "without scar tissue the burst kills nearly all: {off:?}");
         let kept = on.1 as f32 / on.0 as f32;
         assert!((0.3..0.7).contains(&kept), "scar tissue keeps about half: {on:?}");
+        let shrug = on.3 .0 as f32 / (on.3 .0 + on.3 .1).max(1) as f32;
+        assert!(off.3 .0 == 0 && off.3 .1 > 50, "no blow shrugged off without scar tissue: {off:?}");
+        assert!((0.3..0.7).contains(&shrug), "about half the hits shrugged off: {on:?}");
     }
 
     /// **The Sleeper grows while it sleeps** (`dream`, 2026-11-24; GPU

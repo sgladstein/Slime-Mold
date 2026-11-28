@@ -6,6 +6,14 @@ the game's "what is new" and "things to try" lists, the record of his play
 sessions and the tuning numbers. The brief it was started from is at the
 end.
 
+## State (2026-11-28 03:30Z), read this first
+
+- **New account, new threads** (Scott 11-28 03:14Z, "Go with your recommendation"): five lane threads, Lab paused, no difficulty freeze. NOW.md already had the hold dropped (a14463c); this pass only marks #848 merged.
+- **Jobs sent 03:20Z**, from the plan's steps: Engine (handoff rewrite; run bot picks by pip, turret designs, no heart siege, builder arm; 1070 retime and star-map save check; PC league PAUSE now, rebuild on main later; handoff lint; D8 list). Squad (handoff; turret-design logic for the bot with Engine; energy sink proposal with figures, prices are Direction's). Enemy (Grudge readout redo, rescue node at step 3, hunt rerun under an hour, retune with Direction per run log). Look (handoff; star map and slime colours against art direction; rescue badge; then A to D).
+- **Added scope:** record every ask Scott makes in any thread in `wiki/decisions-game.md` and here.
+- **Open with him:** the shop DPS mock-up (other thread, 11-28 03:13Z); D8 once Engine lists what stands on the CPU engine; the auto-delete-branches switch.
+- **Next:** his next run log gets one retune pass with Enemy; the curve page when Engine's twelve-step curve exists.
+
 ## State (2026-11-27 23:55Z), read this first
 
 - **Gap:** this project's threads were out of usage 11-25 01:00Z to 11-27 23:00Z. Meanwhile Scott's other project built the star map (#860), hearts as a crystal mini-boss (#858), slime levels and toughness (#862 #864 #865), the early lift (#868), Hard +2.5 (#870), harder from step 2 (#873), turrets on loadout guns and bought like guns (#871 #875 #876) and the HUD slime bar (#872), all on his chat rulings, recorded in `wiki/decisions-game.md`. Review [doc](https://claude.ai/artifact/6dmCXQ5GC3H1w8LN4ZWGrE), plan [doc](https://claude.ai/artifact/57RBPNiFdCkUk4DZwN28nG) (his card 23:55Z: five lanes, Lab paused, no freeze; in the repo as `Reports/plan-2026-11-27/`, #882). He paused all work at 23:02Z and moved it to a new account (23:36Z); see `handoff/account-move-2026-11-27.md`.
