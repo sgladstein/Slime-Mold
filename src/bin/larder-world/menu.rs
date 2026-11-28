@@ -663,6 +663,10 @@ pub(super) struct Trial {
     k: usize,
     card: rounds::Card,
     run: Run,
+    /// The player's own cards it was dropped over (`Run::swap_in`), each
+    /// with its slot: put back when the trial ends, so trying a card on
+    /// a full gun leaves the gun as it was.
+    out: Vec<(rounds::Card, usize)>,
 }
 
 /// The shop page for run `r`, with the card tried on if there is one:
@@ -1752,7 +1756,7 @@ impl App {
         self.end_trial();
         if let Some(k) = want {
             let made = self.shop_run().and_then(|r| Some((r.try_on(k)?, *r.offers.get(k)?)));
-            self.trial = made.map(|(run, card)| Trial { k, card, run });
+            self.trial = made.map(|(run, card)| Trial { k, card, run, out: Vec::new() });
         }
         // The shop page drawn again as it stands (not `show_shop`, which
         // may turn to the star map), and the run saved: ending a trial
@@ -1771,6 +1775,11 @@ impl App {
         let Some(mut t) = self.trial.take() else { return };
         if let Some(r) = self.shop_run() {
             t.run.untry(t.card, r.in_gun(t.card));
+            for &(c, slot) in t.out.iter().rev() {
+                if let Some(i) = t.run.cards.iter().rposition(|o| o.0 == c && !o.1) {
+                    t.run.pick(Pick::Move(i, slot));
+                }
+            }
             *r = t.run;
         }
     }
@@ -1810,8 +1819,17 @@ impl App {
                 self.trial = Some(t);
             }
             (StartEvent::Move(_, slot), Pick::Card(ci)) => {
+                // The tried card from the bag over a card in the gun
+                // (`Run::swap_in`): that card is noted, to go back.
+                let real = self.shop_run().map_or(0, |r| r.in_gun(t.card));
+                let tried = t.run.trial_at(t.card, real) == Some(ci) && t.run.cards.get(ci).is_some_and(|o| !o.1);
+                let before = t.run.gun();
                 if !t.run.pick(Pick::Move(ci, slot)) {
                     note = Some(format!("{name}: over the gun's budget or slots"));
+                } else if tried && t.run.gun().len() == before.len() {
+                    if let Some(&c) = before.get(slot) {
+                        t.out.push((c, slot));
+                    }
                 }
                 self.trial = Some(t);
             }
