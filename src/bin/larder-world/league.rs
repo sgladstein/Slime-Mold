@@ -625,6 +625,14 @@ pub(super) fn stage(spec: &str, depth: u32) -> &str {
 pub(super) fn planet(base: Args, depth: u32, seed: u64, secs: f32, pip: Option<Pip>, spec: &str, device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
     let mut r = Run::new(seed);
     r.restock();
+    // A step with no planet of that pip (the landing and the home world
+    // have only a Fair one) is refused here: until 11-28 step 1 played its
+    // Fair planet whatever the pip (the loop below never ran).
+    if let Some(want) = pip {
+        if !r.star_map().steps.get(depth as usize - 1).is_some_and(|s| s.iter().any(|n| n.pip == want)) {
+            return Err(format!("league: step {depth} of run {seed} has no {} planet", want.name()));
+        }
+    }
     // `Plan::points`: added before the first shop, which on planet 1 is a
     // shop of its own before the landing.
     let extra = shop_plan(stage(spec, depth))?.points;

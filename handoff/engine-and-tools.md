@@ -22,32 +22,28 @@ and resume of a star-map run), 5 (60 fps at 4K on the GTX 1070).
 
 ## State, 2026-11-28
 
-- **Nightly Run bot** (`run-bot.yml`, planets 1 to 3, seeds 1 to 3): red
-  since 11-25 on the soft-lock check, not a crash. Step 3 is the Trunk since
-  #868; the bot goes broke with about 11 soldiers once every free crystal is
-  drained, the slime keeps the home and one more crystal (17,000 walkers),
-  and the bot's stand kills only what regrows: stall 2:01 to 3:44 (run
-  46087963392; lavapipe repeat on 9a5ec6c: 1:40, won at 10:38).
-- **Branch `claude/project-thread-8iu6no`** (this thread), open PR:
-  - `push=SECS` dial (`strat.rs`, on at 40): after SECS with no harvest and
-    no new 1% low, clear the slime's crystal with the fewest walkers until
-    it is dry or the stall ends. First arms batch (f147c81a): the longest
-    stall fell in 7 pairs, rose in none, 3 tied (p 0.008); planet 3 seed 4
-    loss to win; pushes cost soldiers. Still over a minute on 5 of 10.
-    Second batch (8543d53e): push=20 won 2 of 6 planet 3 games against 4
-    of 6 for 40, so 40 stays. First runs by pip, planets 1 to 3, seeds 1
-    to 3: Safe won 8 of 9 planets (the loss: a Safe run with no Safe or
-    Fair way on took Hard; now the nearest pip); Hard lost step 2 (the
-    Sprawler) on all three seeds, in 1:19 to 4:00 with 19 to 50 fallen.
-  - The heart siege clears the live heart's own crystal (any crystal since
-    #858), not crystal 0.
-  - Star-map picks: `league=run:SEED[:TO[:SECS[:PIP]]]` takes that pip at
-    each fork (`league::pick_pip`: that pip, else Fair, else the first); every
-    league line carries `pip=`. Arms rows `runN.PIP` and `dials=A=1,B=2`.
-  - The first Starfall/core of a run no longer says its words twice (corner
-    alert held back while the run's Starfall note shows; `main.rs`).
-  - Lint: a pull request changing `src/` with no `handoff/*.md` change fails
-    unless a commit says `No-handoff: <why>` (`wiki/lint.py handoff_kept`).
+- **Merged #889 (11-28 05:50Z)**: `push=40` (after 40 s with no harvest and
+  no new 1% low, clear the slime's thinnest crystal; arms batch 1: longest
+  stall fell in 7 pairs, rose in 0, p 0.008; batch 2: push=20 won 2 of 6
+  planet 3 games against 4 for 40); the heart siege clears the live heart's
+  own crystal; `league=run:SEED[:TO[:SECS[:PIP]]]` and `pick_pip` (that
+  pip, else the nearest); every league line has `pip=`; arms rows
+  `runN.PIP` and `dials=`; run-bot.yml plays seeds 1 to 3 times Safe, Fair,
+  Hard, a stall over a minute is a WALL line (Direction's word), soft
+  locks fail; one ore notice; the handoff lint. First runs by pip: Safe
+  won 8 of 9 planets, Hard lost step 2 (Sprawler) on all three seeds, a
+  finding for the curve page (Direction: Scott wants it harder).
+- **Branch `claude/project-thread-8iu6no`**, open PR: the curve kit.
+  `scripts/pc-curve.ps1` (the owner's PC: its own clone `slime-curve`, one
+  planet a game `league=STEP:SEED:SECS:PIP`, arms main and builder
+  `pumps=1,guard=1,turrets=1,hold=20`, waits while he plays or
+  `gpu-timing.lock` exists, resumes from its rows, `-Push` to branch
+  `curve-out`), `.github/workflows/curve.yml` (the GitHub fallback, by hand
+  only: a whole curve is about 190 games, tens of runner hours, so name the
+  part and its time first), `scripts/curve_table.py` (the table by step and
+  pip, and the paired checks). A league planet job refuses a pip its step
+  lacks (step 1 played Fair whatever the pip). Builder arm on step 2 Fair
+  (lavapipe, 240 s): one pump, two turrets.
 - **PC strategy league** (`C:\Users\Scott\Code\slime-league`, detached HEAD,
   src tree `cb8d00f3`, the 11-22 build): paused 11-28 03:27Z with a `PAUSE`
   file (Scott allowed the Remote Control card). Two worker Pythons were
@@ -57,22 +53,17 @@ and resume of a star-map run), 5 (60 fps at 4K on the GTX 1070).
 
 ## Next, in order
 
-1. run-bot.yml (11-28): seeds 1 to 3 times Safe, Fair, Hard; a stall over
-   a minute is a WALL line with step, pip and seed, not a failure
-   (Direction's word 11-28), and a step that walls on every seed heads its
-   pip's table; soft locks still fail. Hard step 2 losing is a finding for
-   the curve page, not a bug (Direction: Scott wants it harder).
+1. The curve: on the owner's PC when it is on and connected (Remote Control
+   in C:\Users\Scott\Code: `scripts\pc-curve.ps1 -DryRun`, then `-Push`),
+   else a named part on GitHub (`curve.yml`). Rows to Direction for the
+   test 3 page (`curve_table.py`).
 2. Whether the heart siege should stay at all (hearts are not the win,
    #858): an arms pair with the siege's heart block off.
-3. The builder arm (pumps plus a turret each) now that #887 builds rolled
-   designs.
-4. run-bot.yml by pip (Safe, Fair, Hard); the curve on twelve steps (PC
-   first, else GitHub), rows for Direction's test 3 page.
-5. Rebuild the PC league on main, then delete `PAUSE`.
-6. GTX 1070 retime: a Hard step 9 and the home world at 3840x2160, and a
+3. Rebuild the PC league on main, then delete `PAUSE`.
+4. GTX 1070 retime: a Hard step 9 and the home world at 3840x2160, and a
    mid-planet save and resume of a star-map run (`scripts/pc-batch.ps1`;
    the `gpu-timing.lock` rule in project memory `gtx1070-batch`).
-7. D8: list what stands on the CPU engine (`src/mould/big.rs`) for Direction.
+5. D8 is decided (Scott 11-28 05:38Z, "Keep it, no new twins"): nothing.
 
 ## Tools, where to look
 
