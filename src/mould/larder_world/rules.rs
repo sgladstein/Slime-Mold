@@ -888,7 +888,8 @@ impl Rules {
                 return true;
             }
             "rescue_thick" => {
-                self.rescue.thick = v.clamp(1.0, f32::from(super::WALL_LEVELS)) as u32;
+                // 0 reads as 1 where the ring is dug (`rescue_dig`).
+                self.rescue.thick = v.clamp(0.0, f32::from(super::WALL_LEVELS)) as u32;
                 return true;
             }
             "rescue_sites" => {
