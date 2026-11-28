@@ -154,7 +154,7 @@ rules on the world, on the CPU and the engine; WM1, designed
 and player walls (`build_wall`) that mould pressing on wears down to slow
 rubble (owner, 15:24Z: walls must not seal a crystal for good). All on the
 big dish, CPU, off by default. Wall health defaults to 400: a whole caged mould breaks out
-in 20-30 s, while a passing tube never breaks a wall. Crystal charge flows
+in 20-30 s, while a passing tube never breaks a wall. (Since 2026-11-28 a run's player walls are weaker, 100 a cell on planet 1 down to 33 on the core world, `run::WALL_HP`, and the wall's upgrade hardens its cells instead of thickening it, `Game::harden`; the owner's card that day, [decisions](../decisions-game.md).) Crystal charge flows
 inside a crystal (`crystal_flow` 0.01), so the mould eats whole crystals. (In the run
 since 2026-11-21 it no longer empties one: only the squad does,
 `crystal_keep`; [growth](../model/growth.md).)
@@ -405,12 +405,29 @@ less than a soldier (was 15 cells and 500 food; he, 05:52Z: turrets were
 **Turrets are bought like guns** since 2026-11-27 (owner, 21:36Z: "You buy
 "turrets" like you buy guns now. They have different rates of fire, range,
 some could shoot over walls, Some can't"; 21:42Z and 21:48Z;
-`mould::turrets`): the run shop's Build tab sells rolled turret designs of
-four kinds (gun turret, lobber, sprayer, hunter; `TurretKind`), each with a
-reach and rate roll round 1, a card rack, and (gun turret and sprayer) a
-roll for firing over walls (the lobber always does, the hunter never);
-later planets roll better ones, and the shop price follows how good it is
-(60 to 600 points) while the food to build stays fixed per kind. A run
+`mould::turrets`). Since 2026-11-28 they **mirror the guns** (owner,
+05:49Z: "It should mirror the gun system, in fact is should be in the gun
+section ... There should be many familys of turrets with there base stats
+randomly selected from a distribution and cost based on how good the
+turret is"; 06:05Z, families over all random): eleven **families**
+(`turrets::Family`) over the four firing styles (`TurretKind`, the
+building each raises): aimed Sentry, Repeater (fast, short), Picket (slow,
+far) and Flak (2 to 6 shots a pull); lobbed Mortar, Bombard (a cluster of
+small shells) and Howitzer (farthest, one big shell); sprayed Sprayer and
+Fan (a wide, short arc of 6 to 12 spots); picky Hunter and Lancer (lighter
+shots, twice as often). Each family is an average of every stat (range,
+rate, spread or arc, shots, strike, over-walls chance, slots, budget;
+`Family::average`), rolled per design as a gun is (`Turret::roll_family`:
+each stat times `exp(sigma z)`, slots and shots plus a normal draw), so
+families of one style overlap; some are first sold on later planets
+(Picket, Flak and Hunter from 2, Bombard and Fan from 3, Howitzer and
+Lancer from 4). The price is a gun's (`Turret::price`: (110 + 40 x planet)
+x grade squared, a third more for a rolled over-walls), and the food to
+build stays fixed per style (21:42Z). They sit on the shop's **Guns tab**,
+a second table under the guns, each against the turret in the loadout
+shown; three a shop, each of a different style while one is left (two of
+four kinds on a Build tab before, with only reach, rate and rack rolled).
+A run
 starts with the plain gun turret in loadout 2; the turret unlocks and
 Turret power are gone. Nothing is replaced: each design bought takes a
 loadout of its own, whose cards every turret built from it fires

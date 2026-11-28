@@ -13,16 +13,20 @@
 //! would need the engines to lift wall cells, which neither can) and
 //! climbing over (soldier path costs, owned by two other threads that day).
 //!
-//! **Thicken** (`Game::upgrade` on a wall): each level adds one wall's width
-//! of cells on its home side (`Building::home`), 2, 4, 6 then 8 cells at
-//! the default width, each at the wall's first price. Its new band is
-//! written at once, as a pump's upgrade is; soldiers standing in it step
-//! out to the home side first (`Game::thicken`), so nobody is put on the
-//! slime's side.
+//! **Harden** (`Game::upgrade` on a wall, since 2026-11-28): each level
+//! gives every standing cell of the wall more health (`Game::wall_full`,
+//! `Rules::wall_hp`, `wall_harden`), at the wall's first price, up to
+//! `WALL_LEVELS`; worn cells keep their wear and rubble stays rubble. The
+//! owner, 06:07Z: walls "should not actually get thicker when upgrading,
+//! they get stronger (more health per cell). I just layer the walls in
+//! play to thicken." From 11-16 to 11-28 a level instead added a band of
+//! cells on the home side (Thicken: 2, 4, 6 then 8 cells), soldiers in
+//! the new band stepping out to the home side first; a wall is now always
+//! its one band.
 
 use super::*;
 
-/// A wall's top level: one band at placing, three more by Thicken.
+/// A wall's top level: as placed, then three hardenings.
 pub const WALL_LEVELS: u8 = 4;
 
 /// A clicked door's length, in wall widths (`Game::door_from_click`): 6
@@ -51,26 +55,30 @@ impl<W: World> Game<W> {
         (self.world.open(x, y) || self.door_at(x, y)) && !self.bulwark_at(x, y)
     }
 
-    /// Wall `b`'s band `l` (1 the wall as placed): its line, fine cells,
-    /// moved `l - 1` widths to its home side.
-    pub fn wall_band(&self, b: usize, l: u8) -> ((f32, f32), (f32, f32)) {
+    /// Wall `b`'s line, fine cells: its one band (since 2026-11-28 a level
+    /// hardens it rather than adding a band, `Game::harden`).
+    pub fn wall_band(&self, b: usize) -> ((f32, f32), (f32, f32)) {
         let bd = self.buildings[b];
         let Kind::Wall { to } = bd.kind else { return (bd.at, bd.at) };
-        let o = f32::from(l.max(1) - 1) * self.rules.wall_width * self.s();
-        let n = bd.home;
-        ((bd.at.0 + n.0 * o, bd.at.1 + n.1 * o), (to.0 + n.0 * o, to.1 + n.1 * o))
+        (bd.at, to)
     }
 
-    /// Write standing wall `b`'s cells into the world, every band of its
-    /// level, then mark the doors. Its cells already walls keep their worn
-    /// health; rubble in its footprint is built again (`World::build_wall`
-    /// writes open cells only), so a door cut into a holed wall fills it.
+    /// A wall cell's full health at `level` (1 as placed): `Rules::wall_hp`,
+    /// and `wall_harden` of it more each level.
+    pub fn wall_full(&self, level: u8) -> f32 {
+        self.rules.wall_hp * (1.0 + self.rules.wall_harden * f32::from(level.max(1) - 1))
+    }
+
+    /// Write standing wall `b`'s cells into the world at its cell health
+    /// (`Building::max_hp`), then mark the doors. Its cells already walls
+    /// keep their worn health; rubble in its footprint is built again
+    /// (`World::build_wall_hp` writes open cells only), so a door cut into
+    /// a holed wall fills it.
     pub(super) fn wall_bands(&mut self, b: usize) {
         let s = self.s();
-        for l in 1..=self.buildings[b].level.max(1) {
-            let (a, z) = self.wall_band(b, l);
-            self.world.build_wall((a.0 / s, a.1 / s), (z.0 / s, z.1 / s), self.rules.wall_width);
-        }
+        let (a, z) = self.wall_band(b);
+        let hp = self.buildings[b].max_hp;
+        self.world.build_wall_hp((a.0 / s, a.1 / s), (z.0 / s, z.1 / s), self.rules.wall_width, hp);
         self.walls += 1;
         self.mark_doors();
         self.stale_maps();
@@ -91,8 +99,8 @@ impl<W: World> Game<W> {
         let mut m = vec![false; w * h];
         let r = (self.rules.wall_width * self.s() / 2.0).max(0.5);
         for &b in &doors {
-            for l in 1..=self.buildings[b].level.max(1) {
-                let (a, z) = self.wall_band(b, l);
+            {
+                let (a, z) = self.wall_band(b);
                 let (x0, x1) = (((a.0.min(z.0) - r).floor().max(0.0)) as usize, ((a.0.max(z.0) + r).ceil().max(0.0) as usize).min(w.saturating_sub(1)));
                 let (y0, y1) = (((a.1.min(z.1) - r).floor().max(0.0)) as usize, ((a.1.max(z.1) + r).ceil().max(0.0) as usize).min(h.saturating_sub(1)));
                 for y in y0..=y1 {
@@ -127,9 +135,8 @@ impl<W: World> Game<W> {
                 continue;
             }
             let u = ((to.0 - bd.at.0) / l, (to.1 - bd.at.1) / l);
-            // Across the line, toward home: from half a width behind it to
-            // half a width past its last band, a cell's slack either side.
-            let (lo, hi) = (-ww / 2.0 - sc, f32::from(bd.level.max(1) - 1) * ww + ww / 2.0 + sc);
+            // Across the line: half a width either side, a cell's slack.
+            let (lo, hi) = (-ww / 2.0 - sc, ww / 2.0 + sc);
             let fits = |p: (f32, f32)| {
                 let (dx, dy) = (p.0 - bd.at.0, p.1 - bd.at.1);
                 let along = dx * u.0 + dy * u.1;
@@ -198,6 +205,7 @@ impl<W: World> Game<W> {
             let hb = self.buildings[h];
             self.buildings[k].home = hb.home;
             self.buildings[k].level = hb.level;
+            (self.buildings[k].max_hp, self.buildings[k].hp) = (hb.max_hp, hb.max_hp);
         }
         // Whole already (`BuildRules::raise` 0 makes every building whole
         // when placed, before it was a door): its bands and the mask again.
@@ -230,34 +238,35 @@ impl<W: World> Game<W> {
             .collect()
     }
 
-    /// Thicken standing wall `b` a level (`Game::upgrade` pays): its next
-    /// band of cells on its home side, now. Soldiers in the band step out
-    /// to its far side first, if there is ground there; doors cut into it
-    /// thicken with it, so they still go through.
-    pub(super) fn thicken(&mut self, b: usize) {
+    /// Harden standing wall `b` a level (`Game::upgrade` pays): every
+    /// standing cell gains the difference to `wall_full` of the new level,
+    /// so a worn wall keeps its wear; doors cut into it harden with it.
+    pub(super) fn harden(&mut self, b: usize) {
         let level = self.buildings[b].level + 1;
         self.buildings[b].level = level;
-        let (a, z) = self.wall_band(b, level);
-        let sc = self.s();
-        let r = (self.rules.wall_width * sc / 2.0).max(0.5);
-        let n = self.buildings[b].home;
-        for k in 0..self.soldiers.len() {
-            let s = self.soldiers[k];
-            let q = nearest_on(a, z, (s.x, s.y));
-            if !s.alive || (q.0 - s.x).hypot(q.1 - s.y) > r + 0.5 {
-                continue;
-            }
-            let across = (s.x - q.0) * n.0 + (s.y - q.1) * n.1;
-            let step = r + 1.0 - across;
-            let to = (s.x + n.0 * step, s.y + n.1 * step);
-            if self.standable(to.0, to.1) {
-                (self.soldiers[k].x, self.soldiers[k].y) = to;
-            }
-        }
         for d in self.doors_in(b) {
             self.buildings[d].level = level;
         }
-        self.wall_bands(b);
+        let full = self.wall_full(level);
+        self.harden_to(b, full);
+    }
+
+    /// Set standing wall `b`'s cell health to `full` (only upward): its
+    /// cells and its doors' gain the difference. The rescue's dug-out rings
+    /// use it to stand at their own health (`RescueRules::thick`).
+    pub(super) fn harden_to(&mut self, b: usize, full: f32) {
+        let add = full - self.buildings[b].max_hp;
+        if add <= 0.0 {
+            return;
+        }
+        let s = self.s();
+        let (a, z) = self.wall_band(b);
+        self.world.harden_wall((a.0 / s, a.1 / s), (z.0 / s, z.1 / s), self.rules.wall_width, add);
+        for k in std::iter::once(b).chain(self.doors_in(b)) {
+            let bd = &mut self.buildings[k];
+            bd.max_hp += add;
+            bd.hp += add;
+        }
     }
 }
 
@@ -345,11 +354,13 @@ mod tests {
         }
     }
 
-    /// Thicken: each level adds a band on the home side, up to
-    /// `WALL_LEVELS`, at the wall's first price; a door cut into it
-    /// thickens with it and still lets soldiers through.
+    /// Harden (2026-11-28): each level raises every standing cell of the
+    /// wall to `wall_full` of the level, up to `WALL_LEVELS`, at the wall's
+    /// first price; no band grows on either side, a worn cell keeps its
+    /// wear, and a door cut into it hardens with it and still lets soldiers
+    /// through.
     #[test]
-    fn thicken_grows_the_wall_on_its_home_side() {
+    fn harden_strengthens_the_wall_in_place() {
         let (mut g, w, a, b) = walled();
         let sc = g.s();
         let mid = (a.0, g.soldiers[0].y);
@@ -359,22 +370,29 @@ mod tests {
         let price = g.wall_price(a, b);
         assert_eq!(g.upgrade_price(w), Some(price));
         let ww = g.rules.wall_width * sc;
-        let shut = |g: &Game<BigDish>, p: (f32, f32)| !g.world.open(p.0, p.1);
+        let (fw, _) = g.world.size();
+        let cell = |p: (f32, f32)| p.1 as usize * fw + p.0 as usize;
+        let on = (a.0, mid.1 + 6.0 * sc);
+        let worn = (a.0, mid.1 + 8.0 * sc);
+        let door = (mid.0, mid.1);
+        assert!(!g.world.open(on.0, on.1) && !g.world.open(worn.0, worn.1));
+        assert_eq!(g.world.wall_health[cell(on)], g.wall_full(1), "placed at level 1's health");
+        g.world.wall_health[cell(worn)] -= 30.0;
+        let side = (a.0 + n.0 * ww, on.1 + n.1 * ww);
         for l in 2..=WALL_LEVELS {
-            let o = f32::from(l - 1) * ww;
-            let side = (a.0 + n.0 * o, mid.1 + 6.0 * sc + n.1 * o);
-            assert!(!shut(&g, side), "level {l}'s band is open ground before");
             let bank = g.bank;
             assert!(g.apply(Cmd::Upgrade(w)));
             assert_eq!(g.buildings[w].level, l);
             assert!((bank - g.bank - price).abs() < 1e-3, "each level costs the first price");
-            assert!(shut(&g, side), "level {l}'s band is wall");
-            let other = (a.0 - n.0 * (ww + sc), mid.1 + 6.0 * sc);
-            assert!(!shut(&g, other), "nothing grows on the slime's side");
-            assert_eq!(g.buildings[d].level, l, "the door thickens with it");
-            let door_band = (mid.0 + n.0 * o, mid.1 + n.1 * o);
-            assert!(shut(&g, door_band) && g.standable(door_band.0, door_band.1), "the door's band is a door");
+            assert!((g.world.wall_health[cell(on)] - g.wall_full(l)).abs() < 1e-3, "level {l}: its cells at full");
+            assert!((g.world.wall_health[cell(worn)] - (g.wall_full(l) - 30.0)).abs() < 1e-3, "level {l}: the worn cell keeps its wear");
+            assert!((g.world.wall_health[cell(door)] - g.wall_full(l)).abs() < 1e-3, "level {l}: the door's cells harden too");
+            assert!((g.buildings[w].max_hp - g.wall_full(l)).abs() < 1e-3);
+            assert!(g.world.open(side.0, side.1), "level {l}: no band on the home side");
+            assert_eq!(g.buildings[d].level, l, "the door hardens with it");
+            assert!(g.standable(door.0, door.1), "the door still a door");
         }
+        assert!(g.wall_full(WALL_LEVELS) > 3.9 * g.wall_full(1), "the top level holds four times the first");
         assert_eq!(g.upgrade_price(w), None, "at the top level");
         assert!(!g.apply(Cmd::Upgrade(w)));
     }

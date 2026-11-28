@@ -1063,8 +1063,8 @@ fn the_menu_starts_a_runs_level_like_a_mission() {
     assert!(shop.heading.starts_with(&format!("Planet 1 of {}", slime_mould::mould::run::PLANETS)), "{}", shop.heading);
     // The plain gun turret, owned from planet 1 (2026-11-27), on the
     // Owned tab, and in loadout 2 on the row of loadouts, quick to build.
-    assert!(shop.loadouts.iter().any(|l| l.n == 2 && l.holds == "Gun turret" && l.quick.is_some_and(|q| q.1 == Some(1))));
-    assert!(shop.rows.iter().any(|row| row.group == slime_mould::world::start::OWNED && row.name.starts_with("Gun turret")), "{:?}", shop.rows.iter().map(|r| (&r.group, &r.name)).collect::<Vec<_>>());
+    assert!(shop.loadouts.iter().any(|l| l.n == 2 && l.holds == "Sentry" && l.quick.is_some_and(|q| q.1 == Some(1))));
+    assert!(shop.rows.iter().any(|row| row.group == slime_mould::world::start::OWNED && row.name.starts_with("Sentry")), "{:?}", shop.rows.iter().map(|r| (&r.group, &r.name)).collect::<Vec<_>>());
 }
 
 /// **A run in the window** (needs a GPU; the cloud's software Vulkan runs
@@ -1104,10 +1104,10 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let wall = m.commands.iter().find(|c| c.id == WALL).unwrap();
     assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
     // The turret buttons are the quick-build slots (2026-11-27): the
-    // first holds the plain gun turret, the others are empty, and the
+    // first holds the plain Sentry (11-28), the others are empty, and the
     // hunter has no button of its own.
     let turret = m.commands.iter().find(|c| c.id == TURRET).unwrap();
-    assert!(!turret.locked && turret.name == "Gun turret", "{} {:?}", turret.name, turret.why_not);
+    assert!(!turret.locked && turret.name == "Sentry", "{} {:?}", turret.name, turret.why_not);
     let empty = m.commands.iter().find(|c| c.id == MORTAR).unwrap();
     assert!(!empty.ready && empty.name == "Quick build 2", "{}", empty.name);
     assert!(m.commands.iter().all(|c| c.id != HUNTER));
@@ -2337,8 +2337,10 @@ fn the_menus_real_lists_fit_one_screen() {
             assert!(m.sheets() <= 2 && !m.scrolls(), "{at}: the things to try take {} pages", m.sheets());
             // The run's shop three planets in (as `menu=shop-mid` films it)
             // and the gun range's armory (Shop B, 11-15): every tab whole on
-            // one screen, but the armory's eight guns, which may take two
-            // pages at 200% on a 540-line screen.
+            // one screen, but the armory's eight guns and the shop's Guns
+            // tab (since 2026-11-28 four guns and three turrets, two
+            // tables), which may take two pages at 200% on a 540-line
+            // screen.
             let mut r = Run::new(4);
             for _ in 0..3 {
                 r.won(3);
@@ -2351,12 +2353,12 @@ fn the_menus_real_lists_fit_one_screen() {
                 m.shop = Some(shop);
                 m.show(Page::Shop);
                 let n = m.shop.as_ref().map_or(0, |s| s.rows.len());
-                // (Cards, Guns, Squad, Buildings, Tools; Guns, Bullets,
+                // (Cards, Owned, Guns, Squad, Tools; Guns, Bullets,
                 // the special bullets, the two shelves of modifiers, and
                 // the trails' and shove cards'.)
                 for tab in 0..if name == "armory" { 6 } else { 5 } {
                     draw(&mut m);
-                    let most = if name == "armory" && tab == 0 { 2 } else { 1 };
+                    let most = if name == "armory" && tab == 0 || name == "shop" && tab == 2 { 2 } else { 1 };
                     assert!(m.sheets() <= most && !m.scrolls(), "{at}: the {name}'s tab {tab} takes {} pages ({n} rows)", m.sheets());
                     m.key(KeyCode::Tab, true);
                 }
