@@ -852,7 +852,13 @@ fn barren_rgb() -> vec3<f32> { return select(BARREN_RGB, SALT_RGB, P.flora == 1u
 // Shallow water is a clear step lighter than deep (at least 20 in grey;
 // the planet review 11-15: fords were 6-7 off deep water and could not be
 // seen at zoom 1). It was (5, 14, 22).
-const WET_RGB: vec3<f32> = vec3<f32>(14.0, 33.0, 41.0);
+// Look C 2026-11-28: at (14, 33, 41) open shallow water, lit by its gloss,
+// came out at the ground's own value or above it (grey 40 against 41 on
+// planet 10's lake, 44 against 34 on planet 8's river, zoom 6, 1536x864),
+// so a pond read as a blue patch of ground, not a hollow. Darker by a
+// quarter: shallow 27-31, a clear step under every planet's ground, and
+// still about 20 over deep water (29 against 8 on planet 5's river).
+const WET_RGB: vec3<f32> = vec3<f32>(9.0, 25.0, 32.0);
 // Deep water (soil 4 with the wet bit, #285): darker still at its middle;
 // a bridge (soil 5) is a plank deck. The owner (11-14 18:01Z) on the
 // first river: "just a blue curved line on the map. It doesn't look
@@ -865,7 +871,8 @@ const DEEP_RGB: vec3<f32> = vec3<f32>(1.0, 6.0, 14.0);
 // largest flat thing on the planet and, navy with the walkers' specks in
 // them, read as night sky. The same values as the navy (shallow a clear
 // step under any ground, deep near black), only the hue moved.
-const FEN_WET_RGB: vec3<f32> = vec3<f32>(20.0, 33.0, 27.0);
+// Darker by the same quarter as the navy on 11-28 (it was (20, 33, 27)).
+const FEN_WET_RGB: vec3<f32> = vec3<f32>(15.0, 25.0, 20.0);
 const FEN_DEEP_RGB: vec3<f32> = vec3<f32>(4.0, 9.0, 6.0);
 // The fen's shallow margin, the bed through peaty water (else (30,52,56)).
 const FEN_SHALLOW: vec3<f32> = vec3<f32>(36.0, 50.0, 38.0);

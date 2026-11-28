@@ -105,6 +105,16 @@ pub struct Rules {
     pub strike: f32,
     /// Game seconds between one soldier's shots.
     pub shot_every: f32,
+    /// **Shots spread in time** (owner 2026-11-28: "All soldier in a squad
+    /// shouldn't fire exactly in sync. It should be more spread out (in
+    /// time)"): each wait between one soldier's shots is its gun's gap
+    /// give or take this share of it, rolled whole ticks round the gap so
+    /// the mean, and so the damage a second, stays the gun's; and a soldier
+    /// that stood idle waits up to this share before its first shot, so an
+    /// opening volley ripples down the line instead of landing on one
+    /// step. 0 is the lockstep every squad fired in before.
+    #[serde(default = "shot_spread_default")]
+    pub shot_spread: f32,
     /// How fast a shot flies, dish cells a game second; 0 is the instant
     /// ray every shot was until 2026-11-13. Why (owner, 11-13 02:37Z):
     /// "Would it look better if the round was a moving bullet instead of a
@@ -772,6 +782,11 @@ pub struct Rules {
     pub rescue: super::RescueRules,
 }
 
+/// `Rules::shot_spread`'s default: a quarter of the gap.
+fn shot_spread_default() -> f32 {
+    0.25
+}
+
 /// `Rules::ceiling_grow`'s default: a slime on the crystals it landed on
 /// may regrow to this times its landing walkers (1 was #690's: no
 /// regrowth; the game before the ceiling refilled to 2). Under
@@ -1216,6 +1231,7 @@ impl Rules {
             "seek_catch" => &mut self.seek_catch,
             "seek_reach" => &mut self.seek_reach,
             "near_first" => &mut self.near_first,
+            "shot_spread" => &mut self.shot_spread,
             "strike" => &mut self.strike,
             "pump_smell" => &mut self.build.pump_smell,
             "pump_hp" => &mut self.build.pump_hp,
@@ -1287,6 +1303,7 @@ impl Default for Rules {
             rate_card: 1.0,
             strike: 2.5,
             shot_every: 1.0,
+            shot_spread: shot_spread_default(),
             bullet_speed: 45.0,
             split_n: 3,
             split_fan: 0.5,

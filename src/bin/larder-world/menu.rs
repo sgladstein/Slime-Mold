@@ -646,7 +646,57 @@ pub(super) fn shop_of(r: &Run) -> Shop {
             })
             .collect(),
         plain_shot,
+        was: None,
     }
+}
+
+/// A card on the shelf tried on while it is picked (the owner, 2026-11-28
+/// 08:37Z: "if you click a bullet, it shows up in my gun if there is room
+/// or bag and then you can add it to the gun as if you own it to see how
+/// it changes the DPS"): `run` is a copy of the run with it in
+/// (`Run::try_on`), which the shop shows and its own cards' moves change.
+/// It is never saved or landed: buying it makes the copy the run
+/// (`Run::keep_trial`), anything else takes the card back out of the
+/// copy, keeping those moves (`Run::untry`), and makes that the run.
+pub(super) struct Trial {
+    /// The offer it is.
+    k: usize,
+    card: rounds::Card,
+    run: Run,
+}
+
+/// The shop page for run `r`, with the card tried on if there is one:
+/// the slots show the gun with it; the shelf's chips and the pane still
+/// measure against the gun as it is (`Shop::was`), and the tried card's
+/// own chip says what it does where it sits now.
+pub(super) fn shop_with(r: &Run, trial: Option<&Trial>) -> Shop {
+    let Some(t) = trial else { return shop_of(r) };
+    let real = shop_of(r);
+    let mut shop = shop_of(&t.run);
+    let picks: Vec<Pick> = t.run.shop().iter().map(|x| x.pick).collect();
+    // The copy has one card more, so its rows after the cards sit one
+    // later than the run's.
+    let first = picks.iter().position(|p| matches!(p, Pick::Card(_)));
+    let n = picks.iter().filter(|p| matches!(p, Pick::Card(_))).count();
+    let mine = t.run.trial_at(t.card, r.in_gun(t.card));
+    let (dps, stats) = (shop.dps, shop.stats.clone());
+    for (i, row) in shop.rows.iter_mut().enumerate() {
+        match picks.get(i) {
+            Some(&Pick::Card(ci)) => row.trying = Some(ci) == mine,
+            Some(&Pick::Offer(k)) if k == t.k => (row.dps, row.no_room, row.stats) = (dps, false, stats.clone()),
+            _ => {
+                let j = match first {
+                    Some(f) if i >= f + n => i - 1,
+                    _ => i,
+                };
+                if let Some(o) = real.rows.get(j) {
+                    (row.dps, row.no_room, row.stats) = (o.dps, o.no_room, o.stats.clone());
+                }
+            }
+        }
+    }
+    shop.was = Some((real.dps, real.stats));
+    shop
 }
 
 /// **The run's star map as the Stars page draws it** (2026-11-26,
@@ -1388,6 +1438,10 @@ impl App {
                 Err(e) => return self.fail(event_loop, e),
             }
         }
+        // The card tried on follows the shop's pick.
+        if self.in_menu() {
+            self.sync_trial();
+        }
     }
 
     /// The shop's landing card for the run's next planet.
@@ -1424,6 +1478,7 @@ impl App {
 
     /// What a pick on the menu does; true to quit.
     pub(super) fn menu_event(&mut self, ev: StartEvent) -> Result<bool, String> {
+        let Some(ev) = self.trial_event(ev) else { return Ok(false) };
         match ev {
             StartEvent::Quit => return Ok(true),
             StartEvent::Range => self.show_armory(),
@@ -1660,6 +1715,127 @@ impl App {
         self.menu.as_ref().and_then(|m| m.shop.as_ref()).is_some_and(|s| s.range)
     }
 
+    /// The run the shop page shows: the tried-on copy while a card is
+    /// tried on, else the one it buys for.
+    fn shown_run(&self) -> Option<&Run> {
+        if let Some(t) = &self.trial {
+            return Some(&t.run);
+        }
+        if self.ranging() {
+            self.range.as_ref()
+        } else {
+            self.run.as_ref()
+        }
+    }
+
+    /// The copy of the run a card is tried on in, if one is.
+    #[cfg(test)]
+    pub(super) fn trial_run(&self) -> Option<&Run> {
+        self.trial.as_ref().map(|t| &t.run)
+    }
+
+    /// The card tried on follows the shop's pick (`Trial`): a card on the
+    /// shelf picked is tried on, one of the gun's or the bag's keeps the
+    /// trial (it is being moved), anything else ends it. Called after
+    /// every input to the menu, and by the pictures after their pick.
+    pub(super) fn sync_trial(&mut self) {
+        let i = self.menu.as_ref().and_then(|m| m.picked_row());
+        let pick = i.and_then(|i| self.shown_run().and_then(|r| r.shop().get(i).map(|row| row.pick)));
+        let want = match pick {
+            Some(Pick::Offer(k)) => Some(k),
+            Some(Pick::Card(_)) if self.trial.is_some() => return,
+            _ => None,
+        };
+        if want == self.trial.as_ref().map(|t| t.k) {
+            return;
+        }
+        self.end_trial();
+        if let Some(k) = want {
+            let made = self.shop_run().and_then(|r| Some((r.try_on(k)?, *r.offers.get(k)?)));
+            self.trial = made.map(|(run, card)| Trial { k, card, run });
+        }
+        // The shop page drawn again as it stands (not `show_shop`, which
+        // may turn to the star map), and the run saved: ending a trial
+        // keeps the player's own moves.
+        let ranging = self.ranging();
+        let r = if ranging { self.range.as_ref() } else { self.run.as_ref() };
+        if let (Some(m), Some(r)) = (self.menu.as_mut().filter(|m| m.page == Page::Shop && m.shop.is_some()), r) {
+            m.shop = Some(shop_with(r, self.trial.as_ref()));
+        }
+        self.save_run();
+    }
+
+    /// The card tried on taken back out, every other move made meanwhile
+    /// kept, and that the run.
+    fn end_trial(&mut self) {
+        let Some(mut t) = self.trial.take() else { return };
+        if let Some(r) = self.shop_run() {
+            t.run.untry(t.card, r.in_gun(t.card));
+            *r = t.run;
+        }
+    }
+
+    /// A menu event while a card is tried on: a buy of it keeps it where
+    /// it sits, a move or a click of the gun's or the bag's cards is made
+    /// on the copy, and anything else ends the trial first (a shop pick
+    /// made then on the run, as the copy's row named it; the rest passed
+    /// on). None when it was dealt with here.
+    fn trial_event(&mut self, ev: StartEvent) -> Option<StartEvent> {
+        let Some(mut t) = self.trial.take() else { return Some(ev) };
+        let row = match ev {
+            StartEvent::Buy(i) | StartEvent::Move(i, _) => t.run.shop().get(i).map(|r| (r.pick, r.name.clone(), r.ready)),
+            _ => None,
+        };
+        let Some((pick, name, ready)) = row else {
+            self.trial = Some(t);
+            self.end_trial();
+            return Some(ev);
+        };
+        let mut note = None;
+        match (ev, pick) {
+            (StartEvent::Buy(_), Pick::Offer(k)) if k == t.k => {
+                if t.run.keep_trial(k) {
+                    if let Some(r) = self.shop_run() {
+                        *r = t.run;
+                    }
+                } else {
+                    note = Some(format!("{name}: not enough points"));
+                    self.trial = Some(t);
+                }
+            }
+            (StartEvent::Buy(_), Pick::Card(_)) => {
+                if !t.run.pick(pick) {
+                    note = Some(format!("{name}: can't be done"));
+                }
+                self.trial = Some(t);
+            }
+            (StartEvent::Move(_, slot), Pick::Card(ci)) => {
+                if !t.run.pick(Pick::Move(ci, slot)) {
+                    note = Some(format!("{name}: over the gun's budget or slots"));
+                }
+                self.trial = Some(t);
+            }
+            (ev, pick) => {
+                self.trial = Some(t);
+                self.end_trial();
+                let done = self.shop_run().is_some_and(|r| match (ev, pick) {
+                    (StartEvent::Move(_, slot), Pick::Offer(k)) => r.buy_into(k, slot),
+                    (StartEvent::Move(_, slot), Pick::Card(ci)) => r.pick(Pick::Move(ci, slot)),
+                    (StartEvent::Move(..), _) => true,
+                    _ => r.pick(pick),
+                });
+                if !done {
+                    note = Some(format!("{name}: {}", if ready { "can't be done" } else { "not enough points, or locked" }));
+                }
+            }
+        }
+        if let (Some(n), Some(m)) = (note, self.menu.as_mut()) {
+            m.notice = Some(n);
+        }
+        self.show_shop();
+        None
+    }
+
     /// The run the shop page on show buys for: the range's in its
     /// armory, else the roguelike run's.
     fn shop_run(&mut self) -> Option<&mut Run> {
@@ -1675,7 +1851,7 @@ impl App {
     pub(super) fn show_armory(&mut self) {
         let r = self.range.get_or_insert_with(|| Run::range(fresh_seed()));
         if let Some(m) = self.menu.as_mut() {
-            m.shop = Some(shop_of(r));
+            m.shop = Some(shop_with(r, self.trial.as_ref()));
             if m.page != Page::Shop {
                 m.show(Page::Shop);
             }
@@ -1827,7 +2003,10 @@ impl App {
         if let Some(m) = self.menu.as_mut() {
             m.stars = None;
             r.dev = m.option("dev").is_some_and(|o| o.value() == "on");
-            m.shop = Some(shop_of(r));
+            if let Some(t) = self.trial.as_mut() {
+                t.run.dev = r.dev;
+            }
+            m.shop = Some(shop_with(r, self.trial.as_ref()));
             m.run_live = true;
             if m.page != Page::Shop {
                 m.show(Page::Shop);

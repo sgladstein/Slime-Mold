@@ -127,7 +127,9 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
             }
             // The run the shop shows is the app's, so a drag (`drag=`)
             // changes it as the window's would.
-            if !drags.is_empty() {
+            // So does a picked row (`@TAB@NAME`): a card on the shelf
+            // picked is tried on in it (`App::sync_trial`).
+            if !drags.is_empty() || extra.contains('@') {
                 shop_run = Some(r);
             }
         }
@@ -249,6 +251,10 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
     }
     if shop_run.is_some() {
         app.run = shop_run;
+    }
+    // A card on the shelf picked is tried on, as a click on it does.
+    if app.menu.as_ref().is_some_and(|m| m.page == slime_mould::world::start::Page::Shop) {
+        app.sync_trial();
     }
     // `hover=X,Y` over a menu page: its pointer there (the shop's detail
     // box describes the card under it).

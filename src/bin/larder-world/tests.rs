@@ -2604,3 +2604,60 @@ fn a_seed_gives_the_same_planets_and_first_shop() {
         assert_eq!((a.planet().name, a.twist(), a.level().seed), (b.planet().name, b.twist(), b.level().seed), "planet {d}");
     }
 }
+
+/// **A card tried on in the shop** (owner, 2026-11-28 08:37Z: "if you
+/// click a bullet, it shows up in my gun if there is room or bag and then
+/// you can add it to the gun as if you own it to see how it changes the
+/// DPS"): picking a card on the shelf shows it in the gun, the run itself
+/// unchanged; a move of it is made on the copy; buying it keeps it where
+/// it sits and pays; picking anything else takes it out again, and the
+/// player's own moves made meanwhile stay.
+#[test]
+fn a_card_picked_on_the_shelf_is_tried_on_and_only_bought_kept() {
+    use slime_mould::mould::run::{card_price, Pick};
+    use slime_mould::world::start::{Page, StartEvent};
+    let mut app = App::new(run_base());
+    app.menu = Some(start_menu(&run_base()));
+    let mut r = Run::new(9);
+    r.points = 10_000;
+    r.cards = vec![(rounds::Card::Wide, true), (rounds::Card::Rate, false)];
+    r.restock();
+    let c = r.offers[0];
+    app.run = Some(r);
+    app.show_shop();
+    let before = app.run.clone().unwrap();
+    let name = before.shop().into_iter().find(|r| r.pick == Pick::Offer(0)).unwrap().name;
+    let m = app.menu.as_mut().unwrap();
+    assert_eq!(m.page, Page::Shop);
+    assert!(m.open_shop_tab_named(&name) && m.pick_named(&name), "{name} on the shelf");
+    app.sync_trial();
+    assert_eq!(app.run.as_ref(), Some(&before), "a card tried on is not the run's");
+    let shop = app.menu.as_ref().unwrap().shop.as_ref().unwrap();
+    let owned = |shop: &slime_mould::world::start::Shop| shop.rows.iter().filter(|r| r.area == slime_mould::world::start::ShopArea::Cards && r.price.is_empty()).count();
+    assert_eq!(owned(shop), 3, "it shows in the gun or the bag");
+    assert_eq!(shop.rows.iter().filter(|r| r.trying).count(), 1);
+    assert!(shop.was.is_some());
+    // Wide moved out of the gun, on the copy: the run still has it in.
+    let wide = app.trial_run().unwrap().shop().iter().position(|r| r.pick == Pick::Card(0)).unwrap();
+    app.menu_event(StartEvent::Buy(wide)).unwrap();
+    assert_eq!(app.run.as_ref(), Some(&before));
+    assert!(!app.trial_run().unwrap().cards.iter().any(|o| o.0 == rounds::Card::Wide && o.1));
+    // Picking another tab ends it: the card goes, the move stays.
+    let m = app.menu.as_mut().unwrap();
+    assert!(m.open_shop_tab_named("Guns"));
+    app.sync_trial();
+    assert!(app.trial_run().is_none());
+    let r = app.run.as_ref().unwrap();
+    assert_eq!((r.points, r.offers.len(), r.cards.len()), (before.points, before.offers.len(), 2));
+    assert!(r.cards.iter().all(|o| !o.1), "Wide stays out, as moved");
+    // Tried on again and bought: kept as it sits, paid for, off the shelf.
+    let m = app.menu.as_mut().unwrap();
+    assert!(m.open_shop_tab_named(&name) && m.pick_named(&name));
+    app.sync_trial();
+    let at = app.trial_run().unwrap().shop().iter().position(|r| r.pick == Pick::Offer(0)).unwrap();
+    app.menu_event(StartEvent::Buy(at)).unwrap();
+    let r = app.run.as_ref().unwrap();
+    assert_eq!(r.points, before.points - card_price(c));
+    assert_eq!(r.offers.len(), before.offers.len() - 1);
+    assert_eq!(r.cards.iter().filter(|o| o.0 == c).count(), before.cards.iter().filter(|o| o.0 == c).count() + 1);
+}

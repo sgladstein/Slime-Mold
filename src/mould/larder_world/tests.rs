@@ -1873,7 +1873,7 @@ fn the_controlled_squad_fires_by_its_mode_and_defends_what_is_near() {
 }
 
 #[test]
-fn a_volley_fires_every_member_at_the_point_at_once_and_the_active_squad_faster() {
+fn a_volley_fires_every_member_at_the_point_within_a_quarter_gap_and_the_active_squad_faster() {
     let mut g = squads(5);
     for _ in 0..4 {
         g.apply(Cmd::Buy);
@@ -1881,10 +1881,23 @@ fn a_volley_fires_every_member_at_the_point_at_once_and_the_active_squad_faster(
     let m = g.middle(0).unwrap();
     let p = (m.0 + 10.0 * g.s(), m.1);
     g.apply(Cmd::Fire(0, Some(p)));
-    g.step();
+    // Spread in time (`Rules::shot_spread`, owner 2026-11-28): every
+    // member opens up within a quarter of the gap, not all on one step.
     let n = g.members(0).len();
-    let fired: Vec<_> = g.last_shots.iter().filter(|s| s.fired && s.by.is_some()).collect();
-    assert_eq!(fired.len(), n, "every member fires on the same step");
+    let quarter = (g.shot_gap(0) as f32 * g.rules.shot_spread).round() as usize + 1;
+    let mut fired = Vec::new();
+    let mut steps = std::collections::BTreeSet::new();
+    for i in 0..quarter {
+        g.step();
+        for s in g.last_shots.iter().filter(|s| s.fired && s.by.is_some()) {
+            fired.push(*s);
+            steps.insert(i);
+        }
+    }
+    let shooters: std::collections::BTreeSet<_> = fired.iter().map(|s| s.by).collect();
+    assert_eq!(shooters.len(), n, "every member fires within a quarter gap");
+    assert_eq!(fired.len(), n, "each once");
+    assert!(steps.len() >= 3, "the opening volley ripples over {} steps", steps.len());
     // Each flies toward the point, within the rifle's aim spread.
     let sc = g.s();
     for s in &fired {
@@ -1911,6 +1924,30 @@ fn a_volley_fires_every_member_at_the_point_at_once_and_the_active_squad_faster(
     // Let go of fire: no more volleys.
     g.apply(Cmd::Fire(0, None));
     assert!(g.squads[0].fire.is_none());
+}
+
+/// Spreading the shots in time (`Rules::shot_spread`) keeps the damage a
+/// second: a held volley fires as many shots over two minutes as the lockstep did.
+#[test]
+fn spread_shots_keep_the_rate_of_fire() {
+    let count = |spread: f32| {
+        let mut g = squads(5);
+        g.rules.shot_spread = spread;
+        for _ in 0..4 {
+            g.apply(Cmd::Buy);
+        }
+        let m = g.middle(0).unwrap();
+        g.apply(Cmd::Fire(0, Some((m.0 + 10.0 * g.s(), m.1))));
+        let mut v = 0;
+        for _ in 0..120 * g.rules.tps / g.rules.frame_ticks {
+            g.step();
+            v += g.last_shots.iter().filter(|s| s.fired && s.by.is_some()).count();
+        }
+        v
+    };
+    let (step, spread) = (count(0.0), count(0.25));
+    assert!(step > 100, "lockstep fired {step}");
+    assert!((spread as f32 - step as f32).abs() <= 0.04 * step as f32, "spread {spread} shots against lockstep {step}");
 }
 
 /// `Cmd::SplitOff` takes the `n` soldiers nearest the point (owner

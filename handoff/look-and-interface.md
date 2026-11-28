@@ -40,14 +40,29 @@ the dug-outs' plates (draw.rs) and tiles (`squadmode.rs`, Squad's file,
 one line: state "dug in", no AUTO) and the pill's `Icon::Group`. Film:
 `run=3 menu=stars@3`, `run=3:3 centre=124,170,4 at=60`.
 
+**11-28, Look C (planets and terrain):** survey `run=1:STEP hand=idle
+at=5 centre=squad,6 screen=1536x864` on steps 1, 3, 5, 8, 10, 12, ground
+kinds masked with a debug copy of the shader (`LARDER_VIEW_WGSL`, each
+kind a flat colour on every other pixel). Found: open shallow water, lit
+by its gloss, sat at the ground's value or above it (planet 10's lake 40
+in grey on ground at 40, planet 8's river 44 on 34), so a pond read as a
+blue patch of ground. `WET_RGB` and `FEN_WET_RGB` a quarter darker:
+shallow 27-31, deep 8 (was 16), the shallow-deep step still about 20.
+Constants only, no frame cost. Not fixed, minor: planet 4's river scum
+flecks blobby at zoom 12; planet 1's meadow tufts a pixel speckle at zoom
+6. Next in C: the caves' reed stalks over water read as rain at zoom 12
+(planet 10), and rock tops flat at zoom 6.
+
 **11-28, Look B (the slime up close, Scott's pick 07:12Z):** inside a
 packed body only the walkers' energy varies (a hill over each crystal);
 the fed glow (`fed_on`, `fed_mat`, `FED_*` in `view.wgsl`; energy summed
 in the fine grid's third block, off for the Sleeper's crust) raises,
 lights and glosses the body by it and dulls the hungry rim, with a
-crisper sheen. Page and clips `Reports/slime-fed-glow-2026-11-28/`. A card
-asked Scott: land as is (recommended), stronger, land then real veins
-(an Enemy change: the body must not be packed), or something else.
+crisper sheen. Page and clips `Reports/slime-fed-glow-2026-11-28/`. Merged
+as #909. Scott picked "land it, then real veins" (08:26Z): veins are an
+experiment, off by default (a `switches.rs` row); Enemy builds the
+streaming on its branch after the stronger slime and tells this lane when
+it shows at zoom 6, and this lane draws it behind the same switch.
 
 **11-28, Look A (the fight round the squad):** filmed `run=1:5
 hand=greedy at=14.25,24.25 centre=squad,12` (planet 4; the greedy squad
@@ -115,6 +130,8 @@ as red pills (`run_alarms`), all pills in the row where they fit. Page in
 `Reports/slime-gauge-2026-11-27/`. Next from its list: shorter, fewer alerts
 (at most three, about 4 s, one short clause, repeats as x3); the Sleeper's
 and Grudge's tells and the heart drawn into the bar.
+
+**11-28, a card tried on in the shop** (owner 08:37Z: "if you click a bullet, it shows up in my gun if there is room or bag and then you can add it to the gun as if you own it to see how it changes the DPS"; thread "Review shop DPS estimates"): `menu::Trial` holds a copy of the run with the picked shelf card in it (`Run::try_on`); `App::sync_trial` follows `StartMenu::picked_row` after every menu input, `trial_event` routes Buy/Move (the tried card's buy = `Run::keep_trial`; own-card clicks and drags go to the copy; anything else ends it with `Run::untry`, own moves kept). `shop_with` draws the copy with `Shop::was` (the real gun) for the shelf's chips and the pane (`Shop::base`), `ShopRow::trying` tags the tile. Never saved or landed: `save_run` reads `App::run` only. The chips' "no room" suffix is gone (owner: "I don't need anything to say ... no room"). Review behind it: `Reports/` none; the doc https://claude.ai/artifact/T9U2zs81uqkutqSxGcsAqR.
 
 **11-27, the star map and planet text** (owner 05:29Z: "The planet path selection map needs to be improved and planet text needs to be improved"): `start/stars.rs` redrawn: the route across the top (a column a step, its slime once over it, `pip_ink`/`pip_scale`/`biome_ink` planets), the open planets as side-by-side cards (`star_card`, `CARD_W`/`CARD_H`, rows drop from the end when short), heat in the bottom bar. `menu::star_view` fills `hits`, `area`, `tally`, `last_size`/`last_area`; `contract_words` gives the quick contract as a clock time; `shop_of`'s planet-ahead lines are one fact each (`bigger_than`, `hits_words`). Page `Reports/star-map-cards-2026-11-27/`. Twist cards no longer repeat their name (`PlanetTwist::card`, Enemy's run.rs, text only).
 
