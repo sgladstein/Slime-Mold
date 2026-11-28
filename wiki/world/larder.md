@@ -154,7 +154,7 @@ rules on the world, on the CPU and the engine; WM1, designed
 and player walls (`build_wall`) that mould pressing on wears down to slow
 rubble (owner, 15:24Z: walls must not seal a crystal for good). All on the
 big dish, CPU, off by default. Wall health defaults to 400: a whole caged mould breaks out
-in 20-30 s, while a passing tube never breaks a wall. Crystal charge flows
+in 20-30 s, while a passing tube never breaks a wall. (Since 2026-11-28 a run's player walls are weaker, 100 a cell on planet 1 down to 33 on the core world, `run::WALL_HP`, and the wall's upgrade hardens its cells instead of thickening it, `Game::harden`; the owner's card that day, [decisions](../decisions-game.md).) Crystal charge flows
 inside a crystal (`crystal_flow` 0.01), so the mould eats whole crystals. (In the run
 since 2026-11-21 it no longer empties one: only the squad does,
 `crystal_keep`; [growth](../model/growth.md).)

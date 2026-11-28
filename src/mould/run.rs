@@ -444,6 +444,19 @@ const DRAIN: [f32; 8] = [2.0, 2.4, 2.7, 3.0, 3.3, 3.6, 3.8, 4.0];
 /// A soldier's health at the landing in a run (`Rules::hp`, before Armour);
 /// see `DRAIN`. The gun range and the free maps keep `Rules::hp`'s 100.
 pub const SOLDIER_HP: f32 = 70.0;
+/// **Walls weaker, and weaker deeper** (2026-11-28, the owner's wall card
+/// "Both", then 06:07Z: "walls should not actually get thicker when
+/// upgrading, they get stronger (more health per cell). I just layer the
+/// walls in play to thicken"). A placed wall's cell health by planet
+/// (`Rules::wall_hp`; every planet had the world's 400): a quarter of that
+/// on planet 1, falling to a twelfth on the core world, as if the slime bit
+/// walls three times as hard by then. Each of a wall's three upgrades adds
+/// its first health again (`Rules::wall_harden` 1), so a wall upgraded to
+/// the top holds 400 a cell on planet 1 and 132 on the core world. On his
+/// 11-28 step 3 one wall of 1,672 food laid at 0:04 held four soldiers
+/// safe through six raids for three minutes while the slime grew 28k to
+/// 55k. The rescue's rings keep 400 (`rescue::RING_HP`).
+const WALL_HP: [f32; 8] = [100.0, 85.0, 72.0, 62.0, 52.0, 45.0, 38.0, 33.0];
 const RAID_ARMOUR: [u32; 8] = [0, 2, 3, 4, 5, 6, 7, 8];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
@@ -2248,6 +2261,7 @@ impl Run {
             r.raid.every_sd = d.every_sd * every / d.every;
             r.drain = at(&DRAIN);
             r.hp = SOLDIER_HP;
+            r.wall_hp = at(&WALL_HP);
             r.raid.march_armour = curve_at_u(&RAID_ARMOUR, e);
             // A raid's size by planet (`RAID_SIZE`), its spread and cap
             // kept at the default's shares of it.
@@ -3888,7 +3902,7 @@ mod tests {
         // places are still the eight tuned planets exactly.
         assert_eq!((PLANETS, STRETCH), (12, 1.0), "the dials as set");
         assert_eq!((curve_depth(1), curve_depth(PLANETS)), (1.0, 8.0));
-        let f32s: [&[f32; 8]; 11] = [&SURGE_FOOD_SHARE, &ORIGIN_SIZE, &STRIKER_SHARE, &CEILING_GROW, &RAID_GAP_MIN, &STRIKER_ARMY, &SOLDIER_STEP, &RAID_FIRST, &RAID_EVERY, &DRAIN, &ROAM_SHARE];
+        let f32s: [&[f32; 8]; 12] = [&SURGE_FOOD_SHARE, &ORIGIN_SIZE, &STRIKER_SHARE, &CEILING_GROW, &RAID_GAP_MIN, &STRIKER_ARMY, &SOLDIER_STEP, &RAID_FIRST, &RAID_EVERY, &DRAIN, &ROAM_SHARE, &WALL_HP];
         let u32s: [&[u32; 8]; 5] = [&LONGEST_WAIT, &RAID_ARMOUR, &SURGE_DASH, &ROAM, &ORIGIN_ARMOUR];
         for d in 1..=8 {
             assert_eq!(curve_depth_of(d, 8), d as f32);

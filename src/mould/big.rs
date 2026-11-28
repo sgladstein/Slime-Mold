@@ -2820,6 +2820,40 @@ impl BigDish {
         self.build_wall_hp(ax, ay, bx, by, width, self.p.wall_hp)
     }
 
+    /// Add `add` health to every standing wall cell in the footprint of the
+    /// wall from (`ax`, `ay`) to (`bx`, `by`), `width` thick (the test
+    /// `build_wall_hp` uses): the Larder World's wall upgrade (2026-11-28,
+    /// the owner: walls "should not actually get thicker when upgrading,
+    /// they get stronger (more health per cell)"). Not a slime rule; the
+    /// GPU's twin is `Engine::harden_wall`. The cells hardened.
+    pub fn harden_wall(&mut self, ax: f32, ay: f32, bx: f32, by: f32, width: f32, add: f32) -> usize {
+        if self.wall.is_empty() || self.wall_health.is_empty() {
+            return 0;
+        }
+        let s = self.p.scale as f32;
+        let (w, h) = (self.w, self.h);
+        let (ax, ay, bx, by, r) = (ax * s, ay * s, bx * s, by * s, (width * s / 2.0).max(0.5));
+        let (dx, dy) = (bx - ax, by - ay);
+        let len2 = (dx * dx + dy * dy).max(1e-6);
+        let near = |x: f32, y: f32| {
+            let t = (((x - ax) * dx + (y - ay) * dy) / len2).clamp(0.0, 1.0);
+            (x - ax - t * dx).hypot(y - ay - t * dy) <= r
+        };
+        let (x0, x1) = ((ax.min(bx) - r).floor().max(0.0) as usize, ((ax.max(bx) + r).ceil() as usize).min(w - 1));
+        let (y0, y1) = ((ay.min(by) - r).floor().max(0.0) as usize, ((ay.max(by) + r).ceil() as usize).min(h - 1));
+        let mut n = 0;
+        for y in y0..=y1 {
+            for x in x0..=x1 {
+                let i = y * w + x;
+                if self.wall[i] && self.wall_health[i] > 0.0 && near(x as f32 + 0.5, y as f32 + 0.5) {
+                    self.wall_health[i] += add;
+                    n += 1;
+                }
+            }
+        }
+        n
+    }
+
     /// `build_wall` with its cells' health `hp` (0: it never breaks), as a
     /// map's walls are built.
     pub fn build_wall_hp(&mut self, ax: f32, ay: f32, bx: f32, by: f32, width: f32, hp: f32) -> usize {
