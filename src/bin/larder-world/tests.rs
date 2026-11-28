@@ -1194,7 +1194,7 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
         assert_eq!((again.name.clone(), again.args.run.as_ref().map(|r| r.depth)), (spec(app.args.run.as_ref().unwrap()), Some(2)), "the same planet");
         again.run_file = None;
     }
-    assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * Rules::default().hp);
+    assert_eq!(app.game.as_ref().unwrap().rules.hp, 1.25 * slime_mould::mould::run::SOLDIER_HP);
     assert_eq!(app.name, spec(app.args.run.as_ref().unwrap()));
     // Loadouts on the planet (owner, 2026-11-19 19:22Z): H opens their
     // panel, paused, nothing for sale; the commanded squad is given the

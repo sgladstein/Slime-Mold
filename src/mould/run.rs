@@ -443,7 +443,7 @@ const RAID_SIZE: [f32; 8] = [0.15, 0.2, 0.23, 0.27, 0.3, 0.33, 0.37, 0.4];
 const DRAIN: [f32; 8] = [2.0, 2.4, 2.7, 3.0, 3.3, 3.6, 3.8, 4.0];
 /// A soldier's health at the landing in a run (`Rules::hp`, before Armour);
 /// see `DRAIN`. The gun range and the free maps keep `Rules::hp`'s 100.
-const SOLDIER_HP: f32 = 70.0;
+pub const SOLDIER_HP: f32 = 70.0;
 const RAID_ARMOUR: [u32; 8] = [0, 2, 3, 4, 5, 6, 7, 8];
 const SURGE_DASH: [u32; 8] = [30, 30, 30, 36, 42, 45, 45, 54];
 /// **Specks: the slime sends pieces of itself off to fresh crystals,
