@@ -43,7 +43,7 @@ Detail: [report](../../Reports/pump-economy-2026-11-15/README.md).
 ## Open
 
 - Guarding a big crystal still pays well; if it becomes the easy opening it needs a look (report, *Not done*).
-- The run sells *Pump power* in place of the pump unlock ([the run](run.md)).
+- The run sold *Pump power* in place of the pump unlock until 2026-11-28, when the owner dropped it ("we don't need to upgrade pump power"; [the run](run.md)).
 
 ## Sources
 

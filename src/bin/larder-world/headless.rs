@@ -201,7 +201,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
         m.show(p);
         match flag {
             "shop-build" => {
-                m.open_shop_tab_named("Buildings");
+                m.open_shop_tab_named("Turrets");
             }
             "shop-tools" => {
                 m.open_shop_tab_named("Tools");

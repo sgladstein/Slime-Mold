@@ -1126,7 +1126,9 @@ impl Group {
     pub fn name(self) -> &'static str {
         match self {
             Group::Squad => "Squad",
-            Group::Build => "Buildings",
+            // The Buildings tab until 2026-11-28: its Walls unlock and Pump
+            // power left the shop (`GONE`), so it holds turret designs only.
+            Group::Build => "Turrets",
             Group::Tools => "Tools",
             Group::Relics => "Relics",
             Group::Guns => "Guns",
@@ -1223,8 +1225,9 @@ pub fn first_gun() -> Gun {
     GunKind::Rifle.average_at(1)
 }
 
-/// Guns for sale in each shop.
-pub const GUN_OFFER: usize = 2;
+/// Guns for sale in each shop: 4 since 2026-11-28 (owner, 05:49Z: "Guns
+/// should also have more options per shop"; 2 before).
+pub const GUN_OFFER: usize = 4;
 /// **Relics** (gun step F, Direction 11-24 08:54Z and 09:51Z; the
 /// gun-system plan's "rare run-wide rules"): one is for sale in the shops
 /// of `RELIC_DEPTHS`, after planets 3, 5 and 7, at `Relic::price`; owned,
@@ -1287,6 +1290,14 @@ impl Relic {
 /// The shops that offer a relic: after planets 3, 5 and 7.
 pub const RELIC_DEPTHS: [u32; 3] = [4, 6, 8];
 
+/// Items no longer sold, kept in `ITEMS` so old saves and play logs read
+/// (a level a save owns still holds): Turret power (owner, 2026-11-27
+/// 21:42Z, replaced by better turrets for sale), Pump power (owner,
+/// 2026-11-28 05:49Z: "we don't need to upgrade pump power"), and the
+/// Walls unlock, which every run owns from the start (`START`), so its
+/// row only read "owned" on what was the Buildings tab.
+pub const GONE: [&str; 3] = ["turret+", "pump+", "walls"];
+
 /// The first paid reroll's price (`Run::reroll_price`, gun step F; the
 /// gun-system plan's "rerolls that cost more each time"; a tier-1 card is
 /// 80): it doubles each time in one shop. A first guess.
@@ -1295,8 +1306,9 @@ pub const REROLL_PRICE: u32 = 25;
 /// Device bodies for sale in each shop from planet 2 (`Run::body_rolls`).
 pub const BODY_OFFER: usize = 2;
 
-/// Turret designs for sale in each shop (`Run::turret_rolls`).
-pub const TURRET_OFFER: usize = 2;
+/// Turret designs for sale in each shop (`Run::turret_rolls`): 3 since
+/// 2026-11-28 (owner, 05:49Z, with guns' 2 to 4; 2 before).
+pub const TURRET_OFFER: usize = 3;
 
 /// The old shop unlock's key a turret kind's building had (and its
 /// shop icon, `Face::Item`): `turret`, `mortar`, `sprayer`, `hunter`.
@@ -2846,17 +2858,23 @@ impl Run {
             self.offers.push(again.remove((z % again.len() as u64) as usize));
         }
         z = self.luck(&pool, &owned, bullets, wanted, z);
-        // Guns for the planet ahead, each its own seed: two kinds, and
-        // neither the kind in hand (2026-11-18: a gun of another kind is
-        // the buy that most changes how the squad plays, and of seeds
-        // 1-12's first two shops 7 sold the same kind twice and 7 sold the
-        // rifle the run starts with).
+        // Guns for the planet ahead, each its own seed: none the kind in
+        // hand (2026-11-18: a gun of another kind is the buy that most
+        // changes how the squad plays, and of seeds 1-12's first two shops
+        // 7 sold the same kind twice and 7 sold the rifle the run starts
+        // with), and every other kind once before any comes twice (with
+        // `GUN_OFFER` 4 and three kinds left, the fourth repeats one, a
+        // second roll of it to set against the first).
         let held = self.gun_of(0);
-        let mut kinds: Vec<GunKind> = GunKind::ALL.into_iter().filter(|&k| held.is_none_or(|g| g.kind != k)).collect();
+        let others: Vec<GunKind> = GunKind::ALL.into_iter().filter(|&k| held.is_none_or(|g| g.kind != k)).collect();
+        let mut kinds = others.clone();
         self.gun_offers = (0..GUN_OFFER as u64)
-            .filter_map(|k| {
+            .map(|k| {
                 let s = mix(z ^ (0x6755_4E00 + k));
-                (!kinds.is_empty()).then(|| Gun::roll_kind(kinds.remove((s % kinds.len() as u64) as usize), s, self.roll_depth()))
+                if kinds.is_empty() {
+                    kinds.clone_from(&others);
+                }
+                Gun::roll_kind(kinds.remove((s % kinds.len() as u64) as usize), s, self.roll_depth())
             })
             .filter(|g| !self.guns.contains(g))
             .collect();
@@ -3095,7 +3113,7 @@ impl Run {
         // (`body_offers`, below).
         // The turret unlocks and Turret power went too (owner, 2026-11-27
         // 21:42Z): turrets are sold as designs (`turret_offers`, below).
-        for (i, it) in ITEMS.iter().enumerate().filter(|(_, it)| !self.range && !self.field && BodyKind::of_key(it.key).is_none() && turret_of_key(it.key).is_none() && it.key != "turret+") {
+        for (i, it) in ITEMS.iter().enumerate().filter(|(_, it)| !self.range && !self.field && BodyKind::of_key(it.key).is_none() && turret_of_key(it.key).is_none() && !GONE.contains(&it.key)) {
             let l = self.owned[i];
             let price = self.price(i);
             let needs = it.needs.is_some_and(|k| !self.has(k));
@@ -3316,7 +3334,7 @@ impl Run {
                     self.own_turret(Turret::plain(kind));
                     return true;
                 }
-                if ITEMS[i].key == "turret+" {
+                if GONE.contains(&ITEMS[i].key) {
                     return false;
                 }
                 // A device unlock (gone from the shop since gun step E3;
@@ -4573,6 +4591,27 @@ mod tests {
     /// its own and is quick to build while one of the 3 slots is free; the
     /// loadout bar's Quick build toggles a turret loadout in or out (not
     /// while full, not with no turret); the save keeps it all.
+    #[test]
+    fn shops_sell_four_guns_three_turrets_and_no_pump_power() {
+        // Owner, 2026-11-28 05:49Z: more guns a shop; no Pump power.
+        for seed in 0..12u64 {
+            let mut r = Run::new(seed);
+            r.won(1);
+            r.points = 10_000;
+            let held = r.guns[r.carry().unwrap()].kind;
+            let kinds: Vec<GunKind> = r.gun_offers.iter().map(|g| g.kind).collect();
+            assert_eq!(kinds.len(), GUN_OFFER, "seed {seed}");
+            assert!(!kinds.contains(&held), "seed {seed}: {kinds:?} with a {held:?} carried");
+            // Every other kind once before one comes twice.
+            assert!(GunKind::ALL.iter().filter(|&&k| k != held).all(|k| kinds.contains(k)), "seed {seed}: {kinds:?}");
+            assert_eq!(r.turret_offers.len(), TURRET_OFFER);
+            let rows = r.shop();
+            assert!(!rows.iter().any(|w| matches!(w.pick, Pick::Item(i) if GONE.contains(&ITEMS[i].key))), "seed {seed}");
+            let pump = ITEMS.iter().position(|i| i.key == "pump+").unwrap();
+            assert!(!r.pick(Pick::Item(pump)) && r.level_of("pump+") == 0);
+        }
+    }
+
     #[test]
     fn turrets_are_owned_like_guns_and_quick_built() {
         let mut r = Run::new(1);

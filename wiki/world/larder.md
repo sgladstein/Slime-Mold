@@ -405,7 +405,9 @@ less than a soldier (was 15 cells and 500 food; he, 05:52Z: turrets were
 **Turrets are bought like guns** since 2026-11-27 (owner, 21:36Z: "You buy
 "turrets" like you buy guns now. They have different rates of fire, range,
 some could shoot over walls, Some can't"; 21:42Z and 21:48Z;
-`mould::turrets`): the run shop's Build tab sells rolled turret designs of
+`mould::turrets`): the run shop's Turrets tab (the Buildings tab until 2026-11-28, when its
+Walls row and Pump power left the shop) sells rolled turret designs, three
+a shop since 2026-11-28 (two before), of
 four kinds (gun turret, lobber, sprayer, hunter; `TurretKind`), each with a
 reach and rate roll round 1, a card rack, and (gun turret and sprayer) a
 roll for firing over walls (the lobber always does, the hunter never);
