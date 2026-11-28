@@ -48,6 +48,20 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-28, shots spread in time (own thread).** Owner 07:17Z: "All
+soldier in a squad shouldn't fire exactly in sync. It should be more spread
+out (in time)". The squad's one volley clock (`Squad::next_volley`) is gone:
+every soldier fires on its own `ready`, for a volley too. `Rules::shot_spread`
+(0.25, `set=shot_spread=`): each wait is the gap give or take a quarter,
+whole ticks rolled evenly round it (`Game::shot_done`, a hash of soldier and
+tick, not `Game::rng`), so the mean gap and the damage a second stay the
+gun's (test `spread_shots_keep_the_rate_of_fire`: 974 shots in 120 s against
+960 lockstep, the gap being the window's edge). A soldier idle a whole gap
+waits 0 to a quarter gap before its first shot (`Game::shot_wait`), so an
+opening volley ripples over several steps. The gun sound already spreads a
+frame's pulls (`sound/world.rs`, up to 6 voiced); fewer land on one step now.
+Clip: `Reports/pr-stills/shot-spread-2026-11-28.gif`.
+
 **2026-11-28, split off any number (same thread).** Owner 03:42Z: "sometimes
 I want to just split off 1 or 2 or a 1/4 of the squad"; halving stays easy.
 Built on the recommended option of his card (hold Y, the wheel picks):
