@@ -784,32 +784,34 @@ fn hold_fire_toggles_apart_from_the_fire_mode_and_the_formation_page_picks() {
     assert!(app.model(None, None).commands.iter().any(|c| c.id == FIRE && c.name == "Fire: defend"));
     app.hud_event(HudEvent::Command { id: HOLD_FIRE }).unwrap();
     assert!(all(&app, Stance::Defend), "let go, back to the mode picked: {:?}", stances(&app));
-    // The Formation page (owner's review, 2026-11-23): two shapes, five
-    // spread steps, the current ones lit; a pick keeps the page open.
+    // The Formation page (2026-11-28): the four shapes, the current one
+    // lit; a pick keeps the page open. The spread is the brackets' (and a
+    // drag of the move button's).
     app.hud_event(HudEvent::Command { id: FORM_PAGE }).unwrap();
     let m = app.model(None, None);
-    for id in [F_BLOB, F_RING, F_TIGHT, F_CLOSE, F_OPEN, F_LOOSE, F_WIDE, F_BACK] {
+    for id in [F_BLOB, F_RING, F_LINE, F_COLUMN, F_BACK] {
         assert!(m.commands.iter().any(|c| c.id == id), "the page has {id}");
     }
     assert!(m.commands.iter().any(|c| c.id == F_BLOB && c.on));
-    assert!(m.commands.iter().any(|c| c.id == F_TIGHT && c.on));
     app.hud_event(HudEvent::Command { id: F_RING }).unwrap();
-    app.hud_event(HudEvent::Command { id: F_LOOSE }).unwrap();
     let sq = |app: &App| {
         let g = app.game.as_ref().unwrap();
         let s = g.squads[g.active.unwrap()];
         (s.formation, s.spread)
     };
     use slime_mould::mould::larder_world::Formation;
-    assert_eq!(sq(&app), (Formation::Ring, 3), "the shape and the spread are set apart");
+    assert_eq!(sq(&app), (Formation::Ring, 0));
     assert!(app.form_page, "a pick keeps the page open");
+    app.hud_event(HudEvent::Command { id: F_COLUMN }).unwrap();
+    assert_eq!(sq(&app), (Formation::Column, 0));
+    app.hud_event(HudEvent::Command { id: F_RING }).unwrap();
     // The brackets step the spread from the main card, within the steps.
     app.hud_event(HudEvent::Command { id: F_BACK }).unwrap();
-    assert!(app.model(None, None).commands.iter().any(|c| c.id == FORM_PAGE && c.name == "Ring, loose"));
-    for _ in 0..3 {
+    for _ in 0..6 {
         app.squad_key(KeyCode::BracketRight, true, false, false);
     }
     assert_eq!(sq(&app), (Formation::Ring, 4), "] stops at wide");
+    assert!(app.model(None, None).commands.iter().any(|c| c.id == FORM_PAGE && c.name == "Ring, wide"));
     app.squad_key(KeyCode::BracketLeft, true, false, false);
     assert_eq!(sq(&app), (Formation::Ring, 3));
 }

@@ -93,7 +93,7 @@ pub use raising::*;
 pub use rules::*;
 pub use world::*;
 pub use shapes::shape_keys;
-pub use squads::{Formation, LeadRules, Squad, BAND_SPREAD, NO_LINK, SPREADS, SPREAD_NAMES, SQUADS_MAX, SQUAD_QUEUE};
+pub use squads::{nearest_step, Formation, LeadRules, Squad, BAND_SPREAD, LINE_MOST, NO_LINK, SPREADS, SPREAD_MOST, SPREAD_NAMES, SQUADS_MAX, SQUAD_QUEUE};
 pub use cover::HealRules;
 pub use gear::{DEVICE_DECK, DEVICE_DECKS};
 pub use doors::{DOOR_WIDTHS, WALL_LEVELS};

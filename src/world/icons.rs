@@ -123,6 +123,11 @@ pub enum Icon {
     FormRing3,
     FormRing4,
     FormRing5,
+    // The line and the column (back on the page 2026-11-28, owner 07:09Z:
+    // "add column to the list"): one tile each, facing up the screen as
+    // they face the way they are sent.
+    FormLine,
+    FormColumn,
     HoldFire,
     Formation,
     // A door in the Build page (controls review, 11-21: Wall and Door
@@ -143,12 +148,18 @@ pub enum Icon {
 }
 
 impl Icon {
-    /// The formation tile for a blob (or a ring) at spread step `step`
-    /// (0 the tightest).
-    pub fn form(ring: bool, step: u8) -> Icon {
+    /// The formation tile for shape `shape` (0 blob, 1 ring, 2 line, 3
+    /// column) at spread step `step` (0 the tightest); a line and a column
+    /// have one tile.
+    pub fn form(shape: u8, step: u8) -> Icon {
         const BLOB: [Icon; 5] = [Icon::FormBlob1, Icon::FormBlob2, Icon::FormBlob3, Icon::FormBlob4, Icon::FormBlob5];
         const RING: [Icon; 5] = [Icon::FormRing1, Icon::FormRing2, Icon::FormRing3, Icon::FormRing4, Icon::FormRing5];
-        (if ring { RING } else { BLOB })[(step as usize).min(4)]
+        match shape {
+            1 => RING[(step as usize).min(4)],
+            2 => Icon::FormLine,
+            3 => Icon::FormColumn,
+            _ => BLOB[(step as usize).min(4)],
+        }
     }
 
     fn paths(self) -> &'static [&'static str] {
@@ -264,6 +275,8 @@ impl Icon {
             Icon::FormRing3 => &["FO12.00 4.40 1.7", "FO17.37 6.63 1.7", "FO19.60 12.00 1.7", "FO17.37 17.37 1.7", "FO12.00 19.60 1.7", "FO6.63 17.37 1.7", "FO4.40 12.00 1.7", "FO6.63 6.63 1.7"],
             Icon::FormRing4 => &["FO12.00 3.40 1.7", "FO18.08 5.92 1.7", "FO20.60 12.00 1.7", "FO18.08 18.08 1.7", "FO12.00 20.60 1.7", "FO5.92 18.08 1.7", "FO3.40 12.00 1.7", "FO5.92 5.92 1.7"],
             Icon::FormRing5 => &["FO12.00 2.20 1.7", "FO18.93 5.07 1.7", "FO21.80 12.00 1.7", "FO18.93 18.93 1.7", "FO12.00 21.80 1.7", "FO5.07 18.93 1.7", "FO2.20 12.00 1.7", "FO5.07 5.07 1.7"],
+            Icon::FormLine => &["FO3.60 9.50 1.7", "FO7.80 9.50 1.7", "FO12.00 9.50 1.7", "FO16.20 9.50 1.7", "FO20.40 9.50 1.7", "FO7.80 14.50 1.7", "FO12.00 14.50 1.7", "FO16.20 14.50 1.7"],
+            Icon::FormColumn => &["FO9.50 3.00 1.7", "FO14.50 3.00 1.7", "FO9.50 8.80 1.7", "FO14.50 8.80 1.7", "FO9.50 14.60 1.7", "FO14.50 14.60 1.7", "FO9.50 20.40 1.7", "FO14.50 20.40 1.7"],
             Icon::HoldFire => &["O12 12 7", "M12 2 L12 6", "M12 18 L12 22", "M2 12 L6 12", "M18 12 L22 12", "M4.5 19.5 L19.5 4.5"],
             // The Formation button: a small wedge and a line behind it.
             Icon::Formation => &["FO19.0 12.0 1.7", "FO14.0 8.0 1.7", "FO14.0 16.0 1.7", "FO9.0 4.5 1.7", "FO9.0 19.5 1.7", "M4 4 L4 20"],

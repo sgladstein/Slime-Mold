@@ -18,10 +18,14 @@ sources:
   - Reports/squad-mode-2026-11-14/README.md
   - Reports/squad-movement-2026-11-16/README.md
 code:
+  - Cmd::Spread
+  - Formation::Column
+  - Formation::Line
   - Formation::Ring
   - Game::demolish
   - Game::drawn_between
   - Game::fight_turn
+  - Game::ghost_places
   - Game::guard_zone
   - Game::heal
   - Game::mark_hot
@@ -138,18 +142,23 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   queued order once let go). A bought soldier and a squad combined into
   yours take your squad's fire mode.
 - **Formations** (the card's Formation button, T, opens its page; owner
-  2026-11-21 05:04Z, cut down by his review of 2026-11-23 03:33Z): two
-  shapes, blob (default) and ring (a circle with its middle empty), and a
-  separate spread of five steps, tight (default), close, open, loose and
-  wide, 1.0 to 2.4 times the tight room (`Formation`, `SPREADS`,
-  `Squad::spread`, `Game::rank_squad`). The page's top row picks the shape,
-  its bottom row the spread, each tile drawn as the squad will stand; a
-  pick keeps the page open. `[` and `]` step the spread from any page. A
-  squad standing still forms up where it stands on a pick. Line, wedge and
-  column went (11-21 to 11-23): the funnel files any shape through a door,
-  and a wide blob or ring still funnels (24 soldiers through the long
-  6-cell door and the 8-cell bridge 2 to 6 s after the tight blob,
-  `a_wide_squad_funnels_through_a_door_and_a_bridge`).
+  2026-11-21 05:04Z, cut down by his review of 2026-11-23 03:33Z, the
+  shapes list back on 2026-11-28): four shapes, blob (default), ring (a
+  circle with its middle empty), line (ranks of at most `LINE_MOST` 16
+  across the way it faces) and column (two abreast along it), Z X C V on
+  the page, each tile drawn as the squad will stand (`Formation`). Line
+  and column face the way the squad was last sent (`Squad::form_face`;
+  a send more than 2 cells away turns them). The spread is set apart from
+  the shape: hold the right button on a move and a ghost of the squad's
+  places shows at the target after 0.2 s; drag out to spread it, in to
+  close it up, smoothly from 1.0 to `SPREAD_MOST` 3.0 times the tight room
+  (`Cmd::Spread`, `Squad::spread_x`, `Game::ghost_places`). `[` and `]`
+  still step the five named spreads, tight (default), close, open, loose
+  and wide, 1.0 to 2.4 (`SPREADS`, `Squad::spread`). A squad standing
+  still forms up where it stands on a pick. The funnel files any shape
+  through a door, and a wide blob or ring still funnels (24 soldiers
+  through the long 6-cell door and the 8-cell bridge 2 to 6 s after the
+  tight blob, `a_wide_squad_funnels_through_a_door_and_a_bridge`).
 - **No lookouts** (owner 2026-11-21 05:04Z: "remove the feature that some
   soldiers guard while harvesting"). From 2026-11-14 to 11-21 a squad
   draining or building with slime near posted a share of itself as lookouts

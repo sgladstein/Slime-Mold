@@ -67,7 +67,8 @@ impl<W: World> Game<W> {
     }
 
     /// How wide squad `q`'s own formation stands, dish cells: twice its
-    /// furthest place from the anchor, plus a gap.
+    /// furthest place from the anchor (a line's or a column's across its
+    /// facing), plus a gap.
     pub(super) fn formation_width(&self, q: usize) -> f32 {
         self.formation_width_at(q, self.form_gap(q))
     }
@@ -76,7 +77,14 @@ impl<W: World> Game<W> {
     fn formation_width_at(&self, q: usize, gap: f32) -> f32 {
         let n = self.members(q).len();
         let sq = self.squads[q];
-        let far = (0..n).map(|r| sq.formation.offset(r, n, gap)).map(|o| o.0.hypot(o.1)).fold(0.0, f32::max);
+        // A blob or a ring as before (its furthest place at this gap, the
+        // same sum); a line or a column across the way it faces
+        // (`Formation::half_width`).
+        let far = if sq.formation.faces() {
+            sq.formation.half_width(n) * gap
+        } else {
+            (0..n).map(|r| sq.formation.offset(r, n, gap)).map(|o| o.0.hypot(o.1)).fold(0.0, f32::max)
+        };
         2.0 * far + self.gap()
     }
 

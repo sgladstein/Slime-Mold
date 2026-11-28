@@ -69,3 +69,20 @@ part after a few seconds (the squads take different ways).
 `wide-squad-z6.mp4`, `wide-squad-z12.mp4`, and a still at zoom 12
 (`zoom12-before-after.jpg`): before, a wide squad strung out in a column
 with stragglers; after, a squeezed blob.
+
+## Part two: shapes and the drag ghost
+
+The Formation page holds four shapes again, blob, ring, line and column (the
+owner's 07:09Z "add column to the list"). Line and column face the way the
+squad was last sent. Holding the right button on a move shows a ghost of the
+squad's places at the target, and a drag sets the spread from 1.0 to 3.0.
+
+- `line-ghost-tight-wide.jpg`: 24 soldiers on planet 1 at zoom 6, a line
+  sent east, its ghost at spread 1.0 (left) and 2.6 (right).
+- `column-ghost-z6.mp4`, `column-ghost-z12.mp4`: the same squad as a column
+  at spread 1.3, sent east, forming two abreast along the move inside its
+  ghost (13 s, real time).
+
+Filmed with `larder-world look=DIR run=1:1 mode=squads set=start_bank=100000
+centre=squad,Z card=buy20/column/ghost1.3 at=2,2.2,...`; the headless `ghost[X]`
+step holds the move button with the squad sent 25 cells east.
