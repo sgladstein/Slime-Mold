@@ -2,7 +2,7 @@
 title: The roguelike run
 kind: design
 status: open
-updated: 2026-11-27
+updated: 2026-11-28
 sources:
   - Reports/balance-review-2026-11-20/README.md
   - Reports/balance-review-2026-11-24/README.md
@@ -230,7 +230,29 @@ ordered: [report](../../Reports/star-map-2026-11-26/README.md). What
 follows describes each planet as it was on eight steps; its numbers now
 read at the planet's curve place.
 
-The Stars page (`world::start::stars`), redrawn 2026-11-27 after the owner's "The planet path selection map needs to be improved and planet text needs to be improved": the route runs across the top, a column a step with its slime named once over it, each planet's ring coloured and sized by its pip (Safe green and small, Fair blue, Hard red-orange, larger, with a halo) and filled with its biome's colour; under it the planets the route can go to stand side by side as cards (slime size against the planet just won, hits, twist, rare card, contracts, world and map size, where it leads, pay), and the heat switch sits beside Fly. The shop's planet-ahead lines are one fact each (`menu::shop_of`). Stills: [PR stills](../../Reports/pr-stills/star-map-cards-2026-11-27.jpg).
+**The rescue contract** (2026-11-28, Enemy; Direction's call 11-27 and the
+owner's word 11-28 03:38Z, "The rescue is one of the optional
+objectives/bonuses that we already have in the star map"): in about one run
+in three (`route::RESCUE_ODDS`), one planet at step 3, the step that meets
+the Trunk (`RESCUE_STEP`), carries `Contract::Rescue` beside its own
+contract, and has no twist. At the first second two squads of three are dug
+in on the thickest slime whose ring of eight doors lies on reachable ground
+clear of crystals, deep from the larder (`larder_world/rescue.rs`): hidden
+(smell 0; a heart does not lunge at a soldier it cannot smell), on Defend,
+deaf to orders; found at 5:00 or when one of yours comes within 8 cells,
+when they reek, join your squad at 0.3 of a soldier's pace and force the
+strikers on. Both dug-outs at the larder keep the contract (twice a plain
+contract's pay); a dug-out wiped loses it. The planet is won by wiping the
+slime, as any other. Keys `rescue`, `rescue_hide`, `rescue_ring`,
+`rescue_thick`, `rescue_wound`, `rescue_alarm`, `rescue_out`,
+`rescue_sites`; the bot's hand `rescue@T`. Its dug-outs are cleared with 16
+kill bursts, since one burst only wounds today's tougher slime (step 3 of
+run seed 3: three dead at 0:03 with one). The owner first picked "goes on,
+with a penalty" on a card for a wiped dug-out, then made the rescue a
+contract, which is that. Prototype and timings:
+[the Lab's report](../../Reports/lab-rescue-2026-11-24/README.md). On screen (Look, 11-28): a cream badge (`ui::RESCUE`, the squad's own cream; `stars::rescue_badge`) on the planet on the map and beside its pip on its card, whose twist row reads "Rescue"; on the planet the dug-outs' plates and squad tiles say "dug in" in that cream, not "auto", and the HUD's pill takes the squad sign ([card](../../Reports/pr-stills/rescue-card-2026-11-28.jpg), [planet](../../Reports/pr-stills/rescue-dug-in-2026-11-28.jpg)).
+
+The Stars page (`world::start::stars`), redrawn 2026-11-27 after the owner's "The planet path selection map needs to be improved and planet text needs to be improved": the route runs across the top, a column a step with its slime named once over it, each planet's ring coloured and sized by its pip (Safe green and small, Fair blue, Hard red-orange, larger, with a halo) and filled with its biome's colour; under it the planets the route can go to stand side by side as cards (slime size against the planet just won, hits, twist, rare card, contracts, world and map size, where it leads, pay), and the heat switch sits beside Fly. The shop's planet-ahead lines are one fact each (`menu::shop_of`). Stills: [PR stills](../../Reports/pr-stills/star-map-cards-2026-11-27.jpg). Since 11-28 the cards are only as tall as the fullest one's facts (`card_need`; they were `CARD_H` whatever they held), and the Tough line shows the planet's slime levels as swatches in the world's colours (`LEVEL_INKS`, kept in step with `view.wgsl`'s `level_rgb`) with the hits from the orange to the darkest (`run::blows_at_level`) ([still](../../Reports/pr-stills/star-cards-fit-2026-11-28.jpg)).
 
 Since 2026-11-26 the early steps climb faster (`run::early_lift`; the owner, 21:51Z: "You can increase the difficulty early but I don't think we should flatten out the later progression"): curve places under `LIFT_TO` 3.5 are bent up by `LIFT_BEND` 0.7, so steps 2 to 4 of twelve read 1.96, 2.56 and 3.07 (were 1.64, 2.27, 2.91) and step 5 on reads as before. A pip's offset applies after the lift. Raising steps 5 on as well was put off (owner asked, 22:12Z): the tables stop at planet 8, so a shift would flatten the last steps, and the bot already lost step 6 on all six seeds ([review](../../Reports/review-2026-11-26/README.md)).
 

@@ -31,23 +31,23 @@ Scott paused all work (11-27 23:02Z) to move accounts. State:
   lump's member never fruits) was the whole planet 4 drop, 2 of 6 against
   5 of 6 without it, because a heart on its crystal shed members to scent
   fruiting; 900 won 5 of 6 with a snipe of about 24.
-- **Next: the rescue planet as a star-map node** (Direction 11-27 23:41Z):
-  in about one run in three, one planet at the step that meets the Trunk
-  (step 3) is a Rescue planet, marked on its card, keeping its pip and pay;
-  won by bringing both dug-in squads home or by wiping the slime; hearts
-  form and break there as anywhere; not on later steps until the Lab's
-  planets 4 and 5 work lands. Card line: "Distress call: two squads are dug
-  in deep in the Trunk. Reach both and walk them home at a wounded pace.
-  The slime wakes when you find them, and its rings won't hold past five
-  minutes." Sources: the Lab's `rescue.rs` on `claude/project-thread-2o4cic`
-  (a7b9204e) and [its report](../Reports/lab-rescue-2026-11-24/README.md);
-  wounded pace is `Soldier::pace` (#851); the origin-unsmelled patch in the
-  report's `raw/`. Plan: pick the dug-outs at the first second on thick
-  slime whose ring `drop_ground().fits()` (reachable from the landing, clear
-  of crystals); `RescueRules` in rules.rs; a `rescue` flag on `route::Node`
-  (rolled from the seed, so saves keep it); a `rescue` field on `Game` for
-  the planet save; a hand for the bots with Engine; the node badge and
-  screens are Look HUD's.
+- **The rescue: a star-map contract, in a PR 11-28** (Direction 11-27;
+  Scott 11-28 03:38Z: "The rescue is one of the optional objectives/bonuses
+  that we already have in the star map"). `route::Contract::Rescue`, drawn
+  on one node at step 3 (`RESCUE_STEP`) in about one run in three
+  (`RESCUE_ODDS`), beside the node's own contract, no twist there; the
+  rule is `larder_world/rescue.rs` (`Rules::rescue`, keys `rescue*`, hand
+  `rescue@T` in hands.rs, a `rescue t` line a second in headless). Sites
+  are picked from the slime grid and `drop_ground().fits()`. Cleared with
+  16 kill bursts (one only wounds today's slime: three dead at 0:03 on run
+  seed 3 step 3). Heart ignores unsmelled soldiers (`origin_near`). Checks
+  on lavapipe, run seed 3 step 3: idle holds both dug-outs past 1:00; the
+  rescue hand from 0:01 with 8 rifles reached one at 0:17 and was wiped in
+  the Trunk at 0:38 (one game; a real timing wants the 1070, Engine's).
+  Scott's card before the contract ruling picked "goes on, with a penalty"
+  for a wiped dug-out; as a contract the penalty is the pay not earned.
+  Next: Look badges the contract and the HUD pill (draw.rs uses the twist
+  pill for `Game::rescue_now`); the run bot does not play the rescue.
 - **Still waiting:** the Lab's strikers settle patch for lap two
   (`Reports/lab-lap-two-2026-11-24/raw/strikers-settle.patch`).
 - **Twists** (#830) and their hooks (`Run::twist`, `Game::twist_now`) are

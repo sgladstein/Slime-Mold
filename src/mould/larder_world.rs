@@ -82,6 +82,7 @@ mod fireway;
 mod autocast;
 mod trample;
 mod gear;
+mod rescue;
 pub mod snap;
 // The moved modules' items keep their old paths (`larder_world::World`,
 // `larder_world::Rules`, ...).
@@ -102,6 +103,7 @@ pub use heart::HeartRules;
 pub use stand::{Heart, Stand, StandRules};
 pub use origin::{OriginRules, OriginState};
 pub use twist::{Twist, TwistNow, TwistRules};
+pub use rescue::{Rescue, RescueRules};
 pub use levels::{apply_levels, crystal_levels, LevelRules};
 pub use strikers::{StrikerRules, Strikers};
 pub use starfall::{fall_count, Cashed, CoreFrom, Drop, DropKind, StarRules, Starfall};
@@ -684,6 +686,10 @@ pub struct Game<W: World> {
     pub starfall: Starfall,
     /// Boss cores that re-form their boss, and raids' cores (`cores.rs`).
     pub cores: Cores,
+    /// The rescue planet's dug-outs (`rescue.rs`, `Rules::rescue`), once
+    /// dug in; None off a rescue planet.
+    #[serde(default)]
+    pub rescue: Option<Rescue>,
     /// The last-stand heart (`stand.rs`).
     pub stand: Stand,
     /// The origin (`origin.rs`), the heart that is the planet's win.
@@ -893,6 +899,7 @@ impl<W: World> Game<W> {
             strikers: Strikers::default(),
             starfall: Starfall::new(seed),
             cores: Cores::default(),
+            rescue: None,
             stand: Stand::default(),
             origin: OriginState::default(),
             rendered: 0.0,

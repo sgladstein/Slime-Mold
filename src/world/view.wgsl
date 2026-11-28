@@ -1197,14 +1197,13 @@ const GEM_SPENT: vec3<f32> = vec3<f32>(56.0, 59.0, 64.0);
 // of the six sides split at its middle and tilted `GEM_STAR` radians
 // apart, so the crown catches the light in twelve tones, not three), and
 // a flat table (from `GEM_TABLE`), darker, where the charge's light shows
-// from inside with a few fracture planes (`GEM_VEINS`) lit through it.
+// from inside.
 // Slopes (horizontal over vertical) for the girdle and the crown.
 const GEM_GIRDLE: f32 = 0.12;
 const GEM_TABLE: f32 = 0.58;
 const GEM_STAR: f32 = 0.38;
 const GEM_BEVEL: f32 = 2.4;
 const GEM_CROWN: f32 = 0.85;
-const GEM_VEINS: u32 = 2u;
 // (Tried with it, 11-24: the charge's light pooled on the ground round a
 // full crystal's foot, 1.4 cells out. At zoom 6 it barely showed, and
 // what it did show was a cyan blur past the hexagon's crisp edge, which
@@ -3647,25 +3646,14 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             let seam_t = 1.0 - smoothstep(0.0, 1.0, abs(dpx - GEM_TABLE * a * P.zoom));
             let seam_s = (1.0 - smoothstep(0.0, 1.0, abs(along) * P.zoom)) * (1.0 - w_bevel) * (1.0 - w_table);
             let seam = max(max(seam_g, seam_t), seam_s) * smoothstep(3.5, 5.0, P.look_zoom);
-            // Fracture planes inside the glass (`GEM_VEINS`), seen through
-            // the table and the crown as hairlines of light, by the charge.
-            // Each a short plane seen edge on: a segment from a point in the
-            // crown, fading to nothing at its ends. (Full lines across the
-            // whole stone, the first cut, read as scratches on its face.)
-            var vein = 0.0;
-            for (var q = 0u; q < GEM_VEINS; q++) {
-                let hq = vec2<f32>(f32(k) * 2.3 + f32(q) * 1.7, 7.1);
-                let ang = 6.2831853 * hash2(hq);
-                let pa = 6.2831853 * hash2(hq + 3.3);
-                let p0 = (0.25 + 0.3 * hash2(hq + 5.9)) * a * vec2<f32>(cos(pa), sin(pa));
-                let dir = vec2<f32>(cos(ang), sin(ang));
-                let half_len = (0.2 + 0.2 * hash2(hq + 8.1)) * a;
-                let u = dot(rel - p0, dir);
-                let d = abs(dot(rel - p0, vec2<f32>(-dir.y, dir.x))) * P.zoom;
-                let along_fade = 1.0 - smoothstep(0.3 * half_len, half_len, abs(u));
-                vein = max(vein, (1.0 - smoothstep(0.3, 1.1, d)) * along_fade);
-            }
-            vein *= smoothstep(GEM_GIRDLE, GEM_TABLE, depth) * v;
+            // (Fracture planes inside the glass, `GEM_VEINS` 2, from 11-24
+            // to 11-28: two hairlines of light at random angles through
+            // each charged stone. The owner, 11-28 03:37Z: "two randomly
+            // oriented sharp lines through each. Not sure what this is
+            // supposed to be but it should be improved or removed." They
+            // showed nothing the game did, and a drained crystal already
+            // cracks from its middle as its charge goes (`GEM_RAYS`), so
+            // they are gone.)
             // Charged, it is glassy cyan lit from inside; spent, frosted:
             // a broad dull sheen, no glint.
             let gspec = pow(max(dot(gn, half_v), 0.0), 28.0) * (0.08 + 0.92 * v) + pow(max(dot(gn, half_v), 0.0), 6.0) * 0.1 * spent;
@@ -3677,7 +3665,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
             // rock and the thin film; the review 11-15 measured 93-126).
             // The table is deeper glass, darker, its light from inside.
             var alb = mix(GEM_SPENT * worn, vec3<f32>(38.0, 142.0, 165.0) * (1.0 - 0.3 * w_table), v) * (1.0 - 0.35 * seam);
-            let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v) + vec3<f32>(120.0, 215.0, 235.0) * 0.45 * vein;
+            let glow = vec3<f32>(10.0, 70.0, 75.0) * v * (0.25 + 0.75 * depth) + vec3<f32>(150.0, 230.0, 255.0) * hot * (0.25 + 0.35 * v);
             // Mould on a crystal grows over it (owner, 11-14 08:15Z: "slime
             // shouldn't go under crystals, they should grow over it but it
             // needs to still clearly look like a crystal"). Before, the

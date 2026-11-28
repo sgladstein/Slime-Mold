@@ -303,6 +303,10 @@ impl<W: World> Game<W> {
     pub fn apply(&mut self, c: Cmd) -> bool {
         self.finish_step();
         self.log.push((self.world.ticks(), c));
+        // The rescue planet's stranded hold their dug-out until reached.
+        if self.rescue_holds(&c) {
+            return false;
+        }
         match c {
             Cmd::Order(k, o) if k < self.soldiers.len() => {
                 self.soldiers[k].order = o;

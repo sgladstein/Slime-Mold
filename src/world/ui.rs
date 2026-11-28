@@ -638,6 +638,12 @@ const READOUT_MS: f32 = 10_000.0;
 /// amber and the accent's cyan (the cold snap and the wind alike).
 pub const TWIST: Rgba = [156, 208, 255, 255];
 
+/// The rescue contract's colour (Enemy's #891, `route::Contract::Rescue`;
+/// Look 11-28): the squad's own cream (art direction rule 3, "your team
+/// cream and olive"), since what it marks is your soldiers, apart from the
+/// twist's ice blue, the Fair pip's cyan and the danger red.
+pub const RESCUE: Rgba = [244, 230, 196, 255];
+
 /// What the game shows this frame.
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct Model {

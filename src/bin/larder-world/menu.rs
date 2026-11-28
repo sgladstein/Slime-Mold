@@ -627,7 +627,7 @@ pub(super) fn shop_of(r: &Run) -> Shop {
         run: (!r.range).then(|| run_view(r)),
         slime: (!r.range && !does.is_empty()).then(|| (title_case(l.tier.name()), does.to_string())),
         beat: beat_it(l.tier).filter(|_| !r.range).map(str::to_string),
-        twist: r.twist().map(|t| (t.name().to_string(), t.card())),
+        twist: r.planet_line(),
         shots: shots
             .into_iter()
             .map(|t| match t {
@@ -685,9 +685,12 @@ pub(super) fn star_view(r: &Run) -> slime_mould::world::start::StarView {
                         name: p.name,
                         slime: title_case(l.tier.name()),
                         biome: p.biome.name().to_string(),
-                        twist: at.twist().map(|t| (t.name().to_string(), t.card())),
+                        twist: at.planet_line(),
+                        rescue: n.contracts.contains(&slime_mould::mould::route::Contract::Rescue),
                         size: l.walkers,
                         hits: run::blows(e),
+                        level_top: run::level_max(e),
+                        top_hits: run::blows_at_level(e, run::level_max(e)),
                         area: (p.size.0 * p.size.1) as f32,
                         pay: at.pay(2),
                         heat_pay: hot.pay(2),
@@ -1905,7 +1908,7 @@ impl App {
         let mut kept_line = None;
         if let (Some(g), Some(tr)) = (self.game.as_ref(), self.mission.as_ref()) {
             let broken = g.bosses.ended.iter().filter(|(_, e, _)| *e == slime_mould::mould::larder_world::BossEnd::Broken).count() as u32;
-            let o = slime_mould::mould::route::Outcome { won: v.stars > 0, at: v.at, par: g.rules.par, lost: tr.lost() as u32, broken, pumped: g.pumped, found: g.starfall.earned() };
+            let o = slime_mould::mould::route::Outcome { won: v.stars > 0, at: v.at, par: g.rules.par, lost: tr.lost() as u32, broken, pumped: g.pumped, found: g.starfall.earned(), rescued: g.rescued() };
             let kept: Vec<String> = r.settle(&o).into_iter().filter(|c| c.1).map(|(c, _, p)| format!("{} +{p}", c.name())).collect();
             if !kept.is_empty() {
                 kept_line = Some(format!("Contract kept: {}", kept.join(", ")));
