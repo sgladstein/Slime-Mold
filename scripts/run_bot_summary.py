@@ -25,9 +25,10 @@ squad cut it to half, else lost), `squad` (the last soldier fell),
 `overrun`, `stuck` (no food to buy or fire with), `cleared` (the slime is
 gone but the goal was not met), `open` (no verdict).
 
-`--check` prints one line a planet (result, length, longest stall) and
-fails on a stall over a minute (`stall=`, 11-22: no harvest and no new
-low of the slime or of the origin's members) or a soft lock: a planet with no verdict by its clock and a minute (`open`),
+`--check` prints one line a planet (result, length, longest stall), names
+a stall over a minute as a WALL line with its step, pip and seed
+(`stall=`, 11-22: no harvest and no new low of the slime or of the origin's
+members; a failure until Direction's 11-28 word), and fails on a soft lock: a planet with no verdict by its clock and a minute (`open`),
 or no line for a planet the run reached. It also fails a planet that ends
 in under a minute (the lane brief's smoke check). A lost planet never
 fails it: a loss is a measurement ("balance never blocks").
@@ -162,9 +163,39 @@ def pace_table(title, seeds):
     print()
 
 
+def wall_line(seed, p):
+    """A stall over `STALL` (the league's `stall=`), with its step, pip,
+    seed and length (Direction, 11-28)."""
+    return (f"step {p.get('depth', '?')} ({p.get('tier', '?')}, {p.get('pip', 'fair')}) seed {seed}: "
+            f"stalled {clock(float(p.get('stall', 0)))} with no harvest and the slime no smaller, "
+            f"{result(p)} at {clock(float(p.get('secs', 0)))}")
+
+
+def walls_headline(seeds):
+    """Markdown: every stall over `STALL` across the seeds, and first, in
+    bold, each step that walls on every seed that reached it (Direction,
+    11-28: "put that in the summary's headline so it can't be missed")."""
+    lines, by_step = [], {}
+    for name, ps in seeds:
+        for p in ps:
+            d = int(p["depth"])
+            hit = float(p.get("stall", 0)) > STALL
+            by_step.setdefault(d, []).append(hit)
+            if hit:
+                lines.append(f"- WALL: {wall_line(name.removeprefix('seed '), p)}")
+    every = [d for d, hits in sorted(by_step.items()) if len(hits) == len(seeds) and all(hits)]
+    for d in every:
+        print(f"**WALL on every seed: step {d}.**")
+        print()
+    if lines:
+        print("\n".join(lines))
+        print()
+
+
 def check(seed, planets, runs):
-    """The CI gate: fails on a soft lock or a planet under a minute."""
-    bad = []
+    """The CI gate: fails on a soft lock or a planet under a minute; names
+    each stall over a minute as a WALL line."""
+    bad, walls = [], []
     for p in planets:
         secs = float(p.get("secs", 0))
         print(f"seed {seed} planet {p.get('depth', '?')} ({p.get('tier', '?')}): {result(p)}, {clock(secs)}, longest stall {clock(float(p.get('stall', 0)))}")
@@ -174,12 +205,19 @@ def check(seed, planets, runs):
             bad.append(f"planet {p.get('depth')}: ended at {clock(secs)}, under a minute")
         # A stall (Direction, 11-22): over a minute after the first with no
         # harvest and no new low of the slime (the league's `stall=`): the
-        # bot standing by a home crystal it cannot take.
+        # bot standing by a home crystal it cannot take. A named wall, not a
+        # failure, since 11-28 (Direction: "Make a stall a named WALL line in
+        # the summary ... Keep soft locks failing"): every planet ends by
+        # its clock, and the bot pushes onto the slime's thinnest crystal
+        # after 40 s (`strat.rs` `push`), so a stall left is the bot losing
+        # a fight (the Trunk on run seeds 2 and 3: 62 to 245 s with the push).
         stall = float(p.get("stall", 0))
         if stall > STALL:
-            bad.append(f"planet {p.get('depth')}: stalled {clock(stall)} with no harvest and the slime and its origin no smaller")
+            walls.append(wall_line(seed, p))
     if not planets or not runs:
         bad.append("the run printed no planet or no end line (the game stopped early)")
+    for w in walls:
+        print(f"WALL: {w}")
     for b in bad:
         print(f"FAIL: {b}")
     return 1 if bad else 0
@@ -196,6 +234,7 @@ def main():
             except OSError:
                 planets = []
             seeds.append((f"seed {name or path}", planets))
+        walls_headline(seeds)
         pace_table(f"The bot's pace by planet, plan `{plan}`", seeds)
         print("Length is a planet's game time; \"won\" is won by its goal, \"held\" held on to the limit (cut to half).")
         return 0

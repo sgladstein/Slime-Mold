@@ -330,6 +330,23 @@ pub(super) struct Plan {
     /// p 0.03). `army=80` stays off: its 2 extra wins and 1 loss are
     /// mostly games that never held 80.
     pub clock: f32,
+    /// **Push when stalled** (2026-11-28, the nightly's red Trunk): with
+    /// no harvest and no new 1% low of the slime for `push` seconds, the
+    /// squad clears the slime's crystal with the fewest walkers on it,
+    /// whatever `per` says, and keeps at it until that crystal is dry or
+    /// the stall ends. On run seed 2's step 3 (lavapipe, main 9a5ec6c) the
+    /// bot was broke with 11 soldiers from 4:10 while the slime held the
+    /// home (9,600 walkers) and one other crystal (7,400) and regrew as
+    /// fast as the squad's stand killed it: 2:30 with the slime at 12,500
+    /// give or take 300, then the heart siege; CI's seed 2 lost at 7:56
+    /// with a 3:44 stall. 0: off. On at 40 since the arms batch of 11-28
+    /// (GitHub, f147c81a, planet 3 on run seeds 1 to 8 and the nightly's
+    /// runs 2 and 3, as is against 40): the longest stall fell in 7 pairs,
+    /// rose in none, 3 tied (sign test p 0.008); planet 3 seed 4 went from
+    /// a loss at 8:42 (stall 316 s) to a win at 5:34, no win was lost; the
+    /// push costs soldiers (seed 3 lost 38 against 17, seed 7 41 against
+    /// 14). Stalls over a minute remain on 5 of 10 (64 to 154 s).
+    pub push: f32,
 }
 
 /// The run's loadout the holding groups fire with `arm=1` (`Run::loadouts`:
@@ -393,6 +410,7 @@ impl Default for Plan {
             storm: 0.5,
             army: 0,
             clock: 480.0,
+            push: 40.0,
         }
     }
 }
@@ -421,7 +439,7 @@ pub(super) const PRESETS: [(&str, &str); 8] = [
 
 impl Plan {
     /// Every dial's key, for the search and the docs.
-    pub const DIALS: [&'static str; 54] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops", "cool", "broke", "siege", "brace", "storm", "mortars", "sprayers", "hunters", "body", "army", "clock"];
+    pub const DIALS: [&'static str; 55] = ["pumps", "walk", "up", "guard", "turrets", "walls", "lure", "first", "hold", "go", "cap", "back", "per", "defend", "more", "take", "shop", "cards", "own", "name", "aim", "kite", "split", "group", "want", "mop", "grow", "regroup", "spare", "shelf", "starve", "deep", "points", "fire", "standoff", "mines", "blast", "gun", "arm", "want2", "tcards", "order", "drops", "cool", "broke", "siege", "brace", "storm", "mortars", "sprayers", "hunters", "body", "army", "clock", "push"];
 
     /// `PRESET,key=value,...` (either part may be missing).
     pub fn parse(spec: &str) -> Result<Plan, String> {
@@ -508,6 +526,7 @@ impl Plan {
             "storm" => self.storm = num(v)?.max(0.0),
             "army" => self.army = whole(v)? as usize,
             "clock" => self.clock = num(v)?.max(0.0),
+            "push" => self.push = num(v)?.max(0.0),
             // A label for the league's rows; the hand ignores it.
             "name" => {}
             _ => return Err(format!("strat: no dial {k} ({})", Plan::DIALS.join(", "))),
@@ -606,6 +625,10 @@ struct Memory {
     /// The siege's closing in (`hunt`): the origin's fewest members, when
     /// they last fell or the stand last stepped in, and the steps taken.
     siege_low: Option<(u32, f32, u32)>,
+    /// The slime's last 1% low and when (`Plan::push`), and the crystal
+    /// the squad is pushing onto.
+    mould_low: (u32, f32),
+    pushing: Option<usize>,
 }
 
 thread_local! {
@@ -1236,6 +1259,9 @@ pub(super) fn strat_hand(g: &mut Game<GpuWorld>, spec: &str) {
         if g.harvested > mm.harvest_at.0 + 1.0 {
             mm.harvest_at = (g.harvested, t);
         }
+        if mm.mould_low.1 == 0.0 || (g.mould as f32) < 0.99 * mm.mould_low.0 as f32 {
+            mm.mould_low = (g.mould as u32, t.max(0.001));
+        }
     });
 
     // ---- The squad.
@@ -1729,14 +1755,45 @@ fn hunt(g: &mut Game<GpuWorld>, p: &Plan, q: usize, m: (f32, f32), range: f32, s
     // times (3) walked 52 soldiers into a home of 12,700 walkers round an
     // origin of 2,200 and lost them all in 35 s (run seed 1 planet 2,
     // lavapipe), so it drains only at `per` a soldier, as `home_ok`.
+    // Push when stalled (`push`).
+    if p.push > 0.0 && !mopping {
+        let since = MEM.with_borrow(|mm| mm.harvest_at.1.max(mm.mould_low.1));
+        // From the first minute on, as the league's `stall=`.
+        let stalled = t > 60.0 && t - since.max(60.0) > p.push;
+        let target = MEM.with_borrow_mut(|mm| {
+            if !stalled {
+                mm.pushing = None;
+            } else if mm.pushing.is_none_or(|c| cs.get(c).is_none_or(|x| x.1 <= DRY)) {
+                mm.pushing = (0..cs.len())
+                    .filter(|&c| cs[c].1 > DRY && g.pump_on(c).is_none())
+                    .map(|c| (c, sense.mass_near(cs[c].0, g.world.crystal_r(c) + range)))
+                    .filter(|&(_, n)| n > 0)
+                    .min_by_key(|&(_, n)| n)
+                    .map(|(c, _)| c);
+            }
+            mm.pushing
+        });
+        if let Some(c) = target {
+            let at = cs[c].0;
+            let o = Order::Clear(at.0, at.1);
+            if fresh(g, o) {
+                g.apply(Cmd::SquadOrder(q as u8, o));
+            }
+            return;
+        }
+    }
     let origin = g.stand.live.filter(|h| h.origin);
     let rest_dry = (1..cs.len()).all(|c| cs[c].1 <= DRY || barren.contains(&c));
     let storming = (p.storm > 0.0 && g.alive() >= STORM_ARMY && g.mould as f32 <= p.storm * MEM.with_borrow(|mm| mm.start))
         || (p.army > 0 && g.alive() >= p.army)
         || (p.clock > 0.0 && t >= p.clock && g.alive() >= STORM_ARMY);
     if let Some(h) = origin.filter(|_| p.siege > 0.0 && (rest_dry || storming) && !mopping) {
-        if cs[0].1 > DRY && home_ok {
-            let o = Order::Clear(cs[0].0 .0, cs[0].0 .1);
+        // The heart's own crystal (since 11-26 a heart forms on any
+        // crystal the slime holds thick, not only the home, #858): drained
+        // while it holds under `per` walkers a soldier, as the home was.
+        let hc = (0..cs.len()).min_by(|&a, &b| dist(cs[a].0, h.centre).total_cmp(&dist(cs[b].0, h.centre))).unwrap_or(0);
+        if cs[hc].1 > DRY && takeable(hc) {
+            let o = Order::Clear(cs[hc].0 .0, cs[hc].0 .1);
             if fresh(g, o) {
                 g.apply(Cmd::SquadOrder(q as u8, o));
             }
