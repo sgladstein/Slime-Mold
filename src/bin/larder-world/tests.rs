@@ -1016,8 +1016,8 @@ fn the_menu_starts_a_runs_level_like_a_mission() {
     assert!(shop.heading.starts_with(&format!("Planet 1 of {}", slime_mould::mould::run::PLANETS)), "{}", shop.heading);
     // The plain gun turret, owned from planet 1 (2026-11-27), on the
     // Owned tab, and in loadout 2 on the row of loadouts, quick to build.
-    assert!(shop.loadouts.iter().any(|l| l.n == 2 && l.holds == "Gun turret" && l.quick.is_some_and(|q| q.1 == Some(1))));
-    assert!(shop.rows.iter().any(|row| row.group == slime_mould::world::start::OWNED && row.name.starts_with("Gun turret")), "{:?}", shop.rows.iter().map(|r| (&r.group, &r.name)).collect::<Vec<_>>());
+    assert!(shop.loadouts.iter().any(|l| l.n == 2 && l.holds == "Sentry" && l.quick.is_some_and(|q| q.1 == Some(1))));
+    assert!(shop.rows.iter().any(|row| row.group == slime_mould::world::start::OWNED && row.name.starts_with("Sentry")), "{:?}", shop.rows.iter().map(|r| (&r.group, &r.name)).collect::<Vec<_>>());
 }
 
 /// **A run in the window** (needs a GPU; the cloud's software Vulkan runs
@@ -1057,10 +1057,10 @@ fn a_run_plays_a_planet_then_the_shop_then_the_next() {
     let wall = m.commands.iter().find(|c| c.id == WALL).unwrap();
     assert!(wall.why_not.as_deref() != Some("Locked: unlock it in the shop between planets"));
     // The turret buttons are the quick-build slots (2026-11-27): the
-    // first holds the plain gun turret, the others are empty, and the
+    // first holds the plain Sentry (11-28), the others are empty, and the
     // hunter has no button of its own.
     let turret = m.commands.iter().find(|c| c.id == TURRET).unwrap();
-    assert!(!turret.locked && turret.name == "Gun turret", "{} {:?}", turret.name, turret.why_not);
+    assert!(!turret.locked && turret.name == "Sentry", "{} {:?}", turret.name, turret.why_not);
     let empty = m.commands.iter().find(|c| c.id == MORTAR).unwrap();
     assert!(!empty.ready && empty.name == "Quick build 2", "{}", empty.name);
     assert!(m.commands.iter().all(|c| c.id != HUNTER));

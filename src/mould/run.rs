@@ -37,7 +37,7 @@
 use super::campaign::{Bonus, Goal, Mission};
 use super::bodies::{Body, BodyKind};
 use super::larder_world::QUICK;
-use super::turrets::{Turret, TurretKind};
+use super::turrets::{Family, Turret, TurretKind};
 use super::guns::{Gun, GunKind};
 use super::kit::KitRules;
 use super::larder_world::{Rules, Twist};
@@ -1126,9 +1126,10 @@ impl Group {
     pub fn name(self) -> &'static str {
         match self {
             Group::Squad => "Squad",
-            // The Buildings tab until 2026-11-28: its Walls unlock and Pump
-            // power left the shop (`GONE`), so it holds turret designs only.
-            Group::Build => "Turrets",
+            // The Buildings tab until 2026-11-28, when its Walls unlock and
+            // Pump power left the shop (`GONE`) and the turret designs went
+            // to the Guns tab; nothing is on it now.
+            Group::Build => "Buildings",
             Group::Tools => "Tools",
             Group::Relics => "Relics",
             Group::Guns => "Guns",
@@ -2767,7 +2768,7 @@ impl Run {
             self.offers.extend(Card::ALL.into_iter().filter(|c| c.kind() != Kind::Payload));
             self.gun_offers = GunKind::ALL.iter().enumerate().map(|(k, &kind)| Gun::roll_kind(kind, mix(z ^ (0x6755_4E00 + k as u64)), self.roll_depth())).collect();
             self.body_offers = BodyKind::ALL.iter().enumerate().map(|(k, &kind)| Body::roll(kind, mix(z ^ (0xB0D1_0000 + k as u64)), self.roll_depth())).collect();
-            self.turret_offers = TurretKind::ALL.iter().enumerate().map(|(k, &kind)| Turret::roll(kind, mix(z ^ (0x7E77_0000 + k as u64)), self.roll_depth())).collect();
+            self.turret_offers = Family::ALL.iter().enumerate().map(|(k, &f)| Turret::roll_family(f, mix(z ^ (0x7E77_0000 + k as u64)), self.roll_depth())).collect();
             return;
         }
         let n = OFFER + self.level_of("draw") as usize;
@@ -2992,18 +2993,25 @@ impl Run {
     }
 
     /// This shop's turret designs (2026-11-27, first guesses):
-    /// `TURRET_OFFER` of different kinds, rolled for the shop's depth, so
-    /// a better one than the plain gun turret comes along as the run goes
+    /// `TURRET_OFFER` of different families (2026-11-28), from those the
+    /// shop's depth sells (`Average::from`), each rolled for that depth,
+    /// so a better one than the plain Sentry comes along as the run goes
     /// deeper (owner, 21:42Z: "better more expensive turret[s] being sold
-    /// later in the run").
+    /// later in the run"), and no two of one firing style while another
+    /// style is left, so a shop shows how differently turrets can play.
     fn turret_rolls(&self, z: u64) -> Vec<Turret> {
-        let mut kinds = TurretKind::ALL.to_vec();
-        (0..TURRET_OFFER as u64)
-            .map(|k| {
-                let s = mix(z ^ (0x7E77_0000 + k));
-                Turret::roll(kinds.remove((s % kinds.len() as u64) as usize), s, self.roll_depth())
-            })
-            .collect()
+        let depth = self.roll_depth();
+        let mut fams: Vec<Family> = Family::ALL.into_iter().filter(|f| f.average().from <= depth).collect();
+        let mut out: Vec<Turret> = Vec::new();
+        for k in 0..TURRET_OFFER as u64 {
+            let s = mix(z ^ (0x7E77_0000 + k));
+            let fresh: Vec<Family> = fams.iter().copied().filter(|f| out.iter().all(|t| t.kind != f.style())).collect();
+            let from = if fresh.is_empty() { fams.clone() } else { fresh };
+            let Some(&f) = from.get((s % from.len().max(1) as u64) as usize) else { break };
+            fams.retain(|&g| g != f);
+            out.push(Turret::roll_family(f, s, depth));
+        }
+        out
     }
 
     /// Shop points the squad took on the planet (`Game::starfall`: ore
@@ -3159,22 +3167,23 @@ impl Run {
         }
         // Turret designs (owner, 2026-11-27 21:36Z): those owned, each a
         // click into the loadout shown (not the squads' first), then those
-        // for sale, in the Build tab where their unlocks were.
+        // for sale, on the Guns tab since 2026-11-28 (owner, 05:49Z: "in
+        // fact is should be in the gun section"; the Build tab before).
         for (i, t) in self.turrets.iter().enumerate() {
             let on = self.loadouts.get(self.editing).is_some_and(|l| l.turret == Some(i));
             let holder = self.loadouts.iter().position(|l| l.turret == Some(i));
             let (about, state) = match holder {
-                _ if on => (format!("{} In {shown}: every one you build fires its cards.", t.kind.about()), "carried".to_string()),
-                _ if self.editing == 0 => (format!("{} Show another loadout to give it cards (squads land with {shown}).", t.kind.about()), holder.map_or("owned".to_string(), |j| self.loadout_name(j))),
-                Some(j) => (format!("{} In {}: click to move it to {shown}.", t.kind.about(), self.loadout_name(j)), self.loadout_name(j)),
-                None => (format!("{} Click to put it in {shown}, to give it cards.", t.kind.about()), "owned".to_string()),
+                _ if on => (format!("{} In {shown}: every one you build fires its cards.", t.family.about()), "carried".to_string()),
+                _ if self.editing == 0 => (format!("{} Show another loadout to give it cards (squads land with {shown}).", t.family.about()), holder.map_or("owned".to_string(), |j| self.loadout_name(j))),
+                Some(j) => (format!("{} In {}: click to move it to {shown}.", t.family.about(), self.loadout_name(j)), self.loadout_name(j)),
+                None => (format!("{} Click to put it in {shown}, to give it cards.", t.family.about()), "owned".to_string()),
             };
-            rows.push(Row { group: Group::Build, face: Face::Item(turret_key(t.kind)), on, name: title(&t.title()), about, price: String::new(), state, ready: !on && self.editing != 0, pick: Pick::CarryTurret(i) });
+            rows.push(Row { group: Group::Guns, face: Face::Item(turret_key(t.kind)), on, name: title(&t.title()), about, price: String::new(), state, ready: !on && self.editing != 0, pick: Pick::CarryTurret(i) });
         }
         for (i, t) in self.turret_offers.iter().enumerate().filter(|_| !self.field) {
             let p = t.price();
             let (price, state) = if self.range { (String::new(), "free".into()) } else { (p.to_string(), "for sale".into()) };
-            rows.push(Row { group: Group::Build, face: Face::Item(turret_key(t.kind)), on: false, name: title(&t.title()), about: format!("{} From planet {}; goes into a loadout of its own.", t.kind.about(), t.depth), price, state, ready: self.range || p <= self.points, pick: Pick::Turret(i) });
+            rows.push(Row { group: Group::Guns, face: Face::Item(turret_key(t.kind)), on: false, name: title(&t.title()), about: format!("{} From planet {}; goes into a loadout of its own.", t.family.about(), t.depth), price, state, ready: self.range || p <= self.points, pick: Pick::Turret(i) });
         }
         for (i, g) in self.guns.iter().enumerate() {
             let on = self.carry() == Some(i);
@@ -3225,7 +3234,7 @@ impl Run {
             for i in 0..self.loadouts.len() {
                 // What it holds by name (2026-11-27: "2: Lobber"), a turret's
                 // or a body's in place of a gun's.
-                let held = self.loadouts[i].turret.and_then(|t| self.turrets.get(t)).map(|t| t.kind.name().to_string()).or_else(|| self.loadouts[i].body.and_then(|b| self.bodies.get(b)).map(|b| b.kind.name().to_string()));
+                let held = self.loadouts[i].turret.and_then(|t| self.turrets.get(t)).map(|t| t.family.name().to_string()).or_else(|| self.loadouts[i].body.and_then(|b| self.bodies.get(b)).map(|b| b.kind.name().to_string()));
                 let gun = held.unwrap_or_else(|| self.gun_of(i).map_or("no gun".to_string(), |g| title(&g.title())));
                 let mut users = Vec::new();
                 if i == 0 {
@@ -3268,7 +3277,7 @@ impl Run {
             // which the shop draws on that loadout's card (2026-11-27).
             for (i, t) in self.loadouts.iter().enumerate().filter_map(|(i, l)| Some((i, self.turrets.get(l.turret?)?))) {
                 let me = self.loadout_name(i);
-                let kind = t.kind.name().to_lowercase();
+                let kind = t.family.name().to_lowercase();
                 let on = self.quick.iter().position(|&q| q == i);
                 let (name, about) = match on {
                     Some(k) => (format!("Quick build {}", k + 1), format!("{me}'s {kind} is button {} of the Build page on a planet. Click to take it off.", k + 1)),

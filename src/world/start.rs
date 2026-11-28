@@ -213,6 +213,11 @@ pub enum ShopArea {
     Upgrades,
     /// A gun, a row of the Guns tab's table.
     Guns,
+    /// A turret design, a row of the Guns tab's second table, under the
+    /// guns (owner, 2026-11-28 05:49Z: turrets "should be in the gun
+    /// section"); owned, on the Owned tab, the one in the loadout shown
+    /// `on` and heading its table.
+    Turrets,
     /// A bullet card: those `on` fill the carried gun's slots, those in
     /// the `BAG` group sit in the bag under them, the rest on the tab named
     /// by their `group` (Cards; the range's Bullets and its shelves).

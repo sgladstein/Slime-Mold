@@ -498,7 +498,12 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                 // Every gun, turret and device owned on one tab, each with
                 // the loadout it is in (2026-11-27).
                 _ if !r.range && matches!(row.pick, Pick::Carry(_)) => (OWNED.to_string(), ShopArea::Guns),
-                _ if !r.range && matches!(row.pick, Pick::CarryTurret(_) | Pick::CarryBody(_)) => (OWNED.to_string(), ShopArea::Upgrades),
+                // Turrets on the Guns tab since 2026-11-28 (owner, 05:49Z:
+                // "it should be in the gun section"), a table of their own
+                // under the guns; owned ones on the Owned tab.
+                _ if !r.range && matches!(row.pick, Pick::CarryTurret(_)) => (OWNED.to_string(), ShopArea::Turrets),
+                _ if matches!(row.pick, Pick::Turret(_)) => ("Guns".to_string(), ShopArea::Turrets),
+                _ if !r.range && matches!(row.pick, Pick::CarryBody(_)) => (OWNED.to_string(), ShopArea::Upgrades),
                 Group::Cards if r.range => (range_shelf(&row).to_string(), ShopArea::Cards),
                 Group::Squad | Group::Cards if matches!(row.face, Face::Item(_)) => ("Squad".to_string(), ShopArea::Upgrades),
                 // Each a tab of the shop's counter (Shop B, 11-15).
@@ -540,14 +545,18 @@ pub(super) fn shop_of(r: &Run) -> Shop {
                         s.level = (0, 0);
                         s.bars = Vec::new();
                     }
-                    // An owned turret design by its kind, its rolls as
-                    // bars (2026-11-27), as an owned body's are.
-                    if let Pick::CarryTurret(i) = row.pick {
-                        if let Some(t) = r.turrets.get(i) {
-                            s.name = t.kind.name().to_string();
-                            s.level = (0, 0);
-                            s.bars = turret_bars(t);
-                        }
+                    // A turret design by its family, its numbers as bars
+                    // (2026-11-27; owned and for sale since 11-28), as a
+                    // gun's are.
+                    let design = match row.pick {
+                        Pick::CarryTurret(i) => r.turrets.get(i),
+                        Pick::Turret(i) => r.turret_offers.get(i),
+                        _ => None,
+                    };
+                    if let Some(t) = design {
+                        s.name = t.family.name().to_string();
+                        s.level = (0, 0);
+                        s.bars = turret_bars(t);
                     }
                     if let Some((b, mine)) = body {
                         s.name = b.kind.name().to_string();
@@ -1110,7 +1119,7 @@ fn loadout_cards(r: &Run, row_of: &dyn Fn(Pick) -> Option<usize>) -> Vec<Loadout
         let turret = l.turret.and_then(|t| r.turrets.get(t));
         let body = l.body.and_then(|b| r.bodies.get(b));
         let (holds, kind, icon) = if let Some(t) = turret {
-            (t.kind.name().to_string(), "Turret", item_icon(run::turret_key(t.kind)))
+            (t.family.name().to_string(), "Turret", item_icon(run::turret_key(t.kind)))
         } else if let Some(b) = body {
             (b.kind.name().to_string(), "Device", item_icon(b.kind.key()))
         } else if let Some(g) = r.gun_of(i) {
@@ -1139,15 +1148,29 @@ fn loadout_cards(r: &Run, row_of: &dyn Fn(Pick) -> Option<usize>) -> Vec<Loadout
 
 /// A turret design's rolls as bars (2026-11-27), as a body's are.
 fn turret_bars(t: &slime_mould::mould::turrets::Turret) -> Vec<(String, f32, String)> {
+    use slime_mould::mould::turrets::TurretKind;
+    // Its numbers as the game fires them (2026-11-28: turrets mirror the
+    // guns), on one scale for every family so the table's columns compare:
+    // reach to 120 cells (a howitzer's), rate to 5 a second (a repeater's).
+    let (reach, rate, strike) = t.numbers();
     let mut b = vec![
-        ("Reach".to_string(), (t.range / 1.5).clamp(0.0, 1.0), format!("x{:.2}", t.range)),
-        ("Rate".to_string(), (t.rate / 1.5).clamp(0.0, 1.0), format!("x{:.2}", t.rate)),
-        ("Card slots".to_string(), t.slots as f32 / 6.0, t.slots.to_string()),
-        ("Budget".to_string(), t.budget as f32 / 30.0, t.budget.to_string()),
+        ("Range".to_string(), reach / 120.0, format!("{reach:.0}")),
+        ("Rate".to_string(), (rate / 5.0).sqrt(), format!("{rate:.2}/s")),
     ];
-    if t.over {
-        b.insert(2, ("Over walls".to_string(), 1.0, "yes".to_string()));
+    match t.kind {
+        TurretKind::Gun => b.push(("Aim".to_string(), 1.0 - t.spread / 8.0, format!("{:.1}", t.spread))),
+        TurretKind::Sprayer => b.push(("Arc".to_string(), t.spread / 180.0, format!("{:.0}\u{b0}", t.spread))),
+        _ => {}
     }
+    if t.shots > 1 {
+        b.push(("Shots".to_string(), t.shots as f32 / 12.0, t.shots.to_string()));
+    }
+    if strike > 0.0 {
+        b.push(("Strike".to_string(), strike / 6.0, format!("{strike:.1}")));
+    }
+    b.push(("Over walls".to_string(), if t.over { 1.0 } else { 0.0 }, if t.over { "yes" } else { "no" }.to_string()));
+    b.push(("Budget".to_string(), t.budget as f32 / 30.0, t.budget.to_string()));
+    b.push(("Slots".to_string(), t.slots as f32 / 6.0, t.slots.to_string()));
     b
 }
 
