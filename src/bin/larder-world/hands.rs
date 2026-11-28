@@ -291,14 +291,21 @@ pub(super) fn plan(g: &mut Game<GpuWorld>, hand: &str) {
     let nums: Option<Vec<f32>> = hand.strip_prefix("hold@").and_then(|p| p.split(',').map(|v| v.parse::<f32>().ok()).collect());
     // A soldier that reached its post keeps its Move order, so the new
     // post is ordered for half a second from T whatever the order.
+    // `hold@N` (2026-11-28, the Enemy lane's films; the owner, 07:31Z: "It
+    // would be much easier to tell in all if the squad was just standing
+    // shooting at the slime"): N soldiers stand at the larder.
+    let army = match nums.as_deref() {
+        Some(&[n]) => n.max(1.0) as usize,
+        _ => 8,
+    };
     let (post, moving) = match nums.as_deref() {
         Some(&[x, y]) => (Some((x, y)), false),
         Some(&[x, y, t, x2, y2]) => (Some(if g.time() >= t { (x2, y2) } else { (x, y) }), (t..t + 0.5).contains(&g.time())),
         _ => (None, false),
     };
-    let hand = if post.is_some() { "hold" } else { hand };
+    let hand = if post.is_some() || nums.as_deref().is_some_and(|v| v.len() == 1) { "hold" } else { hand };
     if hand == "hold" || hand == "push" {
-        while g.time() < 1.0 && g.soldiers.len() < 8 && g.bank >= g.rules.soldier_cost {
+        while g.time() < 1.0 && g.soldiers.len() < army && g.bank >= g.rules.soldier_cost {
             g.apply(Cmd::Buy);
         }
         for k in 0..g.soldiers.len() {

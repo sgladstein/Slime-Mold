@@ -528,6 +528,15 @@ pub struct Settings {
     /// GPU only (the owner's card, 11-17 19:21Z). Sent only while a field
     /// is written (`Engine::hunted`), in the row after the wind's.
     pub hunt_pull: f32,
+    /// **The streaming body** (`stream=W`, 2026-11-28, the Enemy lane; an
+    /// experiment, off by default: the owner, 08:26Z, "the real veins is
+    /// just a prototype or experimental option", the switch `stream` in
+    /// `build::switches`): calm walkers take a side by slot, half leaning
+    /// toward food down the far smell and half away, x W, and two packed
+    /// walkers going opposite ways trade cells (engine.wgsl's `sense` and
+    /// `walk`), so a packed body moves inside and lays trail where it
+    /// does, for the Look lane's veins.
+    pub stream: f32,
     /// **The tether** (`tether=N`, 2026-11-18, the Enemy lane, from the
     /// Lab's one-body prototype; 0 off, as here): a walker on its own way
     /// out from the body (a breakaway, a cut-off walker making for food;
@@ -943,6 +952,7 @@ impl Settings {
             far_smell: t.far_smell,
             lure_pull: 0.0,
             hunt_pull: 0.0,
+            stream: 0.0,
             tether: 0,
             crystal_keep: false,
             ceiling: 0,
@@ -1296,6 +1306,8 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // The hunt's pull (`hunt_pull=W`, 2026-11-26, the Lab): calm slime
         // on the squad's trail leans down it to where the squad is now.
         "hunt_pull" => s.hunt_pull = f()?,
+        // The streaming body (`stream=W`, 2026-11-28, an experiment).
+        "stream" => s.stream = f()?,
         // The tether (`tether=N`, 2026-11-18): slime on its way out from
         // the body steps only where it touches N others (Lab, one body:
         // Reports/lab-body-2026-11-18; 2 its pick).
@@ -2781,8 +2793,10 @@ impl Engine {
         let q = |v: f32, k: f32| (v.max(0.0) * k).round().min(255.0) as u32;
         b.extend(u32_bytes(&[q(s.level_blows, 16.0) | q(s.level_speed, 256.0) << 8 | q(s.level_bite, 16.0) << 16]));
         // The hunt's pull (`hunt_pull`), only while its trail is written,
-        // and three spare words.
-        b.extend(f32_bytes(&[if self.hunted { s.hunt_pull } else { 0.0 }, 0.0, 0.0, 0.0]));
+        // a spare word, the streaming body's lean (`stream`) and a spare
+        // word.
+        let h = |v: f32| if self.hunted { v } else { 0.0 };
+        b.extend(f32_bytes(&[h(s.hunt_pull), 0.0, s.stream, 0.0]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         // Switching withering on starts every walker as if it heard of food

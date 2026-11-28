@@ -706,6 +706,15 @@ pub const CEILING: f32 = 12.0;
 /// three points round it, masses there for 12 s, and comes in from all of
 /// them at once for 8 s. 45 s apart at least. GPU only.
 ///
+/// **The hunt comes in wide** (`hunt_wave`, 2026-11-28, the Enemy lane, on
+/// the owner's 11-28 ask for a stronger slime; `larder_world/waves.rs`):
+/// once the squad's trail has brought half a percent of the slime up to
+/// the ring just past the guns' reach, that slime masses there for 20 s
+/// (12 at first, longer on the owner's 08:56Z "focus on A" so the masses
+/// are bigger), splitting to points 70 degrees either side, and comes in
+/// from all of them at once. Standing or walking: the owner's films had
+/// a squad standing still. One planet before the losing waves.
+///
 /// **The slime beats** (`heart`, 2026-11-20, the same thread;
 /// `larder_world/heart.rs`): every 6 s a beat runs out from its home
 /// crystal (else the crystal it holds most) through the body, and the
@@ -737,7 +746,7 @@ pub const CEILING: f32 = 12.0;
 /// or more, every walker left gathers into one armoured heart on its heart
 /// crystal, which lunges at the nearest soldier every 20 s, until it is cut
 /// under 15% of the most it held or is 150 s old. GPU only.
-pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0), ("ceiling", CEILING), ("origin", 1.0)];
+pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), ("wave", 1.0), ("heart", 1.0), ("strikers", 1.0), ("late_at", 0.4), ("stand", 1.0), ("ceiling", CEILING), ("origin", 1.0), ("hunt_wave", 1.0)];
 
 /// **The planet each of `ENEMY_RULES` first plays on** (2026-11-20, the
 /// thread "Pace threats across the planets"; the owner that night, after a
@@ -769,7 +778,7 @@ pub const ENEMY_RULES: &[(&str, f32)] = &[("unit_paths", 1.0), ("fruit", 1.0), (
 /// time"). His log: at 8:44 the slime's mass rose 14,045 to 17,936 in 3 s
 /// as a fruit burst, and 21 of 28 soldiers died in those 3 s; the dark
 /// knot it grows from reads as a mini-boss.
-pub const FIRST_PLANET: &[(&str, u32)] = &[("fruit", 2), ("strikers", 2), ("wave", 3), ("late_at", 3), ("stand", 4)];
+pub const FIRST_PLANET: &[(&str, u32)] = &[("fruit", 2), ("strikers", 2), ("hunt_wave", 2), ("wave", 3), ("late_at", 3), ("stand", 4)];
 
 /// The planet `rule` (one of `ENEMY_RULES`) first plays on (`FIRST_PLANET`).
 pub fn first_planet(rule: &str) -> u32 {

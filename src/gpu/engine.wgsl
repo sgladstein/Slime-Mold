@@ -269,8 +269,11 @@ struct Params {
     // in sixteenths (16-23); 0 off. A level is a crystal's (`Pile::_c`).
     wind_x: f32, wind_y: f32, blows: f32, grades: u32,
     // The hunt's pull (`hunt`, 2026-11-26, the Lab: 0 with no trail
-    // written) and three spare words.
-    hunt: f32, hunt_pad0: f32, hunt_pad1: f32, hunt_pad2: f32,
+    // written), a spare word (the armoured tongue's blows, 2026-11-28, B
+    // of the owner's three; dropped at his 08:56Z "focus on A": it only
+    // made the slime tougher, nothing new to see), the streaming body's
+    // lean (`stream`, 2026-11-28, an experiment, 0 off) and a spare word.
+    hunt: f32, hunt_pad1: f32, stream: f32, hunt_pad2: f32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -990,6 +993,32 @@ fn wall_between(x0: f32, y0: f32, x1: f32, y1: f32) -> u32 {
         if (j != NONE && (ground[j] & WALL) != 0u) { return j; }
     }
     return NONE;
+}
+// The most a trail keeps of its spread value a step, soil and all (the
+// scents review, 2026-11-28, finding 1, Reports/scent-review-2026-11-28):
+// clay keeps 1.05, so a keep of 0.952 or more on clay grew every step
+// instead of fading, and the viewer's slider (to 0.999, carried into the
+// game by slime-tweaks.txt) at 0.99 put 2e22 on planet 1's trail by 0:40
+// and drew the whole map as slime. No shipped tier reaches it (the
+// Trunk's 0.95 on clay is 0.9975), and under it the sums are the same
+// bits as before.
+const KEEP_MOST: f32 = 0.998;
+// Whether every cell round fine cell i holds a walker or is not ground
+// (the streaming body's walkers inside a body, `stream`): a walker at the
+// edge keeps the body's own rules, so the streams stay inside it.
+fn packed(i: u32) -> bool {
+    let x = i32(i % P.w);
+    let y = i32(i / P.w);
+    for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+            let nx = x + dx;
+            let ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= i32(P.w) || ny >= i32(P.h)) { continue; }
+            let j = u32(ny) * P.w + u32(nx);
+            if (agar[j] != 0u && atomicLoad(&occ[j]) == 0u) { return false; }
+        }
+    }
+    return true;
 }
 // What the trail on cell i keeps of its spread value (the CPU's `tick`
 // multiplies after the spread, and the trail after the species' sum).
@@ -1779,6 +1808,23 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
             if (fl > -1.0e5) { fl += w * (cos(h - sa) * beat.x + sin(h - sa) * beat.y); }
             if (fr > -1.0e5) { fr += w * (cos(h + sa) * beat.x + sin(h + sa) * beat.y); }
         }
+        // **The streaming body** (`stream`, 2026-11-28, the Enemy lane's
+        // experiment for the Look lane's veins, the owner's 08:26Z pick
+        // "Land it, then real veins", off by default): every calm walker
+        // takes a side by its slot, half streaming in toward food down the
+        // far smell (`food_dist`) and half out away from it, x `stream`;
+        // packed walkers going opposite ways swap cells (`walk`), so the
+        // body moves inside without a free cell and lays trail where it
+        // moves.
+        if (lb == 0u && P.stream > 0.0 && packed(here)) {
+            let dh = food_dist(here);
+            if (dh != 0xFFFFFFFFu) {
+                let w = select(-P.stream, P.stream, (k & 1u) == 1u);
+                if (f > -1.0e5) { f += w * far_near(wk.x, wk.y, h, so, dh); }
+                if (fl > -1.0e5) { fl += w * far_near(wk.x, wk.y, h - sa, so, dh); }
+                if (fr > -1.0e5) { fr += w * far_near(wk.x, wk.y, h + sa, so, dh); }
+            }
+        }
         // **The wave** (2026-11-20; `wave_dist`): a calm walker inside the
         // wave's field leans down it, x `wave`, as the lure's. Calm only,
         // as the lure: a walker already charging keeps its charge.
@@ -1869,15 +1915,23 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
     }
     var aim = NONE;
+    var swap = 0.0;
     if (there != NONE) {
         if (there == here) {
             aim = there;
         } else if (agar[there] != 0u && !(deep_shut(there) && !deep_shut(here)) && !(crater_shut(there) && !crater_shut(here)) && (move_crowd(k, sp) == 0u || atomicLoad(&occ[there]) < move_crowd(k, sp) + thread_room(lb == 0u && !scared, there, here))) {
             aim = there;
             if (crowd_of(sp) > 0u) { atomicMin(&claim[there], keyed(P.s_claim, t, k)); }
+        } else if (P.stream > 0.0 && lb == 0u && !scared && agar[there] != 0u && crowd_of(sp) == 1u && atomicLoad(&occ[there]) == 1u && atomicLoad(&occ[here]) == 1u) {
+            // The streaming body's swap (`stream`): a calm walker blocked
+            // by one walker asks to trade cells with it, its ask the cell it
+            // comes from; `walk` trades only where the two asked each other.
+            aim = there;
+            swap = 1.0;
+            atomicMin(&claim[there], here);
         }
     }
-    intent[k] = vec4<f32>(nx, ny, h, 0.0);
+    intent[k] = vec4<f32>(nx, ny, h, swap);
     icell[k] = aim;
 }
 
@@ -1908,7 +1962,14 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
     let here = cell(wk.x, wk.y);
     var wins = false;
     if (aim != NONE) {
-        wins = aim == here || crowd_of(species_of(k)) == 0u || atomicLoad(&claim[aim]) == keyed(P.s_claim, t, k);
+        if (intent[k].w > 0.5) {
+            // The streaming body's swap (`stream`): only where each of the
+            // two cells' asks is the other's, so both walkers trade and no
+            // cell holds two.
+            wins = aim != here && atomicLoad(&claim[aim]) == here && atomicLoad(&claim[here]) == aim;
+        } else {
+            wins = aim == here || crowd_of(species_of(k)) == 0u || atomicLoad(&claim[aim]) == keyed(P.s_claim, t, k);
+        }
     }
     var at = here;
     if (wins) {
@@ -1916,7 +1977,7 @@ fn walk(@builtin(global_invocation_id) gid: vec3<u32>) {
             atomicSub(&occ[here], 1u);
             atomicAdd(&occ[aim], 1u);
         }
-        walkers[k] = intent[k];
+        walkers[k] = vec4<f32>(intent[k].xyz, 0.0);
         at = aim;
     } else {
         // Blocked: Jones's rule, a new heading; or (`bkeep`) the heading it
@@ -2621,7 +2682,12 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
                 }
             }
         }
-        trail_out[i] = sum / n * P.keep * soil_keep(i);
+        let f = soil_keep(i);
+        if (P.keep * f > KEEP_MOST) {
+            trail_out[i] = sum / n * KEEP_MOST;
+        } else {
+            trail_out[i] = sum / n * P.keep * f;
+        }
     } else {
         // Each species' field spreads as the trail would; the trail is
         // their sum, in species order (the CPU's `tick`).
@@ -2643,12 +2709,19 @@ fn trail(@builtin(global_invocation_id) gid: vec3<u32>) {
         // cell's keep.
         let f = soil_keep(i);
         var total = 0.0;
+        var held = 0.0;
+        var over = false;
         for (var s = 0u; s < nsp(); s++) {
-            let v = sums[s] / n * keep_of(s);
-            sp_out[s * c + i] = v * f;
+            let ks = keep_of(s);
+            let v = sums[s] / n * ks;
+            // Capped as the one-species trail above (`KEEP_MOST`).
+            var kept = v * f;
+            if (ks * f > KEEP_MOST) { kept = sums[s] / n * KEEP_MOST; over = true; }
+            sp_out[s * c + i] = kept;
             total += v;
+            held += kept;
         }
-        trail_out[i] = total * f;
+        if (over) { trail_out[i] = held; } else { trail_out[i] = total * f; }
     }
     if (germs) { germ_out[i] = gsum / n * P.sick_keep; }
     if (al) {

@@ -3900,6 +3900,78 @@ mod tests {
         assert!(g.rescued() && g.end.is_none(), "every dug-out home keeps the contract, and the planet goes on: {:?}", g.end);
     }
 
+    /// **The hunt comes in wide** (`waves.rs`'s hunted waves, 2026-11-28).
+    /// A race world with the hunt on and only the hunted waves (no losing
+    /// ones, from the landing); the squad is walked past the slime's home
+    /// a cell a second at a time, out of its guns' reach.
+    ///
+    /// - A hunted wave starts within 40 s, gathering at two points or more
+    ///   past the guns' reach of every soldier.
+    /// - While it gathers the trail stays warm (the engine holds the hunt
+    ///   field), and it strikes after its gather.
+    #[test]
+    fn a_walked_squad_brings_a_hunted_wave_in_wide() {
+        let Some((device, queue)) = test_gpu() else { return };
+        let (seed, scale, walkers) = (5, 1, 4_000);
+        let mut s = race_settings(seed, scale, walkers);
+        s.hunt_pull = 30.0;
+        let mut rules = Rules::default();
+        rules.wave.hunted = true;
+        rules.wave.first = 0.0;
+        let mut g = Game::new(GpuWorld::new(&device, &queue, s, scale), rules, seed);
+        assert!(g.world.can_wave() && g.world.hunt_pull());
+        let sc = g.world.scale();
+        let home = g.world.crystals()[0].0;
+        let (w, h) = g.world.size();
+        let range = g.gun_range_max() * sc;
+        // The squad's line: past the home, out of reach, walked along y.
+        let x = if home.0 < w as f32 / 2.0 { home.0 + range + 10.0 * sc } else { home.0 - range - 10.0 * sc };
+        let y0 = (home.1 - 20.0 * sc).clamp(10.0, h as f32 - 10.0);
+        let put = |g: &mut Game<GpuWorld>, y: f32| {
+            for (i, so) in g.soldiers.iter_mut().enumerate().filter(|(_, so)| so.alive) {
+                let at = (x + (i % 3) as f32 * sc, y + (i / 3) as f32 * sc);
+                (so.x, so.y, so.was) = (at.0, at.1, at);
+            }
+        };
+        let mut y = y0;
+        while g.waves.hunted == 0 && g.time() < 40.0 {
+            put(&mut g, y.min(h as f32 - 10.0));
+            let t = g.time();
+            while g.time() < t + 1.0 {
+                g.step();
+            }
+            y += 2.0 * sc;
+        }
+        let wave = g.waves.live.clone().expect("a hunted wave by 40 s");
+        eprintln!("hunted wave at {:.0} s: {} points {:?} round {:?}", g.time(), wave.points.len(), wave.points, wave.centre);
+        assert!(wave.hunted && wave.phase == crate::mould::larder_world::WavePhase::Gather);
+        assert!(wave.points.len() >= 2, "it comes in wide");
+        for p in &wave.points {
+            assert!(g.soldiers.iter().filter(|so| so.alive).all(|so| (so.x - p.0).hypot(so.y - p.1) >= range), "a point inside the guns' reach");
+        }
+        // The squad is kept standing (its health topped up), so the wave
+        // has someone to strike.
+        let hp: Vec<f32> = g.soldiers.iter().map(|so| so.hp).collect();
+        let step = |g: &mut Game<GpuWorld>| {
+            for (so, &h) in g.soldiers.iter_mut().zip(&hp) {
+                so.hp = so.hp.max(h);
+            }
+            g.step();
+        };
+        let t = g.time();
+        while g.time() < t + 2.5 {
+            step(&mut g);
+        }
+        // The trail stays warm while it gathers, so the stream keeps
+        // feeding the masses (cold, tried first, starved them).
+        assert!(g.world.e.hunted, "the trail stays warm while it gathers");
+        while g.waves.live.as_ref().is_some_and(|w| w.phase != crate::mould::larder_world::WavePhase::Strike) && g.time() < t + g.rules.wave.hunted_gather + 3.0 {
+            step(&mut g);
+        }
+        let alive = g.soldiers.iter().filter(|so| so.alive).count();
+        assert!(g.waves.live.as_ref().is_some_and(|w| w.phase == crate::mould::larder_world::WavePhase::Strike), "it strikes after its gather: {:?} at {:.1} s, {alive} alive", g.waves.live.as_ref().map(|w| w.phase), g.time());
+    }
+
     #[test]
     fn no_mini_boss_forms_on_the_heart() {
         use crate::mould::larder_world::BossCause;

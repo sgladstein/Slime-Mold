@@ -51,6 +51,7 @@ sources:
   - Reports/starfall-look-2026-11-21/README.md
   - Reports/strategy-b-2026-11-26/README.md
   - Reports/strikers-2026-11-20/README.md
+  - Reports/stronger-slime-2026-11-28/index.html
   - Reports/surge-2026-11-15/README.md
   - Reports/trunk-fort-2026-11-18/README.md
   - Reports/whole-game-review-2026-11-15/README.md
@@ -291,6 +292,8 @@ Since 2026-11-26 (the owner, 06:58Z: "the progression needs to be way stronger f
 ## The hunt
 
 Since 2026-11-28 (Enemy, the plan's step 5; the owner, 11-28 03:31Z, "trying to make the slime enemy stronger"): the slime follows the squad's trail (`larder_world/hunt.rs`, the Lab's of 11-26, engine key `hunt_pull`). Once a game second the cells the soldiers stand on are kept while warm, and the slime's field is the walking distance to the nearest with each place's age added (`hunt_lag` 4 dish cells a second, out to `hunt_reach` 80), so calm walkers that meet the path go along it to where the squad is now and stop on a cold trail; a masked soldier leaves none. Its pull rises by planet (`run::HUNT_PULL`: off on the landing world, about 10 at step 2, full 30 from step 6, the owner's card of 11-28 05:40Z, "Mild at step 2, full by step 6"). On today's slime (1.75 blows at step 2) the tongue now reaches the guns: in the Lab's rig on step 2, as main a kiting or standing squad of 15 lost 1 soldier in 12 games; with the hunt a standing squad lost soldiers on 5 of 6 seeds and a kiting one on 2 of 6 ([rerun](../../Reports/hunt-rerun-2026-11-28/README.md)). GPU only.
+
+**The hunt comes in wide** (2026-11-28, Enemy; option A of the stronger-slime page, the owner's 08:56Z "focus on A"; `WaveRules::hunted`, `run::ENEMY_RULES`' `hunt_wave`, on from step 3 by `run::FIRST_PLANET`): once the trail has brought half a percent of the slime's mass (`near` 0.005) to the ring just past the guns' reach round the thickest knot of soldiers, that slime masses there for 20 s (`hunted_gather`) while the trail keeps feeding it, at the point it holds and at points 70 degrees either side (`flank`), the mass splitting to the nearer flank (`lead` 0.8), then comes in from all of them at once as any wave's strike. It needs no losses, standing or walking. The wave line in headless says `hunted`, the league line ends `waves=SENT/HUNTED`. On the bot with cards (step 3, seeds 2-5) it did not make the game harder; on the owner's standing-squad films (19 rifles, run seed 2 step 3) the slime came from two sides and killed no soldier ([page](../../Reports/stronger-slime-2026-11-28/index.html)). The armoured tongue (B, one more blow on the trail) was dropped on the same note: it read as today's game.
 
 ## Waves
 
