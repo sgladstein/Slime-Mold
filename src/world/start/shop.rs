@@ -141,10 +141,12 @@ fn dps_words(now: Option<f32>, after: Option<f32>, no_room: bool) -> Option<(Str
     } else {
         (format!("-{} DPS", dps_text(-d)), WORSE, false)
     };
-    // With no room in the gun it goes to the bag: what it would do there,
-    // said as such, in a quieter ink.
+    // With no room in the gun it would go to the bag: what it would do
+    // in the gun, in a quieter ink. (It said "no room" too until the
+    // owner, 2026-11-28 08:37Z: "I don't need anything to say new bullet
+    // vs swap or no room"; picking it tries it on, in the bag.)
     if no_room {
-        return Some((format!("{t} \u{b7} no room"), if same { FAINT } else { with_alpha(ink, 0.7) }, same));
+        return Some((t, if same { FAINT } else { with_alpha(ink, 0.7) }, same));
     }
     Some((t, ink, same))
 }
@@ -523,6 +525,19 @@ impl StartMenu {
             self.pick_row(h);
         }
         h.is_some()
+    }
+
+    /// The shop's row picked now (a card on the shelf, the gun or the
+    /// bag; an upgrade, a gun), as `Shop::rows` numbers it; None when
+    /// nothing is (`App::sync_trial` tries a picked card on).
+    pub fn picked_row(&self) -> Option<usize> {
+        if self.page != Page::Shop || !self.picked || self.shop.is_none() {
+            return None;
+        }
+        match self.rows().get(self.focus) {
+            Some(&Hit::Buy(i)) => Some(i),
+            _ => None,
+        }
     }
 
     /// The keyboard (or a click) picks `h`: the pane tells it.
@@ -1023,7 +1038,7 @@ impl StartMenu {
                     page(n, 1, self);
                     for (j, &i) in tab.rows.iter().enumerate() {
                         let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
-                        self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, fit, hot(r), ring(Hit::Buy(i)), c, s);
+                        self.hand_card(&shop.rows[i], shop.base().0, shop.base().1, r, fit, hot(r), ring(Hit::Buy(i)), c, s);
                         self.hits.push((r, Hit::Buy(i)));
                     }
                 }
@@ -1032,7 +1047,7 @@ impl StartMenu {
                     page(n, 1, self);
                     for (j, &i) in tab.rows.iter().enumerate() {
                         let r = Rect::new(area.x + (j % cols) as f32 * (w + g), area.y + (j / cols) as f32 * (h + g), w, h);
-                        self.shelf_row(&shop.rows[i], shop.dps, r, hot(r), ring(Hit::Buy(i)), c, s);
+                        self.shelf_row(&shop.rows[i], shop.base().0, r, hot(r), ring(Hit::Buy(i)), c, s);
                         self.hits.push((r, Hit::Buy(i)));
                     }
                 }
@@ -1053,7 +1068,7 @@ impl StartMenu {
                         page(n, 1, self);
                         for (j, &i) in tab.rows.iter().enumerate() {
                             let r = Rect::new(x0 + j as f32 * (w + g), y0, w, h);
-                            self.hand_card(&shop.rows[i], shop.dps, &shop.stats, r, fit, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
+                            self.hand_card(&shop.rows[i], shop.base().0, shop.base().1, r, fit, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
                             self.hits.push((r, Hit::Buy(i)));
                             if drag == Some(i) {
                                 from = Some(r);
@@ -1063,7 +1078,7 @@ impl StartMenu {
                         page(n, 1, self);
                         for (j, &i) in tab.rows.iter().enumerate() {
                             let r = Rect::new(area.x + (j % cols) as f32 * (w + g), area.y + (j / cols) as f32 * (h + g), w, h);
-                            self.shelf_row(&shop.rows[i], shop.dps, r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
+                            self.shelf_row(&shop.rows[i], shop.base().0, r, hot(r) && drag.is_none(), ring(Hit::Buy(i)), c, s);
                             self.hits.push((r, Hit::Buy(i)));
                             if drag == Some(i) {
                                 from = Some(r);
@@ -1417,7 +1432,7 @@ impl StartMenu {
             c.text_fit(Weight::SemiBold, 14.5 * s, (r.x + 14.0 * s + ic, mid), Align::Left, &name, name_w - 22.0 * s - ic, TEXT);
             for (k, l) in labels.iter().enumerate() {
                 if dps && k == 0 {
-                    let (mine, this) = (shop.dps, if row.on { shop.dps } else { row.dps });
+                    let (mine, this) = (shop.base().0, if row.on { shop.base().0 } else { row.dps });
                     let Some(v) = this else { continue };
                     let ink = match mine {
                         Some(m) if !row.on && v > m + 0.05 => GOOD,
@@ -1592,7 +1607,12 @@ impl StartMenu {
         // The gun with it (or without it, or this gun against yours):
         // damage a shot, fire rate, range, speed and aim, with a tick
         // where the gun stands now, green where it is better, red worse.
-        if !row.stats.is_empty() && !shop.stats.is_empty() && y + 40.0 * s <= limit {
+        // A card of the gun's or the bag's is measured against the gun the
+        // slots show; the rest against the gun as it is really, not with a
+        // card being tried on (`Shop::base`).
+        let own = row.area == ShopArea::Cards && (row.on || row.group == BAG);
+        let (now_dps, now_stats) = if own { (shop.dps, shop.stats.as_slice()) } else { shop.base() };
+        if !row.stats.is_empty() && !now_stats.is_empty() && y + 40.0 * s <= limit {
             let t = match row.area {
                 ShopArea::Cards if row.on => "YOUR GUN WITHOUT IT",
                 ShopArea::Cards if row.no_room => "YOUR GUN WITH IT, IF IT FIT",
@@ -1601,7 +1621,7 @@ impl StartMenu {
                 _ => "YOUR GUN WITH IT",
             };
             y = head(c, y, t);
-            let mine = (!(row.area == ShopArea::Guns && row.on)).then_some(shop.stats.as_slice());
+            let mine = (!(row.area == ShopArea::Guns && row.on)).then_some(now_stats);
             y += stat_bars(c, &row.stats, mine, r.x + p, y, iw, 21.0 * s, 13.5 * s, [150, 162, 176, 255], 1.0, limit, s);
             if mine.is_some() && y + 18.0 * s <= limit {
                 let note = if row.no_room { "Tick: now  ·  no room now, it would wait in the bag" } else { "Tick: your gun now  ·  green better, red worse" };
@@ -1628,7 +1648,7 @@ impl StartMenu {
         }
         // Then, second and small, the estimated damage a second: now, with
         // it, and the change.
-        if let (Some(now), Some(then)) = (shop.dps, row.dps) {
+        if let (Some(now), Some(then)) = (now_dps, row.dps) {
             if y + 22.0 * s <= limit {
                 let cw = dps_chip(c, Some(now), Some(then), row.no_room, r.x + p + iw, y + 12.0 * s, 12.5 * s, s, 1.0);
                 let with = match row.area {
@@ -1998,6 +2018,12 @@ impl StartMenu {
         let foot = r.bottom() - 9.0 * s;
         for k in 0..row.cost.min(6) {
             c.rrect(Rect::new(tx + k as f32 * (d + 2.5 * s), foot - d / 2.0, d, d), d / 2.0, with_alpha(ENERGY, 0.85 * dim.max(0.6)));
+        }
+        // A card on the shelf tried on (`ShopRow::trying`): its copy here
+        // edged and tagged, so it reads as not yet yours.
+        if row.trying {
+            c.outline(r, 6.0 * s, 1.5 * s, with_alpha(ACCENT, 0.9));
+            c.text(Weight::SemiBold, 11.5 * s, (r.right() - 6.0 * s, r.bottom() - 6.0 * s), Align::Right, "trying", ACCENT);
         }
     }
 }

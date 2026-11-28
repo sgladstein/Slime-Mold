@@ -266,6 +266,9 @@ pub struct LoadoutCard {
     pub quick: Option<(usize, Option<u8>)>,
 }
 
+/// A gun's number as a shop bar: its label, 0 to 1, its value.
+pub type Stat = (String, f32, String);
+
 /// A row of the run's shop page (the game fills it: `mould::run::Run::shop`).
 #[derive(Clone, Debug, PartialEq)]
 pub struct ShopRow {
@@ -311,12 +314,15 @@ pub struct ShopRow {
     /// scale (damage a shot, fire rate, range, speed, aim; the owner,
     /// 2026-11-22 08:53Z); empty where it changes no gun.
     pub stats: Vec<(String, f32, String)>,
+    /// A card on the shelf tried on (`Shop::was`): its copy in the gun or
+    /// the bag, marked on its tile, which can be moved as if owned.
+    pub trying: bool,
 }
 
 impl ShopRow {
     /// A row with the plain look; the game sets the rest.
     pub fn new(group: &str, area: ShopArea, icon: Icon, name: &str) -> Self {
-        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None, cell: None, dps: None, no_room: false, stats: Vec::new() }
+        ShopRow { group: group.into(), area, icon, tint: TEXT, name: name.into(), about: String::new(), price: String::new(), state: String::new(), ready: false, on: false, level: (0, 0), bars: Vec::new(), cost: 0, badge: None, cell: None, dps: None, no_room: false, stats: Vec::new(), trying: false }
     }
 }
 
@@ -379,6 +385,23 @@ pub struct Shop {
     /// The "New loadout" row, the last card of that row, while there is
     /// room for one more.
     pub new_loadout: Option<usize>,
+    /// While a card on the shelf is tried on (the owner, 2026-11-28
+    /// 08:37Z: a picked card shows up in the gun, or the bag, and can be
+    /// moved as if owned), the slots show the gun with it and `dps` and
+    /// `stats` are that gun's; this is the gun as it is really, which the
+    /// shelf's chips and the pane measure against.
+    pub was: Option<(Option<f32>, Vec<Stat>)>,
+}
+
+impl Shop {
+    /// The gun the shelf's cards are measured against: as it really is,
+    /// not with a card being tried on.
+    pub fn base(&self) -> (Option<f32>, &[(String, f32, String)]) {
+        match &self.was {
+            Some((d, st)) => (*d, st.as_slice()),
+            None => (self.dps, self.stats.as_slice()),
+        }
+    }
 }
 
 /// Which shot a card in the gun's slots joins (`mould::rounds::Shot`).
@@ -3427,7 +3450,7 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None, loadouts: Vec::new(), new_loadout: None }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None, loadouts: Vec::new(), new_loadout: None, was: None }
     }
 
     /// `shop` with `n` loadouts on its row of cards (2026-11-27), the
@@ -3519,7 +3542,7 @@ mod tests {
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new(), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None, loadouts: Vec::new(), new_loadout: None }
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new(), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None, loadouts: Vec::new(), new_loadout: None, was: None }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the
