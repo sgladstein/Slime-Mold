@@ -8,6 +8,7 @@ sources:
   - Reports/bug-sweep-2026-11-14.md
   - Reports/build-flow-2026-11-14/README.md
   - Reports/command-card-2026-11-15/README.md
+  - Reports/formations-on-the-move-2026-11-28/README.md
   - Reports/free-camera-2026-11-15/README.md
   - Reports/guards-2026-11-15/README.md
   - Reports/map-sharing-2026-11-16/README.md
@@ -283,7 +284,7 @@ is still to come. A walking map serves any goal within `MAP_NEAR` 12 dish cells 
   07:08Z, "Keep its spread, squeeze in gaps"). Before, a wide squad
   measured the ground against its full spread and walked most of a
   planet as a column whose soldiers traded places every step; the
-  before-and-after counts are in the pull request.
+  counts are in the [report](../../Reports/formations-on-the-move-2026-11-28/README.md).
 - **Building** is shared with the RTS round: ghosts soldiers raise from reach 6,
   Shift queues, an unfinished one can be called off for the whole price
   ([report](../../Reports/build-flow-2026-11-14/README.md)). Since
