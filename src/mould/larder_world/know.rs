@@ -19,9 +19,17 @@
 //! A masked soldier (the toolkit's mask, smell 0) is never smelled.
 //!
 //! Left as they were: the Lure (a smell made to be followed, with its own
-//! field), the crystals' far smell, the charges' own reach, and every
-//! check that asks where the guns are so as to keep out of them (that is
-//! the slime feeling pain, which it does wherever it is).
+//! field), the crystals' far smell, the charges (`time_unit_paths`: a
+//! charge starts only within the guns' reach and the panic margin of a
+//! unit, which the slime smells by air anyway), and every check that asks
+//! where the guns are so as to keep out of them (that is the slime
+//! feeling pain, which it does wherever it is).
+//!
+//! The charges' field was gated too at first, and on planet 2 run seed 1
+//! (llvmpipe) a turtle that won at 278 s lost at 127 s with it: the
+//! gated buildings were those still going up, which no reach smelled,
+//! so the charges that wore them went for the soldiers building them
+//! (the other gates one at a time left the game as it was to 140 s).
 //!
 //! Stage 0 of the design: no new field on the GPU and nothing drawn. The
 //! reviews (11-28) asked to test the knowledge first, keeping every tuned
@@ -52,7 +60,8 @@ pub(super) struct Know {
 }
 
 impl<W: World> Game<W> {
-    /// Whether the gate is on (`Rules::know_reach` > 0).
+    /// Whether the gate is on (`Rules::know_reach` > 0; below 0 the
+    /// placebo, `time_know`).
     pub(super) fn know_on(&self) -> bool {
         self.rules.know_reach > 0.0
     }
@@ -103,8 +112,12 @@ impl<W: World> Game<W> {
     /// Once a game second, before the aims: what the slime smells by the
     /// walking distance started a second ago and by the crow's reach of
     /// the guns now, then a new walking distance from its body.
+    ///
+    /// A negative reach is the placebo: the same reading at its size, and
+    /// nothing gated, so a census can tell the gate's effect from the
+    /// reading's own (a game is chaotic: one more grid read flips seeds).
     pub(super) fn time_know(&mut self) {
-        if !self.know_on() {
+        if self.rules.know_reach == 0.0 {
             if self.know.way.is_some() || !self.know.soldier.is_empty() {
                 self.know = Know::default();
             }
@@ -115,7 +128,7 @@ impl<W: World> Game<W> {
         let (w, h) = self.world.size();
         let bin = (sc as usize).max(1);
         let grid = self.world.mould_grid(bin);
-        let reach = (self.rules.know_reach * sc) as u32;
+        let reach = (self.rules.know_reach.abs() * sc) as u32;
         let field = self.know.way.take().map(Way::finish).unwrap_or_default();
         let bw = w.div_ceil(RAID_BLOCK);
         let walk = |p: (f32, f32)| {
@@ -154,9 +167,11 @@ impl<W: World> Game<W> {
                 sums[0] += 1;
             }
         }
+        // A building still going up smells as one standing: the soldiers
+        // building it are there.
         for (k, b) in self.buildings.iter().enumerate() {
-            sums[3] += b.up() as u64;
-            if b.up() && smells(b.at) {
+            sums[3] += b.alive as u64;
+            if b.alive && smells(b.at) {
                 self.know.building[k] = Some(now);
                 sums[2] += 1;
             }
