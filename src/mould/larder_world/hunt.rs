@@ -39,6 +39,52 @@ pub(super) struct Hunt {
     way: Option<Way>,
     /// Whether the world holds a trail to clear once none is warm.
     set: bool,
+    /// The way back along the squad's path (a unit vector), kept from the
+    /// last second it walked, for the side tongues.
+    back: Option<(f32, f32)>,
+}
+
+impl Hunt {
+    /// How far the squad's middle moved over the warm seconds (fine
+    /// cells), from the oldest second kept to the newest; None with fewer
+    /// than two seconds held (`waves.rs`'s hunted waves).
+    pub(super) fn walked(&self) -> Option<f32> {
+        let mid = |cells: &Vec<u32>| -> Option<(f32, f32)> {
+            let n = cells.len() as f32;
+            (n > 0.0).then(|| {
+                let (x, y) = cells.iter().fold((0.0, 0.0), |(x, y), &c| (x + (c & 0xFFFF) as f32, y + (c >> 16) as f32));
+                (x / n, y / n)
+            })
+        };
+        let (a, b) = (self.places.front()?, self.places.back()?);
+        if a.0 == b.0 {
+            return None;
+        }
+        let (a, b) = (mid(&a.1)?, mid(&b.1)?);
+        Some((a.0 - b.0).hypot(a.1 - b.1))
+    }
+
+    /// The squad's middle now and the way back along its path, once it
+    /// has walked `least` fine cells over the warm seconds (else the last
+    /// way back it had), for the side tongues.
+    fn heading(&mut self, least: f32) -> Option<((f32, f32), (f32, f32))> {
+        let mid = |cells: &Vec<u32>| -> Option<(f32, f32)> {
+            let n = cells.len() as f32;
+            (n > 0.0).then(|| {
+                let (x, y) = cells.iter().fold((0.0, 0.0), |(x, y), &c| (x + (c & 0xFFFF) as f32, y + (c >> 16) as f32));
+                (x / n, y / n)
+            })
+        };
+        let now = mid(&self.places.back()?.1)?;
+        if let Some(old) = self.places.front().and_then(|p| mid(&p.1)) {
+            let (dx, dy) = (old.0 - now.0, old.1 - now.1);
+            let d = dx.hypot(dy);
+            if d >= least.max(1.0) {
+                self.back = Some((dx / d, dy / d));
+            }
+        }
+        Some((now, self.back?))
+    }
 }
 
 impl<W: World> Game<W> {
@@ -47,6 +93,14 @@ impl<W: World> Game<W> {
     pub(super) fn time_hunt(&mut self) {
         if !self.world.hunt_pull() {
             return;
+        }
+        // A wave gathering (`waves.rs`) holds the slime past the guns'
+        // reach: the trail is cold until it strikes (the places are still
+        // kept), or it would draw the massing walkers on into the guns a
+        // few at a time.
+        let gathering = self.waves.live.as_ref().is_some_and(|w| w.phase == super::WavePhase::Gather);
+        if gathering {
+            self.hunt.way = None;
         }
         if let Some(way) = self.hunt.way.take() {
             self.world.set_hunt_field(way.finish());
@@ -69,11 +123,35 @@ impl<W: World> Game<W> {
         while self.hunt.places.front().is_some_and(|p| !warm(p.0)) {
             self.hunt.places.pop_front();
         }
-        let from: Vec<(u32, u32)> = self.hunt.places.iter().flat_map(|(at, cells)| {
+        let mut from: Vec<(u32, u32)> = self.hunt.places.iter().flat_map(|(at, cells)| {
             let age = ((now - at) as f32 * lag).round() as u32;
             cells.iter().map(move |&c| (c, age))
         }).collect();
+        // **Several tongues** (`Rules::hunt_tongues`, 2026-11-28): two
+        // side branches from the squad, cheaper to come in along than
+        // straight, so the slime near it splits onto them and comes in
+        // from the sides as well as down the path behind.
+        if r.hunt_tongues > 0.0 {
+            if let Some((c, back)) = self.hunt.heading(5.0 * sc) {
+                let len = (r.hunt_tongue_len.max(0.0) * sc) as u32;
+                let age = r.hunt_tongue_age.max(0.0);
+                for side in [1.0f32, -1.0] {
+                    let a = side * r.hunt_tongue_angle.to_radians();
+                    let (dx, dy) = (back.0 * a.cos() - back.1 * a.sin(), back.0 * a.sin() + back.1 * a.cos());
+                    for d in (sc.max(1.0) as u32..=len).step_by(sc.max(1.0) as usize) {
+                        let p = (c.0 + dx * d as f32, c.1 + dy * d as f32);
+                        if p.0 < 0.0 || p.1 < 0.0 || p.0 >= w as f32 || p.1 >= h as f32 {
+                            break;
+                        }
+                        from.push((cell(p.0, p.1), (d as f32 * age).round() as u32));
+                    }
+                }
+            }
+        }
         if from.is_empty() {
+            return;
+        }
+        if gathering {
             return;
         }
         let Some((agar, gw, gh)) = self.slime_ground() else { return };

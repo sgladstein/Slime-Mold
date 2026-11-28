@@ -934,7 +934,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                 // at each of its points and within reach of the squad.
                 if let (Some(w), Some((at, front))) = (g.waves.live.as_ref(), g.wave_counts()) {
                     let pts: Vec<String> = w.points.iter().zip(&at).map(|(p, n)| format!("{:.0},{:.0}: {n}", p.0, p.1)).collect();
-                    println!("  wave t {:.0} s: {:?} ({} sent), points [{}], {front} walkers near the squad at {:.0},{:.0}", g.time(), w.phase, g.waves.sent, pts.join("; "), w.centre.0, w.centre.1);
+                    println!("  wave t {:.0} s: {:?}{} ({} sent), points [{}], {front} walkers near the squad at {:.0},{:.0}", g.time(), w.phase, if w.hunted { " hunted" } else { "" }, g.waves.sent, pts.join("; "), w.centre.0, w.centre.1);
                 }
                 // The condensed strikers (`strikers.rs`, 2026-11-20): how
                 // many live, what they hold, and the walkers taken in.

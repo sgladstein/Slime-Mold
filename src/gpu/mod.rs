@@ -528,6 +528,13 @@ pub struct Settings {
     /// GPU only (the owner's card, 11-17 19:21Z). Sent only while a field
     /// is written (`Engine::hunted`), in the row after the wind's.
     pub hunt_pull: f32,
+    /// **The armoured tongue** (`hunt_armour=B`, 2026-11-28, the Enemy
+    /// lane, one of the three the owner picked to see that day, 07:07Z:
+    /// "A, B, and D"; 0 off, as here): an ordinary walker inside the
+    /// hunt's field (on or near the squad's trail) takes B blows more, so
+    /// the slime that follows you reaches your guns and bites before it
+    /// dies (engine.wgsl's `tough_walker`). Sent with the hunt's pull.
+    pub hunt_armour: f32,
     /// **The tether** (`tether=N`, 2026-11-18, the Enemy lane, from the
     /// Lab's one-body prototype; 0 off, as here): a walker on its own way
     /// out from the body (a breakaway, a cut-off walker making for food;
@@ -943,6 +950,7 @@ impl Settings {
             far_smell: t.far_smell,
             lure_pull: 0.0,
             hunt_pull: 0.0,
+            hunt_armour: 0.0,
             tether: 0,
             crystal_keep: false,
             ceiling: 0,
@@ -1296,6 +1304,9 @@ pub fn set(s: &mut Settings, key: &str, v: &str) -> Result<(), String> {
         // The hunt's pull (`hunt_pull=W`, 2026-11-26, the Lab): calm slime
         // on the squad's trail leans down it to where the squad is now.
         "hunt_pull" => s.hunt_pull = f()?,
+        // The armoured tongue (`hunt_armour=B`, 2026-11-28): slime on the
+        // squad's trail takes B blows more.
+        "hunt_armour" => s.hunt_armour = f()?,
         // The tether (`tether=N`, 2026-11-18): slime on its way out from
         // the body steps only where it touches N others (Lab, one body:
         // Reports/lab-body-2026-11-18; 2 its pick).
@@ -2780,9 +2791,11 @@ impl Engine {
         // packed: sixteenths, 256ths, sixteenths.
         let q = |v: f32, k: f32| (v.max(0.0) * k).round().min(255.0) as u32;
         b.extend(u32_bytes(&[q(s.level_blows, 16.0) | q(s.level_speed, 256.0) << 8 | q(s.level_bite, 16.0) << 16]));
-        // The hunt's pull (`hunt_pull`), only while its trail is written,
-        // and three spare words.
-        b.extend(f32_bytes(&[if self.hunted { s.hunt_pull } else { 0.0 }, 0.0, 0.0, 0.0]));
+        // The hunt's pull (`hunt_pull`) and the armoured tongue's blows
+        // (`hunt_armour`), only while its trail is written, and two spare
+        // words.
+        let h = |v: f32| if self.hunted { v } else { 0.0 };
+        b.extend(f32_bytes(&[h(s.hunt_pull), h(s.hunt_armour), 0.0, 0.0]));
         self.setting = crusts && scars && s.set_scar > 0.0;
         self.energy_flows = self.grows && s.energy_flow > 0.0;
         // Switching withering on starts every walker as if it heard of food

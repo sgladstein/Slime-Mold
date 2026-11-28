@@ -269,8 +269,9 @@ struct Params {
     // in sixteenths (16-23); 0 off. A level is a crystal's (`Pile::_c`).
     wind_x: f32, wind_y: f32, blows: f32, grades: u32,
     // The hunt's pull (`hunt`, 2026-11-26, the Lab: 0 with no trail
-    // written) and three spare words.
-    hunt: f32, hunt_pad0: f32, hunt_pad1: f32, hunt_pad2: f32,
+    // written), the armoured tongue's blows (`hunt_armour`, 2026-11-28)
+    // and two spare words.
+    hunt: f32, hunt_armour: f32, hunt_pad1: f32, hunt_pad2: f32,
 };
 struct State { t: u32, top: f32, _a: u32, _b: u32 };
 // A pile's crystal: its run of `pcell` (`start`, `count`), and from the
@@ -559,6 +560,14 @@ fn tough_walker(k: u32) -> bool {
     let gb = f32(P.grades & 255u) / 16.0;
     var b = P.blows;
     if (gb > 0.0) { b += gb * f32(grade_of(k)); }
+    // **The armoured tongue** (`Settings::hunt_armour`, 2026-11-28): a
+    // walker inside the hunt's field, on or near the squad's trail, takes
+    // that many blows more. One block read a blow, none a step.
+    if (P.hunt_armour > 0.0) {
+        let w = walkers[k];
+        let i = cell(w.x, w.y);
+        if (i != NONE && hunt_dist(i) != 0xFFFFFFFFu) { b += P.hunt_armour; }
+    }
     if (b <= 1.0) { return false; }
     b = min(b, 15.0);
     var need = u32(floor(b));

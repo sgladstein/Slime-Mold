@@ -695,6 +695,19 @@ pub struct Rules {
     /// (`gpu::Settings::hunt_pull`).
     pub hunt_reach: f32,
     pub hunt_lag: f32,
+    /// **Several tongues** (2026-11-28, the Enemy lane; the owner's pick
+    /// to see, 07:07Z, "A, B, and D"; `hunt.rs`): with `hunt_tongues` over
+    /// 0 the trail gets two side branches from the squad, `hunt_tongue_angle`
+    /// degrees either side of the way back along its path and
+    /// `hunt_tongue_len` dish cells long, each cell's age `hunt_tongue_age`
+    /// of its distance from the squad. Under 1, walking to a branch and in
+    /// along it is shorter down the field than walking straight in, so the
+    /// slime near the squad gathers onto the branches and comes in down
+    /// them from the sides. 0 off, as here.
+    pub hunt_tongues: f32,
+    pub hunt_tongue_angle: f32,
+    pub hunt_tongue_len: f32,
+    pub hunt_tongue_age: f32,
     /// **Mini-bosses** (2026-11-16, the mini-boss thread; `bosses.rs`):
     /// slime at a crowded knot or a big part cut off from food clenches
     /// into a lump that hunts the nearest soldier. Off here (`boss_every`
@@ -861,6 +874,12 @@ impl Rules {
                 self.wave.on = v > 0.0;
                 return true;
             }
+            // Hunted waves (`waves.rs`, 2026-11-28): the hunt catching up
+            // starts a wave that fills its flanks.
+            "hunt_wave" => {
+                self.wave.hunted = v > 0.0;
+                return true;
+            }
             "heart" => {
                 self.heart.on = v > 0.0;
                 return true;
@@ -967,6 +986,7 @@ impl Rules {
             "fruit_armour" => self.fruit.armour as f32,
             "fruit_throw" => self.fruit.throw as f32,
             "wave" => on(self.wave.on),
+            "hunt_wave" => on(self.wave.hunted),
             "heart" => on(self.heart.on),
             "strikers" => on(self.strikers.on),
             "strikers_most" => self.strikers.most as f32,
@@ -1016,6 +1036,10 @@ impl Rules {
             "raid_march_size" => &mut self.raid.march_size,
             "lure_reach" => &mut self.lure_reach,
             "hunt_reach" => &mut self.hunt_reach,
+            "hunt_tongues" => &mut self.hunt_tongues,
+            "hunt_tongue_angle" => &mut self.hunt_tongue_angle,
+            "hunt_tongue_len" => &mut self.hunt_tongue_len,
+            "hunt_tongue_age" => &mut self.hunt_tongue_age,
             "hunt_lag" => &mut self.hunt_lag,
             "star_tail" => &mut self.star.tail,
             "star_first" => &mut self.star.first,
@@ -1128,6 +1152,11 @@ impl Rules {
             "wave_reach" => &mut self.wave.reach,
             "wave_strike" => &mut self.wave.strike,
             "wave_strike_pull" => &mut self.wave.strike_pull,
+            "wave_moved" => &mut self.wave.moved,
+            "wave_near" => &mut self.wave.near,
+            "wave_flank" => &mut self.wave.flank,
+            "wave_lead" => &mut self.wave.lead,
+            "wave_hunted_gather" => &mut self.wave.hunted_gather,
             "fight_hold" => &mut self.fight_hold,
             "boss_every" => &mut self.boss.every,
             "boss_every_sd" => &mut self.boss.every_sd,
@@ -1348,6 +1377,10 @@ impl Default for Rules {
             lure_reach: 60.0,
             hunt_reach: 80.0,
             hunt_lag: 4.0,
+            hunt_tongues: 0.0,
+            hunt_tongue_angle: 100.0,
+            hunt_tongue_len: 60.0,
+            hunt_tongue_age: 0.4,
             boss: super::BossRules::default(),
             fruit: super::FruitRules::default(),
             wave: super::WaveRules::default(),

@@ -25,6 +25,23 @@
 //!
 //! GPU only (the owner's 11-17 19:21Z card): a world that cannot
 //! (`World::can_wave`, the CPU engine) never sends one.
+//!
+//! **Hunted waves** (2026-11-28, the Enemy lane; Direction's job after the
+//! owner, 11-28 03:31Z: "I didn't build turrets because the game was too
+//! easy to beat without them ... trying to make the slime enemy
+//! stronger"). The hunt (`hunt.rs`) brought the slime along the squad's
+//! trail, but it came in a single file down the trail, into the guns at
+//! the back, and died a few walkers at a time. Now, once the squad has
+//! walked (`moved` dish cells over the trail's warm seconds) and at least
+//! `near` of the slime's mass has caught up to the ring past the guns'
+//! reach, the trail goes cold and a wave starts: the slime that caught up
+//! masses where it is, and the points it lacks are filled `flank` degrees
+//! either side of the biggest mass, so the wave comes in wide even from
+//! one trail. The massed point's field starts `lead` of the way to its
+//! nearest flank, so the mass splits: the walkers nearer a flank go round
+//! to it. `hunted_gather` seconds (shorter than the losing wave's, as the
+//! squad is walking), then the strike as any wave's. No losses needed,
+//! the `every` gap and the one-at-a-time rule with fruits as any wave.
 
 use super::raids::Way;
 use super::{Game, World};
@@ -62,6 +79,39 @@ pub struct WaveRules {
     /// the guns' reach, `stand` and `reach` dish cells from them.
     pub strike: f32,
     pub strike_pull: f32,
+    /// **Hunted waves** (the module's note): on by planet
+    /// (`run::FIRST_PLANET`), and with the hunt only. The squad's walk over
+    /// the trail's warm seconds, the share of the slime's mass caught up
+    /// on the ring, the angle a flank point is filled at, the share of the
+    /// way to it a massed point's field starts at, and its gather seconds.
+    #[serde(default)]
+    pub hunted: bool,
+    #[serde(default = "hunted_moved")]
+    pub moved: f32,
+    #[serde(default = "hunted_near")]
+    pub near: f32,
+    #[serde(default = "hunted_flank")]
+    pub flank: f32,
+    #[serde(default = "hunted_lead")]
+    pub lead: f32,
+    #[serde(default = "hunted_gather")]
+    pub hunted_gather: f32,
+}
+
+fn hunted_moved() -> f32 {
+    25.0
+}
+fn hunted_near() -> f32 {
+    0.06
+}
+fn hunted_flank() -> f32 {
+    70.0
+}
+fn hunted_lead() -> f32 {
+    0.5
+}
+fn hunted_gather() -> f32 {
+    8.0
 }
 
 impl Default for WaveRules {
@@ -82,6 +132,12 @@ impl Default for WaveRules {
             reach: 60.0,
             strike: 8.0,
             strike_pull: 40.0,
+            hunted: false,
+            moved: hunted_moved(),
+            near: hunted_near(),
+            flank: hunted_flank(),
+            lead: hunted_lead(),
+            hunted_gather: hunted_gather(),
         }
     }
 }
@@ -109,6 +165,9 @@ pub struct Wave {
     /// The squad's middle and the points it gathers at (fine cells).
     pub centre: (f32, f32),
     pub points: Vec<(f32, f32)>,
+    /// Started by the hunt catching up (the module's note), not by losses.
+    #[serde(default)]
+    pub hunted: bool,
 }
 
 /// The game's waves.
@@ -119,6 +178,9 @@ pub struct Waves {
     /// Waves sent, and the tick the last one ended.
     pub sent: u32,
     pub last: Option<u64>,
+    /// Of those sent, the hunt's (the module's note).
+    #[serde(default)]
+    pub hunted: u32,
     /// The field being built and the pull it goes with (set a game second
     /// after it was started, as the lure's), and whether the world holds
     /// one to clear.
@@ -139,7 +201,7 @@ impl<W: World> Game<W> {
         while self.waves.kills.len() > keep {
             self.waves.kills.pop_front();
         }
-        if !r.on || !self.world.can_wave() {
+        if !(r.on || r.hunted) || !self.world.can_wave() {
             return;
         }
         if let Some((way, pull)) = self.waves.way.take() {
@@ -151,8 +213,9 @@ impl<W: World> Game<W> {
         let secs = |s: f32| (s.max(0.0) * self.rules.tps as f32) as u64;
         if let Some(mut w) = self.waves.live.take() {
             let alive = self.soldiers.iter().any(|s| s.alive);
+            let gather = if w.hunted { r.hunted_gather } else { r.gather };
             match w.phase {
-                WavePhase::Gather if alive && now >= w.since + secs(r.gather) => {
+                WavePhase::Gather if alive && now >= w.since + secs(gather) => {
                     w.phase = WavePhase::Strike;
                     w.since = now;
                     self.start_strike_way();
@@ -192,11 +255,108 @@ impl<W: World> Game<W> {
         if self.fruits.live.is_some() {
             return;
         }
+        if r.hunted && self.hunt_caught_up() && self.start_hunted_wave() {
+            return;
+        }
+        if !r.on {
+            return;
+        }
         let (Some(&(k0, m0)), Some(&(k1, m1))) = (self.waves.kills.front(), self.waves.kills.back()) else { return };
         if self.waves.kills.len() < keep || m1 >= m0 || (k1.saturating_sub(k0) as f32) < r.loss * m1 as f32 {
             return;
         }
         self.start_wave();
+    }
+
+    /// Whether the hunt has caught up (the module's note): the slime
+    /// follows a trail, the squad walked `moved` dish cells along it over
+    /// its warm seconds, and `near` of the slime's mass is on the ring
+    /// between the guns' reach and `stand` and `disc` past it, round the
+    /// thickest knot of soldiers.
+    fn hunt_caught_up(&self) -> bool {
+        let r = self.rules.wave;
+        if !self.world.hunt_pull() || self.mould == 0 {
+            return false;
+        }
+        let sc = self.world.scale();
+        let Some(walked) = self.hunt.walked() else { return false };
+        if walked < r.moved * sc {
+            return false;
+        }
+        let Some(k) = self.thickest_knot() else { return false };
+        let (kx, ky) = (self.soldiers[k].x, self.soldiers[k].y);
+        let bin = (sc as usize).max(1);
+        let Some(g) = self.world.mould_grid(bin) else { return false };
+        let gw = self.world.size().0.div_ceil(bin);
+        let b = bin as f32;
+        let range = self.gun_range_max() * sc;
+        let out = range + (r.stand + r.disc) * sc;
+        let held: u64 = g.iter().enumerate().filter(|&(i, &n)| {
+            let d = (((i % gw) as f32 + 0.5) * b - kx).hypot(((i / gw) as f32 + 0.5) * b - ky);
+            n > 0 && d >= range && d <= out
+        }).map(|(_, &n)| n as u64).sum();
+        held as f32 >= r.near * self.mould as f32
+    }
+
+    /// A hunted wave gathering now (the module's note): the massed points,
+    /// and flank points filled `flank` degrees either side of the biggest;
+    /// false with none massed.
+    fn start_hunted_wave(&mut self) -> bool {
+        let r = self.rules.wave;
+        let now = self.world.ticks();
+        let Some((centre, mut points)) = self.wave_points_from(1) else { return false };
+        let massed = points.len();
+        let sc = self.world.scale();
+        let (w, h) = self.world.size();
+        let range = self.gun_range_max() * sc;
+        let soldiers: Vec<(f32, f32)> = self.soldiers.iter().filter(|s| s.alive).map(|s| (s.x, s.y)).collect();
+        let best = points[0];
+        let (dx, dy) = (best.0 - centre.0, best.1 - centre.1);
+        let (ring, a0) = (dx.hypot(dy), dy.atan2(dx));
+        let flank = r.flank.to_radians();
+        let apart = r.apart.to_radians();
+        for a in [a0 + flank, a0 - flank] {
+            if points.len() >= r.sides.max(2) as usize {
+                break;
+            }
+            let p = (centre.0 + ring * a.cos(), centre.1 + ring * a.sin());
+            let inside = p.0 >= 0.0 && p.1 >= 0.0 && p.0 < w as f32 && p.1 < h as f32;
+            let clear = soldiers.iter().all(|q| (q.0 - p.0).hypot(q.1 - p.1) >= range);
+            let gap = points.iter().all(|q| {
+                let d = ((q.1 - centre.1).atan2(q.0 - centre.0) - a).rem_euclid(std::f32::consts::TAU);
+                d.min(std::f32::consts::TAU - d) >= apart * 0.9
+            });
+            if inside && clear && gap {
+                points.push(p);
+            }
+        }
+        if points.len() < 2 {
+            return false;
+        }
+        // A massed point's field starts `lead` of the way to its nearest
+        // flank point, so the walkers nearer a flank go round to it.
+        let cell = |p: (f32, f32)| (p.0.clamp(0.0, w as f32 - 1.0) as u32) | ((p.1.clamp(0.0, h as f32 - 1.0) as u32) << 16);
+        let flanks = &points[massed..];
+        let from: Vec<(u32, u32)> = points.iter().enumerate().map(|(i, &p)| {
+            let lead = if i < massed {
+                flanks.iter().map(|q| (q.0 - p.0).hypot(q.1 - p.1)).fold(f32::INFINITY, f32::min)
+            } else {
+                0.0
+            };
+            (cell(p), if lead.is_finite() { (lead * r.lead.clamp(0.0, 1.0)) as u32 } else { 0 })
+        }).collect();
+        // The reach counts from each point's start, so the massed points'
+        // lead is added to it, or a lead past the reach would draw nothing.
+        let limit = (r.reach.max(0.0) * sc) as u32 + from.iter().map(|f| f.1).max().unwrap_or(0);
+        let way = match self.slime_ground() {
+            Some((agar, gw, gh)) => Way::start_with(move || super::raids::round_walk_from(&agar, gw, gh, &from, limit)),
+            None => Way::Ready(Vec::new()),
+        };
+        self.waves.way = Some((way, r.gather_pull));
+        self.waves.sent += 1;
+        self.waves.hunted += 1;
+        self.waves.live = Some(Wave { phase: WavePhase::Gather, since: now, centre, points, hunted: true });
+        true
     }
 
     /// A wave gathering now round the squad; false with no points to
@@ -212,7 +372,7 @@ impl<W: World> Game<W> {
         let cells = points.iter().map(|&p| cell(p)).collect();
         self.waves.way = Some((Way::start_lures(self.slime_ground(), cells, (r.reach.max(0.0) * sc) as u32), r.gather_pull));
         self.waves.sent += 1;
-        self.waves.live = Some(Wave { phase: WavePhase::Gather, since: now, centre, points });
+        self.waves.live = Some(Wave { phase: WavePhase::Gather, since: now, centre, points, hunted: false });
         true
     }
 
@@ -266,6 +426,12 @@ impl<W: World> Game<W> {
     /// guns' reach of any soldier. The squad's middle and the points (fine
     /// cells); None with fewer than two.
     pub(super) fn wave_points(&self) -> Option<WaveSite> {
+        self.wave_points_from(2)
+    }
+
+    /// `wave_points` with at least `fewest` points (a hunted wave fills
+    /// its flanks from one).
+    fn wave_points_from(&self, fewest: usize) -> Option<WaveSite> {
         let r = self.rules.wave;
         let sc = self.world.scale();
         let bin = (sc as usize).max(1);
@@ -328,6 +494,6 @@ impl<W: World> Game<W> {
                 picked.push((a, p));
             }
         }
-        (picked.len() >= 2).then(|| (c, picked.into_iter().map(|(_, p)| p).collect()))
+        (picked.len() >= fewest.max(1)).then(|| (c, picked.into_iter().map(|(_, p)| p).collect()))
     }
 }
