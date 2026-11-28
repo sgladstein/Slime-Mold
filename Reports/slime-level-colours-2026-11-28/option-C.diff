@@ -1,0 +1,19 @@
+--- /dev/fd/63	2026-11-28 04:04:00.229518898 +0000
++++ /tmp/claude-0/f/optC.wgsl	2026-11-28 03:51:17.128538195 +0000
+@@ -1443,7 +1443,7 @@
+     // film stays above the darker ground (crystals thread, 11-14) in grey.
+     let thick = smoothstep(0.6, 1.0, th);
+     var vivid = lum + (hue - vec3<f32>(lum)) * (1.0 + 0.45 * (1.0 - cut)) * (1.0 - 0.3 * thick);
+-    if (lvl > 0.0) { vivid = mix(vivid, mix(level_rgb(lvl), ASH_RGB, 0.75 * cut), smoothstep(0.0, 1.0, lvl)); }
++    if (lvl > 0.0) { vivid = mix(vivid, vec3<f32>(40.0, 33.0, 28.0), 0.95 * smoothstep(0.0, 7.0, lvl)); }
+     // Condensed mould (11-14, the condense thread): where its walkers have
+     // condensed (`dense`, the share of the mass round the cell) the body
+     // turns deep bronze and holds near-full gloss, a harder, denser body,
+@@ -1497,6 +1497,7 @@
+     // explorers, whose height (`film_th`) is next to none.
+     m.vis = 1.0 - smoothstep(0.004, 0.05, th);
+     m.glow = vec3<f32>(0.0);
++    if (lvl > 0.0) { m.glow = species_hue() * 0.16 * smoothstep(0.0, 7.0, lvl) * (1.0 - cut) * opaque; }
+     m.gloss = mix((0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut), 0.95, dense * (1.0 - cut));
+     // Old looks, given back as body looks (the slime viewer, 11-21: the
+     // owner's card "Bring back old looks", from git). 8, paint: the first

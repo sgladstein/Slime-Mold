@@ -986,6 +986,13 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                     let (off, killed) = g.world.shrugged(10 * g.rules.tps as u64);
                     println!("  scar t {:.0} s: {} of the slime's {} on full scar; shrugged off {off} of {} hits in 10 s ({:.0}%)", g.time(), g.world.scarred(), g.mould, off + killed, 100.0 * off as f64 / (off + killed).max(1) as f64);
                 }
+                // The rescue planet (`larder_world::rescue`): each dug-out's
+                // place, soldiers left and its found, reached and home times.
+                if let Some(r) = g.rescue.as_ref() {
+                    let secs = |t: Option<f32>| t.map_or("-".to_string(), |t| format!("{t:.0}"));
+                    let sites: Vec<String> = r.sites.iter().map(|s| format!("{:.0},{:.0} {} left, found {} reached {} home {}", s.at.0, s.at.1, s.left, secs(s.found), secs(s.reached), secs(s.home))).collect();
+                    println!("  rescue t {:.0} s: {} dug-outs [{}]{}{}", g.time(), r.sites.len(), sites.join("; "), r.failed.map_or(String::new(), |t| format!(", failed at {t:.0}")), r.done.map_or(String::new(), |t| format!(", won at {t:.0}")));
+                }
                 if g.rules.star.on {
                     println!("  cores t {:.0} s: {} dropped, pot {:.0} of {:.0}, {} re-formed, {} raids beaten; points {:.1} (ore {:.1}, cores {:.1}), the slime ate {:.1}", g.time(), g.starfall.cores, g.cores.pot, g.rules.star.core_pot, g.cores.reformed, g.cores.raids_beaten, g.starfall.points, g.starfall.ore_taken, g.starfall.core_taken, g.starfall.eaten);
                 }

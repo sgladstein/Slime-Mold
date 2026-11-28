@@ -825,7 +825,12 @@ impl App {
                 if g.active != Some(q) && !g.leads(q) {
                     note.push("on its own".into());
                 }
-                let state = if sq.fire.is_some() {
+                // A rescue's dug-out takes no orders (Enemy's #891): say so
+                // on its tile, not "holding" (Look, 11-28).
+                let dug = g.rescue.as_ref().is_some_and(|r| r.live() && g.members(q).iter().any(|&k| r.pinned(k)));
+                let state = if dug {
+                    "dug in".to_string()
+                } else if sq.fire.is_some() {
                     "firing".to_string()
                 } else if sq.heal {
                     "healing".to_string()
@@ -847,7 +852,7 @@ impl App {
                 }
                 let linked = g.active.is_some_and(|a| a != q && g.linked(a).contains(&q));
                 let near = g.active.is_some_and(|a| a != q && overlap.contains(&q));
-                SquadRow { key: if q < 9 { format!("{}", q + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), hp: { let ms = g.members(q); ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32 }, note: Some(note.join(", ")), active: g.active == Some(q), near, linked, auto: !g.leads(q), state }
+                SquadRow { key: if q < 9 { format!("{}", q + 1) } else { "-".into() }, name: format!("Squad {}", q + 1), soldiers: g.members(q).len(), hp: { let ms = g.members(q); ms.iter().map(|&k| g.soldiers[k].hp / g.rules.hp).sum::<f32>() / ms.len().max(1) as f32 }, note: Some(note.join(", ")), active: g.active == Some(q), near, linked, auto: !g.leads(q) && !dug, state }
             })
             .collect();
         let mine = g.active.map_or(0, |q| g.members(q).len());

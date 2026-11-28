@@ -36,6 +36,8 @@ use slime_mould::mould::guns::{Gun, GunKind};
 use slime_mould::mould::rounds::Card;
 use slime_mould::mould::route::{self, Pip};
 use slime_mould::mould::run::{self, Pick, ITEMS};
+use slime_mould::mould::turrets::TurretKind;
+use slime_mould::mould::larder_world::QUICK;
 
 /// The unlocks a plan may build with, as `Run::has` keys.
 const UNLOCKS: [&str; 9] = ["walls", "turret", "mortar", "sprayer", "hunter", "blast", "mine", "cord", "gas"];
@@ -55,6 +57,11 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
         buy_wants(r, &p.want2, p.shelf, &mut bought);
         r.edit(0);
     }
+    // Rolled turret designs (2026-11-28, plan step 3): no bot had bought
+    // one since turrets were sold like guns (#876), so the curve's turrets
+    // were all plain. Before the turrets' cards, so they go on the design
+    // the bot builds.
+    buy_designs(r, p, &mut bought);
     // The turrets' cards (`Plan::tcards`), in their loadout: the turrets
     // first if the plan's items buy them, or the items would spend the
     // points before the cards had turrets to go on.
@@ -127,6 +134,69 @@ pub(super) fn shop(r: &mut Run, p: &Plan) -> Vec<String> {
     }
     reorder(r, &p.order);
     bought
+}
+
+/// The turret kinds plan `p` places, in the order their quick-build
+/// slots are kept: the plain turret first (`Plan::turrets`), so the
+/// turrets' cards (`tcards`) go on its design (`Run::quick_design(0)`).
+fn placed_kinds(p: &Plan) -> Vec<TurretKind> {
+    [(TurretKind::Gun, p.turrets), (TurretKind::Lobber, p.mortars), (TurretKind::Sprayer, p.sprayers), (TurretKind::Hunter, p.hunters)].into_iter().filter(|&(_, n)| n > 0).map(|(k, _)| k).collect()
+}
+
+/// A design worth its price over the best one owned of its kind: a tenth
+/// better (`Turret::value`), so a run does not pay for a roll that is
+/// about the same.
+const DESIGN_BETTER: f32 = 1.1;
+
+/// **Rolled turret designs** (owner 2026-11-27 21:36Z: turrets are rolled
+/// designs sold in the shop like guns; plan of 11-27, step 3): for each
+/// kind plan `p` places (`placed_kinds`), the best-valued design of it on
+/// offer (`Run::turret_offers`, `Pick::Turret`), when the run can pay and
+/// it beats the best owned of that kind by `DESIGN_BETTER` (or none is
+/// owned). A better design goes into the loadout that already builds its
+/// kind (`Pick::CarryTurret`), so the cards there stay on it; then the
+/// quick-build slots (`Run::quick`, `Cmd::Place`) hold the best design of
+/// each placed kind, in `placed_kinds` order, while there is room.
+fn buy_designs(r: &mut Run, p: &Plan, bought: &mut Vec<String>) {
+    let kinds = placed_kinds(p);
+    if kinds.is_empty() {
+        return;
+    }
+    // The loadout holding design `t`.
+    let holder = |r: &Run, t: usize| (1..r.loadouts.len()).find(|&l| r.loadouts[l].turret == Some(t));
+    // The best owned design of `kind` with a loadout, and that loadout.
+    let best = |r: &Run, kind: TurretKind| -> Option<(f32, usize)> {
+        (0..r.turrets.len()).filter(|&t| r.turrets[t].kind == kind).filter_map(|t| holder(r, t).map(|l| (r.turrets[t].value(), l))).max_by(|a, b| a.0.total_cmp(&b.0))
+    };
+    for &kind in &kinds {
+        let pick = r.turret_offers.iter().enumerate().filter(|(_, t)| t.kind == kind && t.price() <= r.points).max_by(|a, b| a.1.value().total_cmp(&b.1.value())).map(|(i, t)| (i, *t));
+        let Some((i, t)) = pick else { continue };
+        let had = best(r, kind);
+        if had.is_some_and(|(v, _)| t.value() < v * DESIGN_BETTER) {
+            continue;
+        }
+        if !r.pick(Pick::Turret(i)) {
+            continue;
+        }
+        bought.push(format!("design.{}", t.word()));
+        let new = r.turrets.len() - 1;
+        // Into the loadout that builds its kind, so its cards stay on.
+        // (The quick slots are set below.)
+        if let Some((_, l)) = had {
+            if r.edit(l) {
+                r.pick(Pick::CarryTurret(new));
+            }
+            r.edit(0);
+        }
+    }
+    // The quick slots: the best of each placed kind, in `placed_kinds`
+    // order, so slot 0 is the plain turret's when the plan places one
+    // (the turrets' cards go there). Each holds a design, as
+    // `Run::toggle_quick` asks.
+    let want: Vec<usize> = kinds.iter().filter_map(|&k| best(r, k).map(|b| b.1)).take(QUICK).collect();
+    if !want.is_empty() {
+        r.quick = want;
+    }
 }
 
 /// A device body (`Plan::body`): the best-rolled of its kind on offer,
@@ -700,6 +770,42 @@ mod tests {
             let bought = shop(&mut r, &p);
             assert_eq!(bought.first(), offered.as_ref(), "seed {seed}: {bought:?}");
             assert!(bought.first().is_some_and(|b| b.starts_with("torch.")), "seed {seed}: {bought:?}");
+        }
+    }
+
+    /// A plan that places turrets buys the best rolled design of each kind
+    /// it places, a better gun turret into the turrets' own loadout (its
+    /// cards stay on it), and the quick-build slots hold the best of each
+    /// placed kind, the plain turret's first; a roll no better is not
+    /// bought, and a plan that places none buys none.
+    #[test]
+    fn a_plan_buys_rolled_turret_designs_and_quick_builds_them() {
+        use slime_mould::mould::turrets::Turret;
+        let good = |kind| Turret { range: 1.3, rate: 1.4, ..Turret::plain(kind) };
+        for seed in 1..=3 {
+            let mut r = Run::new(seed);
+            r.restock();
+            r.won(2);
+            r.points += 2000;
+            r.turret_offers = vec![Turret::plain(TurretKind::Gun), good(TurretKind::Gun), good(TurretKind::Lobber), good(TurretKind::Hunter)];
+            let p = Plan::parse("turtle,mortars=1,cards=0,shop=").unwrap();
+            let bought = shop(&mut r, &p);
+            let designs: Vec<&String> = bought.iter().filter(|b| b.starts_with("design.")).collect();
+            assert_eq!(designs.len(), 2, "seed {seed}: the better gun turret and the mortar, no hunter: {bought:?}");
+            assert_eq!(r.loadouts[r.turret_loadout].turret.map(|t| r.turrets[t]), Some(good(TurretKind::Gun)), "seed {seed}: into the turrets' loadout");
+            let q: Vec<TurretKind> = (0..QUICK).filter_map(|s| r.quick_design(s)).map(|d| d.0.kind).collect();
+            assert_eq!(q, vec![TurretKind::Gun, TurretKind::Lobber], "seed {seed}");
+            assert_eq!(r.quick_design(0).map(|d| d.0), Some(good(TurretKind::Gun)), "seed {seed}");
+            // The same roll again is no better: not bought.
+            r.turret_offers = vec![good(TurretKind::Gun)];
+            assert!(!shop(&mut r, &p).iter().any(|b| b.starts_with("design.")), "seed {seed}");
+            // A plan that places no turret buys no design.
+            let mut r = Run::new(seed);
+            r.restock();
+            r.won(2);
+            r.points += 2000;
+            r.turret_offers = vec![good(TurretKind::Gun)];
+            assert!(!shop(&mut r, &Plan::parse("rush,cards=0").unwrap()).iter().any(|b| b.starts_with("design.")), "seed {seed}");
         }
     }
 

@@ -655,8 +655,12 @@ impl App {
                 let n = q;
                 if let Some(m) = g.middle(q) {
                     let lit = g.active == Some(q);
-                    let colour = if lit { [255, 255, 255, 255] } else { [200, 210, 220, 170] };
-                    let label = format!("{}{}", n + 1, if lit { " *" } else if g.leads(q) { "" } else { " auto" });
+                    // A rescue's dug-out (Enemy's #891): it takes no orders,
+                    // so "auto" told the player it could be commanded. Its
+                    // plate says what it is, in the rescue's cream (11-28).
+                    let dug = g.rescue.as_ref().is_some_and(|r| r.live() && g.members(q).iter().any(|&k| r.pinned(k)));
+                    let colour = if dug { slime_mould::world::ui::RESCUE } else if lit { [255, 255, 255, 255] } else { [200, 210, 220, 170] };
+                    let label = format!("{}{}", n + 1, if dug { " dug in" } else if lit { " *" } else if g.leads(q) { "" } else { " auto" });
                     // Above its topmost soldier, so the soldiers' sprites
                     // don't cover the number (the longer "N auto" label of
                     // 11-15 showed only its tail over a spread squad). Over
@@ -2429,7 +2433,11 @@ impl App {
         let run = self.args.run.as_ref().filter(|r| !r.range);
         let tier = run.map(|r| r.level().tier);
         m.tell = tier.and_then(|t| slime_tell(g, t));
-        m.twist = run.and_then(|r| r.twist()).and_then(|t| twist_tell(g, &t));
+        // A Rescue planet's line takes the twist's pill (it has no twist).
+        m.twist = match g.rescue_now() {
+            Some(now) => Some((Icon::Group, now, slime_mould::mould::run::RESCUE_CARD.to_string())),
+            None => run.and_then(|r| r.twist()).and_then(|t| twist_tell(g, &t)),
+        };
         // A run's middle (owner, 11-27): the slime's size as a bar in the
         // goal line's place, the heart and the stalemate as red pills. The
         // goal stays in the model for the pause menu, as its own words

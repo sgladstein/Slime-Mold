@@ -77,8 +77,10 @@ on the letter of a ruling alone.
 - **Decide what can be undone; ask only what cannot** (2026-11-17, card:
   "Threads decide small, ask big"). Look, tuning and implementation choices
   are yours: make them, state them in the "what is new" line, reverse them if
-  he objects in play. A question that changes the game's direction goes to
-  the Direction lane, not straight to the owner.
+  he objects in play. After a lane's first review, a task that is unclear
+  or could go more than one way is asked of him in the lane's own thread,
+  with a recommendation (2026-11-28 03:27Z); later direction questions go
+  through the Direction lane.
 - **The look is everyone's job and one lane's call.** He called the visuals
   "an important factor" (2026-11-17). Check a visible change against
   `wiki/looks/art-direction.md` and include a short clip at zoom 6 and 12 in
