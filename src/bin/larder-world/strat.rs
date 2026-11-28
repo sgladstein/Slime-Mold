@@ -1488,7 +1488,10 @@ fn place(g: &mut Game<GpuWorld>, p: &Plan, w: Want, sense: &Sense) -> bool {
             let site = MEM.with_borrow(|mm| mm.pumps[i].1[s]);
             let ok = match site.kind {
                 Kind::Wall { to } => g.build_blocked(site.kind, site.at).is_none() && g.apply(Cmd::Build(Kind::Wall { to }, site.at)),
-                k => spot(g, k, site.at).is_some_and(|at| g.apply(Cmd::Build(k, at))),
+                k => spot(g, k, site.at).is_some_and(|at| match design_slot(g, k) {
+                    Some(s) => g.apply(Cmd::Place(s, at)),
+                    None => g.apply(Cmd::Build(k, at)),
+                }),
             };
             if ok {
                 let b = g.buildings.len() - 1;
@@ -1502,6 +1505,16 @@ fn place(g: &mut Game<GpuWorld>, p: &Plan, w: Want, sense: &Sense) -> bool {
         }
         Want::Upgrade(b) => g.apply(Cmd::Upgrade(b)),
     }
+}
+
+/// **The quick-build slot that builds `kind`** (2026-11-28, plan step 3):
+/// the best-valued design of it there (`Game::designs`), which `Cmd::Place`
+/// raises at the same food price as a plain one, firing by its rolls and
+/// its loadout's cards. None outside a run or with no design of the kind,
+/// where `Cmd::Build` raises the plain building as before; until this the
+/// bot built every turret plain, whatever its shop had bought.
+pub(super) fn design_slot(g: &Game<GpuWorld>, kind: Kind) -> Option<u8> {
+    g.designs.iter().enumerate().filter_map(|(s, d)| d.filter(|d| slime_mould::mould::larder_world::design_kind(d.kind) == kind).map(|d| (s, d.value()))).max_by(|a, b| a.1.total_cmp(&b.1)).map(|(s, _)| s as u8)
 }
 
 /// Out of home with nothing to build: the run bot's play (work the
