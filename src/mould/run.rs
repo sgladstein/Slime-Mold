@@ -506,6 +506,8 @@ pub fn enemy_keys(e: f32) -> Vec<(&'static str, String)> {
     vec![
         // The slime's toughness (`BLOWS`): the blows a walker takes.
         ("blows", format!("{}", blows(e))),
+        // The hunt (`HUNT_PULL`): the slime follows the squad's trail.
+        ("hunt_pull", format!("{}", curve_at(&HUNT_PULL, e))),
         // The slime's levels' strength (`LEVEL_MAX`; the levels themselves
         // are the crystals', `Run::rules`).
         ("level_blows", format!("{LEVEL_BLOWS}")),
@@ -573,6 +575,22 @@ pub fn enemy_keys(e: f32) -> Vec<(&'static str, String)> {
 /// planet against 131,000 walkers, and then: "Probably not enough. Make it
 /// harder!" (06:54Z). About half again from planet 2 on; planet 1 as it was.
 const BLOWS: [f32; 8] = [1.0, 1.75, 2.25, 2.75, 2.75, 3.25, 3.75, 4.5];
+
+/// **The hunt by planet** (`gpu::Settings::hunt_pull`, `larder_world/hunt.rs`;
+/// 2026-11-28, Enemy, the plan's step 5; the owner's 03:31Z "trying to
+/// make the slime enemy stronger"): how hard calm slime leans down the
+/// squad's trail, by curve place. Off on the landing world, about 10 at
+/// step 2, 14 at step 3, 19 at step 4, 25 at step 5, full (30, the Lab's
+/// strongest) from step 6, and a Hard pick (+2.5 places) about four steps
+/// on (the owner's card, 11-28 05:40Z: "Mild at step 2, full by step 6"). Rerun of the Lab's rig on today's slime (step 2, threats off,
+/// 15 rifles, run seeds 1-6, lavapipe, Reports/hunt-rerun-2026-11-28):
+/// soldiers bitten by 5:00 kiting, as main 0 on all six; pull 10:
+/// 0, 0, 7, 11, 0, 0 (one squad wiped); pull 30: 0, 0, 4, 11, 0, -; pull 30
+/// with the Lab's fast tubes 11, 0, 14, 11, 14, 2 (three wiped). Standing
+/// and fighting, main 0, 0, 0, 0, 0, 1; pull 10 18, 0, 5, 18, 21, 20. The
+/// fast tubes (`trail_scale`, `step_by`) are the whole slime's, not
+/// taken. A Direction tuning number.
+const HUNT_PULL: [f32; 8] = [0.0, 10.0, 18.0, 30.0, 30.0, 30.0, 30.0, 30.0];
 
 /// **The slime's levels by planet** (2026-11-26, `larder_world/levels.rs`;
 /// the owner, 08:24Z: "You could change slime color so their are 3-8 levels
@@ -3924,6 +3942,12 @@ mod tests {
                 // The lure's pull is the GPU engine's alone (the owner's
                 // card, 11-17 19:21Z: no CPU twin): the engine takes it,
                 // and `BigParams` has no field for it.
+                if k == "hunt_pull" {
+                    // The hunt is the GPU engine's alone (`hunt.rs`), rising
+                    // with the planet.
+                    assert!(get(d + 1, k) >= get(d, k), "planet {d}: {k}");
+                    continue;
+                }
                 if k == "lure_pull" || k == "tether" || k == "crystal_keep" || k == "crater_shut" || k == "boss_flinch" || k == "blows" || k.starts_with("level_") {
                     let mut s = crate::gpu::Settings::big_dish();
                     crate::gpu::set(&mut s, k, &v).unwrap();
