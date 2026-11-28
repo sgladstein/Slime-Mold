@@ -17,7 +17,9 @@
 //! - **1-9** or **Ctrl + wheel** switch squads; the wheel zooms, about
 //!   the squad while the camera follows it.
 //! - **Y** splits it; the half nearer the cursor becomes a new squad and
-//!   you control that one. **Shift + drag** a box pulls the soldiers in it
+//!   you control that one. Held, the wheel picks how many go (1, 2, a
+//!   quarter, the half, three quarters; owner 2026-11-28), the ones that
+//!   would go are ringed, and letting go of Y splits. **Shift + drag** a box pulls the soldiers in it
 //!   out into a squad of their own. **J** joins the nearest squad within
 //!   reach into it.
 //! - **Drag a box** (with none controlled; **Ctrl + drag** with one): every
@@ -147,7 +149,7 @@ pub(super) fn squad_help() -> Vec<(String, String)> {
         ("Click a squad, Space".into(), "With none controlled: take command of it, or of the last one".into()),
         ("1-9, Ctrl + wheel".into(), "Take command of another squad".into()),
         (format!("{0}, Shift + {0}", k(CYCLE)), "The next squad, or the one before".into()),
-        (k(SPLIT), "Split: the half nearer the cursor becomes a new squad".into()),
+        (k(SPLIT), "Split: tap for the half nearer the cursor; hold and roll the wheel for 1, 2, a quarter or three quarters, then let go".into()),
         ("Drag a box".into(), "Take command of every squad in it, as one (with a squad commanded: Ctrl + drag); click one, or its number, to take it alone".into()),
         ("Ctrl + click a squad".into(), "Take command of it, with another commanded".into()),
         ("Shift + drag".into(), "Pull the soldiers in the box out into a new squad".into()),
@@ -191,6 +193,26 @@ pub(super) struct SquadInput {
     box_from: Option<(f32, f32)>,
     /// The box was dragged past a click when the button came up.
     box_far: bool,
+    /// Y is held (owner 2026-11-28 03:42Z: "sometimes I want to just split
+    /// off 1 or 2 or a 1/4 of the squad"): the step in `split_sizes` the
+    /// wheel has picked, the half when Y went down. Letting go splits.
+    split_hold: Option<usize>,
+}
+
+/// **The sizes a held Y steps through** with the wheel, for a squad of `n`
+/// (2 or more): 1, 2, a quarter, the half, three quarters, each at least
+/// one, short of the whole squad, and each once; a tap of Y takes the half
+/// (`split_half`), as before 11-28.
+pub(super) fn split_sizes(n: usize) -> Vec<usize> {
+    let mut v: Vec<usize> = [1, 2, n / 4, n / 2, 3 * n / 4].into_iter().filter(|&k| k >= 1 && k < n).collect();
+    v.sort_unstable();
+    v.dedup();
+    v
+}
+
+/// The step of `split_sizes(n)` that is the half.
+pub(super) fn split_half(n: usize) -> usize {
+    split_sizes(n).iter().position(|&k| k == (n / 2).max(1)).unwrap_or(0)
 }
 
 impl SquadInput {
@@ -268,7 +290,7 @@ impl App {
     /// sweep, 2026-11-14: a volley held over the bottom bar swung to the
     /// ground behind it, and a click on the minimap fired at or sent the
     /// squad to the ground behind the minimap).
-    fn cursor_world(&self) -> Option<(f32, f32)> {
+    pub(super) fn cursor_world(&self) -> Option<(f32, f32)> {
         self.controls.cursor.filter(|&c| !self.hud.over(c)).and_then(|c| self.camera.world_at(c))
     }
 
@@ -351,6 +373,11 @@ impl App {
             return false;
         }
         let ours = matches!(code, SPLIT | MERGE | HEAL_KEY | CYCLE | TIGHTER | LOOSER) || digit(code).is_some();
+        // Letting go of a held Y splits off the size picked (`split_hold`).
+        if code == SPLIT && !pressed {
+            self.split_release();
+            return true;
+        }
         if !pressed || repeat || !ours {
             return ours;
         }
@@ -371,7 +398,6 @@ impl App {
             self.squad_heal();
             return true;
         }
-        let at = self.cursor_world();
         let Some(q) = self.active() else {
             // None commanded: its number takes command, as the let-go
             // alert says (until 2026-11-21 it did nothing here, so after
@@ -385,10 +411,15 @@ impl App {
         };
         let g = self.game.as_mut().unwrap();
         match code {
+            // Y down starts the pick at the half; the wheel changes it and
+            // the soldiers that would go are ringed (`split_preview`);
+            // letting go splits (`split_release`). A squad of one can't.
             SPLIT => {
-                let p = at.or_else(|| g.middle(q as usize)).unwrap_or_default();
-                if g.apply(Cmd::Split(q, p)) {
-                    self.steer_new_squad();
+                let n = g.members(q as usize).len();
+                if n < 2 {
+                    self.hud.alert("A squad of one can't split", None, theme::WARN);
+                } else {
+                    self.sq.as_mut().unwrap().split_hold = Some(split_half(n));
                 }
             }
             MERGE => {
@@ -654,6 +685,57 @@ impl App {
                 }
             }
         }
+    }
+
+    /// How many of the controlled squad a held Y would take now, of how
+    /// many (`split_hold`).
+    pub(super) fn split_count(&self) -> Option<(usize, usize)> {
+        let i = self.sq.as_ref()?.split_hold?;
+        let q = self.active()? as usize;
+        let n = self.game.as_ref()?.members(q).len();
+        let sizes = split_sizes(n);
+        Some((*sizes.get(i.min(sizes.len().checked_sub(1)?))?, n))
+    }
+
+    /// The soldiers a held Y would split off (nearest the cursor), ringed
+    /// while it is held so you see who goes before letting go.
+    pub(super) fn split_preview(&self) -> Vec<usize> {
+        let (Some((k, _)), Some(q), Some(g)) = (self.split_count(), self.active(), self.game.as_ref()) else { return Vec::new() };
+        let p = self.cursor_world().or_else(|| g.middle(q as usize)).unwrap_or_default();
+        g.split_pick(q as usize, p, k)
+    }
+
+    /// Y let go: split off the size picked, nearest the cursor
+    /// (`Cmd::SplitOff`; the half is `Cmd::Split`, so a tap replays as it
+    /// always did).
+    fn split_release(&mut self) {
+        let Some(count) = self.split_count() else {
+            if let Some(sq) = self.sq.as_mut() {
+                sq.split_hold = None;
+            }
+            return;
+        };
+        self.sq.as_mut().unwrap().split_hold = None;
+        let at = self.cursor_world();
+        let Some(q) = self.active() else { return };
+        let Some(g) = self.game.as_mut() else { return };
+        let p = at.or_else(|| g.middle(q as usize)).unwrap_or_default();
+        let (k, n) = count;
+        let c = if k == (n / 2).max(1) { Cmd::Split(q, p) } else { Cmd::SplitOff(q, k.min(255) as u8, p) };
+        if g.apply(c) {
+            self.steer_new_squad();
+        }
+    }
+
+    /// The wheel while Y is held: more (up) or fewer (down) to split off.
+    /// True if it took the wheel (no zoom then).
+    pub(super) fn split_wheel(&mut self, notches: i32) -> bool {
+        let Some((_, n)) = self.split_count() else { return false };
+        let last = split_sizes(n).len().saturating_sub(1) as i32;
+        let sq = self.sq.as_mut().unwrap();
+        let i = sq.split_hold.unwrap_or(0) as i32;
+        sq.split_hold = Some((i + notches.signum()).clamp(0, last) as usize);
+        true
     }
 
     /// Ctrl + wheel in the squad mode: the next or last squad. (It was the

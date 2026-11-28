@@ -48,6 +48,18 @@ Start from `handoff/gun-cards.md` and `handoff/turrets.md` as history.
 
 ## State (kept current; newest first)
 
+**2026-11-28, split off any number (same thread).** Owner 03:42Z: "sometimes
+I want to just split off 1 or 2 or a 1/4 of the squad"; halving stays easy.
+Built on the recommended option of his card (hold Y, the wheel picks):
+`Game::split_pick`/`split_off`, `Cmd::SplitOff` (replay `splitn`); the
+window's `split_hold`, `split_sizes` (1, 2, quarter, half, three quarters),
+`split_wheel` before the zoom, `split_release`; draw.rs (Look's file)
+rings `split_preview` after the controls' marks with "k of n" at the cursor.
+A tap of Y is `Cmd::Split` as before. Film: `film_split` (stills). Also
+11-28: #887 merged; step 6 (energy) dropped by his ruling (balance from his
+play logs once the stronger slime and turrets land); the Grudge re-film is
+this lane's now that Enemy's readout is on main (#886).
+
 **2026-11-28, the new account's lane thread (plan of 11-27, steps 3 and 6).**
 Jobs from Direction, in order: turret designs in the run bot (with Engine,
 who owns the bot files and does pip picks, the heart siege and the builder

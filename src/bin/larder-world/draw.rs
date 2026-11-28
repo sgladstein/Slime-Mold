@@ -1735,6 +1735,23 @@ impl App {
         let units = self.units();
         self.controls.prune(&units);
         self.controls.marks(&units, &self.camera, r, &mut self.marks);
+        // Y held (Squad and arsenal, 2026-11-28): the soldiers a split
+        // would take, ringed, and "2 of 9" at the cursor.
+        let going = self.split_preview();
+        if !going.is_empty() {
+            // The selection ring's size (`Controls::marks`), one a soldier.
+            let ring = (r * self.camera.zoom * 0.95).max(2.0) + 2.0;
+            for &k in &going {
+                let s = &g.soldiers[k];
+                self.marks.selected((s.x, s.y), ring);
+            }
+            if let (Some((k, n)), Some(at)) = (self.split_count(), self.cursor_world()) {
+                let label = format!("{k} of {n}");
+                let off = (12.0, -18.0);
+                self.marks.plate(at, off, &label, 1.5, LABEL_PLATE);
+                self.marks.label(at, off, &label, 1.5, theme::TEXT);
+            }
+        }
     }
 
     pub(super) fn model(&self, hover: Option<(f32, f32)>, ghost: Option<Ghost>) -> Model {

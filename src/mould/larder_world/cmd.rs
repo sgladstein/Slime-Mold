@@ -62,6 +62,10 @@ pub enum Cmd {
     Face(u8, (f32, f32)),
     /// Squad `q` splits; the half nearer the point is a new squad.
     Split(u8, (f32, f32)),
+    /// Squad `q`'s `n` soldiers nearest the point leave as a new squad
+    /// (owner 2026-11-28 03:42Z: "sometimes I want to just split off 1 or
+    /// 2 or a 1/4 of the squad"); `Split` is the half. Replay word `splitn`.
+    SplitOff(u8, u8, (f32, f32)),
     /// Soldier `k` joins squad `q` (a free id starts a new squad).
     Join(usize, u8),
     /// Squad `b` joins squad `a`.
@@ -139,6 +143,7 @@ impl Cmd {
             Cmd::Fire(q, None) => format!("fire {q} none"),
             Cmd::Face(q, p) => format!("face {q} {} {}", p.0, p.1),
             Cmd::Split(q, p) => format!("split {q} {} {}", p.0, p.1),
+            Cmd::SplitOff(q, n, p) => format!("splitn {q} {n} {} {}", p.0, p.1),
             Cmd::Join(k, q) => format!("join {k} {q}"),
             Cmd::Merge(a, b) => format!("merge {a} {b}"),
             Cmd::Active(q) => format!("active {q}"),
@@ -190,6 +195,7 @@ impl Cmd {
             "fire" => return Some(Cmd::Fire(w.get(1)?.parse().ok()?, Some((f(2)?, f(3)?)))),
             "face" => return Some(Cmd::Face(w.get(1)?.parse().ok()?, (f(2)?, f(3)?))),
             "split" => return Some(Cmd::Split(w.get(1)?.parse().ok()?, (f(2)?, f(3)?))),
+            "splitn" => return Some(Cmd::SplitOff(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?, (f(3)?, f(4)?))),
             "join" => return Some(Cmd::Join(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "merge" => return Some(Cmd::Merge(w.get(1)?.parse().ok()?, w.get(2)?.parse().ok()?)),
             "active" => return Some(Cmd::Active(w.get(1)?.parse().ok()?)),
@@ -368,7 +374,7 @@ impl<W: World> Game<W> {
                 }
                 None => false,
             },
-            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Band(..) | Cmd::Heal(..) => self.squad_cmd(c),
+            Cmd::Steer(..) | Cmd::SquadOrder(..) | Cmd::Fire(..) | Cmd::Face(..) | Cmd::Split(..) | Cmd::SplitOff(..) | Cmd::Join(..) | Cmd::Merge(..) | Cmd::Active(..) | Cmd::Formation(..) | Cmd::SquadQueue(..) | Cmd::Link(..) | Cmd::Unlink(..) | Cmd::Band(..) | Cmd::Heal(..) => self.squad_cmd(c),
             Cmd::Device(q, t) => self.device(q as usize, t),
             Cmd::Auto(m) => {
                 self.autocast = m;

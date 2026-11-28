@@ -402,3 +402,60 @@ fn film_pause_page(app: &mut App, page: &str, pick: Option<&str>) {
         _ => panic!("no pause page {page}"),
     }
 }
+
+/// **The held-Y split** (owner 2026-11-28 03:42Z): stills of a squad of
+/// ten with Y held at each size the wheel steps through, the soldiers that
+/// would go ringed and "k of n" at the cursor, which sits east of the
+/// squad. `FILM_ZOOM` (8).
+///
+/// `FILM=DIR cargo test --release --bin larder-world film_split --
+/// --ignored --nocapture`
+#[test]
+#[ignore]
+fn film_split() {
+    let env = |k: &str| std::env::var(k).ok();
+    let dir = env("FILM").expect("FILM=DIR");
+    std::fs::create_dir_all(&dir).unwrap();
+    let Some((device, queue)) = gpu() else { panic!("no gpu") };
+    let args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, squads: true, ..Default::default() };
+    let mut app = offscreen(args, (960, 540), &device, &queue).unwrap();
+    {
+        let g = app.game.as_mut().unwrap();
+        g.bank = 1e9;
+        while g.alive() < 10 && g.apply(Cmd::Buy) {}
+    }
+    let dt = 1.0 / 15.0;
+    for _ in 0..30 {
+        app.squad_frame(dt);
+        app.step(dt);
+    }
+    let zoom = env("FILM_ZOOM").map_or(8.0, |v| v.parse().unwrap());
+    let centre = app.game.as_ref().unwrap().middle(0).unwrap();
+    app.camera.centre_on(centre);
+    app.camera.zoom_to(zoom, app.camera.to_screen(centre));
+    app.camera.centre_on(centre);
+    if let Some(sq) = app.sq.as_mut() {
+        sq.follow = false;
+    }
+    let sc = app.game.as_ref().unwrap().world.scale();
+    app.controls.cursor = Some(app.camera.to_screen((centre.0 + 8.0 * sc, centre.1)));
+    assert!(app.squad_key(squadmode::SPLIT, true, false, false));
+    let n = app.split_count().unwrap().1;
+    let steps = squadmode::split_sizes(n).len();
+    for _ in 0..steps {
+        app.split_wheel(1);
+    }
+    for _ in 0..steps {
+        app.prepare();
+        let (view, cp) = (app.view.as_ref().unwrap(), app.canvas_pass.as_mut().unwrap());
+        let mut enc = device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("film") });
+        view.record(&mut enc, &app.camera, None);
+        cp.record(&mut enc, &view.out, view.stride);
+        queue.submit([enc.finish()]);
+        let (k, n) = app.split_count().unwrap();
+        let path = format!("{dir}/split-{k}-of-{n}.png");
+        view.picture().save(&path).unwrap();
+        println!("{path}");
+        app.split_wheel(-1);
+    }
+}

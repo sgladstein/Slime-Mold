@@ -527,6 +527,50 @@ fn turning_the_map_on_the_menu_switches_the_dish_behind() {
     assert!(app.in_menu(), "still on the menu");
 }
 
+/// Y held with the wheel (owner 2026-11-28 03:42Z: split off 1 or 2 or a
+/// quarter): a tap still splits off the half, a held Y rolled down to one
+/// rings one soldier and letting go splits that one off; the wheel then
+/// zooms again. Skips with no GPU (CI).
+#[test]
+fn holding_y_and_the_wheel_split_off_one_soldier() {
+    let Some((device, queue)) = gpu() else { return };
+    let args = Args { map: Some("fork".into()), seed: 1, scale: 2, walkers: 5000, squads: true, ..Default::default() };
+    let mut app = offscreen(args, (1280, 720), &device, &queue).unwrap();
+    {
+        let g = app.game.as_mut().unwrap();
+        g.bank = 1e6;
+        for _ in 0..7 {
+            g.apply(Cmd::Buy);
+        }
+    }
+    let q = app.game.as_ref().unwrap().active.unwrap();
+    let n = app.game.as_ref().unwrap().members(q).len();
+    assert!(n >= 8, "{n}");
+    assert_eq!(squadmode::split_sizes(9), vec![1, 2, 4, 6]);
+    assert_eq!(squadmode::split_sizes(2), vec![1]);
+    assert!(app.squad_key(squadmode::SPLIT, true, false, false));
+    assert_eq!(app.split_count(), Some((n / 2, n)), "the half first");
+    assert_eq!(app.split_preview().len(), n / 2);
+    for _ in 0..5 {
+        assert!(app.split_wheel(-1));
+    }
+    assert_eq!(app.split_count(), Some((1, n)), "rolled down to one");
+    assert_eq!(app.split_preview().len(), 1);
+    assert!(app.squad_key(squadmode::SPLIT, false, false, false));
+    let g = app.game.as_ref().unwrap();
+    let b = g.active.unwrap();
+    assert_ne!(b, q);
+    assert_eq!((g.members(b).len(), g.members(q).len()), (1, n - 1));
+    assert_eq!(app.split_count(), None);
+    assert!(!app.split_wheel(1), "let go: the wheel zooms again");
+    // A tap on the big squad: the half.
+    app.game.as_mut().unwrap().apply(Cmd::Active(q as u8));
+    assert!(app.squad_key(squadmode::SPLIT, true, false, false));
+    assert!(app.squad_key(squadmode::SPLIT, false, false, false));
+    let g = app.game.as_ref().unwrap();
+    assert_eq!(g.members(g.active.unwrap()).len(), (n - 1) / 2);
+}
+
 /// The squad panel (owner, 2026-11-14 08:22Z) in a squad-mode window: Split
 /// makes a second row and commands it, a row click commands that squad,
 /// Combine brings the other in. Skips with no GPU (CI).
