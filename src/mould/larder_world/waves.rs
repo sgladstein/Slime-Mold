@@ -32,10 +32,10 @@
 //! stronger"). The hunt (`hunt.rs`) brought the slime along the squad's
 //! trail, but it came in a single file down the trail, into the guns at
 //! the back, and died a few walkers at a time. Now, once at least `near`
-//! of the slime's mass has caught up to the ring past the guns' reach (and,
-//! with `moved` over 0, the squad has walked that many dish cells over the
-//! trail's warm seconds; 0 since the owner's 07:31Z note, so a squad
-//! standing and shooting meets it too), a wave starts: the slime that
+//! of the slime's mass has caught up to the ring past the guns' reach, a
+//! wave starts, whether the squad walked or stood (a gate on the squad's
+//! walk over the trail's warm seconds was tried first and dropped on the
+//! owner's 07:31Z note: a squad standing and shooting should meet it too): the slime that
 //! caught up masses where it is (the trail stays warm, so the stream
 //! keeps feeding the masses), and the points it lacks are filled `flank` degrees
 //! either side of the biggest mass, so the wave comes in wide even from
@@ -83,14 +83,11 @@ pub struct WaveRules {
     pub strike: f32,
     pub strike_pull: f32,
     /// **Hunted waves** (the module's note): on by planet
-    /// (`run::FIRST_PLANET`), and with the hunt only. The squad's walk over
-    /// the trail's warm seconds, the share of the slime's mass caught up
+    /// (`run::FIRST_PLANET`), and with the hunt only. The share of the slime's mass caught up
     /// on the ring, the angle a flank point is filled at, the share of the
     /// way to it a massed point's field starts at, and its gather seconds.
     #[serde(default)]
     pub hunted: bool,
-    #[serde(default = "hunted_moved")]
-    pub moved: f32,
     #[serde(default = "hunted_near")]
     pub near: f32,
     #[serde(default = "hunted_flank")]
@@ -101,11 +98,6 @@ pub struct WaveRules {
     pub hunted_gather: f32,
 }
 
-fn hunted_moved() -> f32 {
-    // 0 since the owner's 11-28 07:31Z note: a squad standing and shooting
-    // is the one that should meet it.
-    0.0
-}
 fn hunted_near() -> f32 {
     // A stream into a standing squad's guns is a sliver of the body: 6%
     // and 1.5% never fired against 19 standing soldiers on step 3 (11-28;
@@ -143,7 +135,6 @@ impl Default for WaveRules {
             strike: 8.0,
             strike_pull: 40.0,
             hunted: false,
-            moved: hunted_moved(),
             near: hunted_near(),
             flank: hunted_flank(),
             lead: hunted_lead(),
@@ -279,8 +270,7 @@ impl<W: World> Game<W> {
     }
 
     /// Whether the hunt has caught up (the module's note): the slime
-    /// follows a trail, the squad walked `moved` dish cells along it over
-    /// its warm seconds, and `near` of the slime's mass is on the ring
+    /// follows a trail and `near` of the slime's mass is on the ring
     /// between the guns' reach and `stand` and `disc` past it, round the
     /// thickest knot of soldiers.
     fn hunt_caught_up(&self) -> bool {
@@ -289,9 +279,6 @@ impl<W: World> Game<W> {
             return false;
         }
         let sc = self.world.scale();
-        if r.moved > 0.0 && self.hunt.walked().is_none_or(|walked| walked < r.moved * sc) {
-            return false;
-        }
         let Some(k) = self.thickest_knot() else { return false };
         let (kx, ky) = (self.soldiers[k].x, self.soldiers[k].y);
         let bin = (sc as usize).max(1);

@@ -41,27 +41,6 @@ pub(super) struct Hunt {
     set: bool,
 }
 
-impl Hunt {
-    /// How far the squad's middle moved over the warm seconds (fine
-    /// cells), from the oldest second kept to the newest; None with fewer
-    /// than two seconds held (`waves.rs`'s hunted waves).
-    pub(super) fn walked(&self) -> Option<f32> {
-        let mid = |cells: &Vec<u32>| -> Option<(f32, f32)> {
-            let n = cells.len() as f32;
-            (n > 0.0).then(|| {
-                let (x, y) = cells.iter().fold((0.0, 0.0), |(x, y), &c| (x + (c & 0xFFFF) as f32, y + (c >> 16) as f32));
-                (x / n, y / n)
-            })
-        };
-        let (a, b) = (self.places.front()?, self.places.back()?);
-        if a.0 == b.0 {
-            return None;
-        }
-        let (a, b) = (mid(&a.1)?, mid(&b.1)?);
-        Some((a.0 - b.0).hypot(a.1 - b.1))
-    }
-}
-
 impl<W: World> Game<W> {
     /// Once a game second: the trail started a second ago is set, today's
     /// places are kept, the cold ones dropped, and a new trail is started.

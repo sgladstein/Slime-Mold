@@ -3887,7 +3887,7 @@ mod tests {
     ///
     /// - A hunted wave starts within 40 s, gathering at two points or more
     ///   past the guns' reach of every soldier.
-    /// - While it gathers the trail is cold (the engine holds no hunt
+    /// - While it gathers the trail stays warm (the engine holds the hunt
     ///   field), and it strikes after its gather.
     #[test]
     fn a_walked_squad_brings_a_hunted_wave_in_wide() {
@@ -3942,8 +3942,10 @@ mod tests {
         while g.time() < t + 2.5 {
             step(&mut g);
         }
-        assert!(!g.world.e.hunted, "the trail is cold while it gathers");
-        while g.waves.live.as_ref().is_some_and(|w| w.phase != crate::mould::larder_world::WavePhase::Strike) && g.time() < t + 15.0 {
+        // The trail stays warm while it gathers, so the stream keeps
+        // feeding the masses (cold, tried first, starved them).
+        assert!(g.world.e.hunted, "the trail stays warm while it gathers");
+        while g.waves.live.as_ref().is_some_and(|w| w.phase != crate::mould::larder_world::WavePhase::Strike) && g.time() < t + g.rules.wave.hunted_gather + 3.0 {
             step(&mut g);
         }
         let alive = g.soldiers.iter().filter(|so| so.alive).count();

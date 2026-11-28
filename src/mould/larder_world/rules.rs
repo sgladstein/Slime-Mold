@@ -1161,7 +1161,6 @@ impl Rules {
             "wave_reach" => &mut self.wave.reach,
             "wave_strike" => &mut self.wave.strike,
             "wave_strike_pull" => &mut self.wave.strike_pull,
-            "wave_moved" => &mut self.wave.moved,
             "wave_near" => &mut self.wave.near,
             "wave_flank" => &mut self.wave.flank,
             "wave_lead" => &mut self.wave.lead,

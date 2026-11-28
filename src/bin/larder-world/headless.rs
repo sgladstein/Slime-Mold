@@ -977,7 +977,7 @@ pub(super) fn headless(args: Args, dir: &str, hand: &str, at: &[f32], screen: (u
                                 dense += 1;
                                 let (dx, dy) = (x - x0, y - y0);
                                 let l = dx.hypot(dy);
-                                if l >= 1.0 && l < 30.0 {
+                                if (1.0..30.0).contains(&l) {
                                     moved += 1;
                                     sum[b].0 += dx;
                                     sum[b].1 += dy;
