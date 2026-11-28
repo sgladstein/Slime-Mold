@@ -2300,6 +2300,38 @@ fn set_mat(m0: Mat, share: f32, wide: f32) -> Mat {
     return m;
 }
 
+// **The fed swell** (Look B, 2026-11-28, the owner's pick "the slime up
+// close"). Inside a packed body every cell holds a walker, so its count is
+// flat and the body was one even crinkle at zoom 6 (the 11-24 polish
+// review's "flat"); the trail saturates there too, and the food scent
+// lies only in a ring round each crystal. What does vary is how fed each
+// walker is: energy flows through the body from the crystals it covers
+// (`energy_flow`, `egain` in the engine), so the mean energy round a cell
+// is a smooth hill over each crystal falling to the hungry rim. The body
+// rises by it (`FED_RISE`), so the key light models a mound over its
+// food, and glows a little in its own colour (`FED_GLOW`); a hungry rim
+// sits lower and duller. A shot or a cut changes it as the energy does.
+// The energy between `FED_E.x` and `.y` is the ramp, straight (a
+// smoothstep from 0.3 to 1.8, the first cut, flattened the top into a
+// plateau with a ledge round it, a contour the data does not have). The
+// hungry rim's colour falls to `FED_DIM` of itself. On with lives (the
+// game's walkers have energy) and off for the Sleeper, whose crust uses
+// the fine grid's third block.
+fn fed_on() -> bool { return P.lives != 0u && !crust_look(); }
+const FED_E: vec2<f32> = vec2<f32>(0.0, 2.0);
+const FED_RISE: f32 = 0.35;
+const FED_GLOW: f32 = 0.25;
+const FED_DIM: f32 = 0.8;
+const FED_GLOSS: f32 = 0.15;
+fn fed_mat(m0: Mat, f: f32, body: f32) -> Mat {
+    if (body <= 0.0) { return m0; }
+    var m = m0;
+    m.albedo = m.albedo * mix(1.0, mix(FED_DIM, 1.0, f), body);
+    m.glow = m.glow + m.albedo * FED_GLOW * f * body;
+    m.gloss = min(m.gloss + FED_GLOSS * f * body, 1.0);
+    return m;
+}
+
 // How far beyond the map's edge `prep` works the ground out, in cells.
 const OFF_MAP: f32 = 8.0;
 
@@ -2381,8 +2413,8 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         rows5[k] = a;
     }
     workgroupBarrier();
-    if (gid.x >= P.rw || gid.y >= P.rh) { return; }
-    let i = gid.y * P.rw + gid.x;
+    // The columns down before the edge test, so the fed pass below can
+    // reuse the tile with every thread at its barriers.
     var n = 0.0;
     var m = 0.0;
     var nb = 0.0;
@@ -2398,6 +2430,44 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         nb += g2[dy] * a[4];
         lcb += g2[dy] * a[5];
     }
+    // How fed the walkers round here are (`fed_on`, Look B 11-28): their
+    // mean energy under the body's Gaussian, from the fine grid's third
+    // block, on the tile `crowd` held (free once the rows were summed).
+    var fed = 0.0;
+    if (fed_on()) {
+        workgroupBarrier();
+        for (var k = li; k < 576u; k += 256u) {
+            let fx = bx + i32(k % 24u); let fy = by + i32(k / 24u);
+            var v = 0u;
+            if (fx >= 0 && fy >= 0 && fx < i32(P.rw) && fy < i32(P.rh)) { v = atomicLoad(&fgrid[2u * P.fhalf + u32(fy) * P.rw + u32(fx)]); }
+            crowd[k] = v;
+        }
+        workgroupBarrier();
+        for (var k = li; k < 384u; k += 256u) {
+            let r = k / 16u;
+            let c0 = k % 16u;
+            var es = 0.0;
+            var ec = 0.0;
+            for (var dx = 0u; dx < 9u; dx++) {
+                let t = crowd[r * 24u + c0 + dx];
+                es += g2[dx] * f32(t >> 8u) / 64.0;
+                ec += g2[dx] * f32(t & 255u);
+            }
+            rows5[k][0] = es;
+            rows5[k][1] = ec;
+        }
+        workgroupBarrier();
+        var es = 0.0;
+        var ec = 0.0;
+        for (var dy = 0u; dy < 9u; dy++) {
+            let a = rows5[(lid.y + dy) * 16u + lid.x];
+            es += g2[dy] * a[0];
+            ec += g2[dy] * a[1];
+        }
+        if (ec > 0.05) { fed = clamp((es / ec - FED_E.x) / (FED_E.y - FED_E.x), 0.0, 1.0); }
+    }
+    if (gid.x >= P.rw || gid.y >= P.rh) { return; }
+    let i = gid.y * P.rw + gid.x;
     let ws = s1 * s1;
     let wb = s2 * s2;
     let cut_share = clamp(m / max(n, 1e-3), 0.0, 1.0);
@@ -2486,6 +2556,10 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     if (P.slime_look == 8u || P.slime_look == 9u) { th_h = mix(th, th0 * (1.0 + 0.6 * dense_share), dense_share); }
     if (P.slime_look == 3u) { th_h = max(th_h, CORD_RISE * trail * cord); }
     if (P.slime_look == 2u) { th_h = th_h + SHEET_RISE * sheet * sheet; }
+    // The fed swell: the body stands up where its walkers are fed.
+    let fed_in = smoothstep(0.3, 0.6, wide) * select(0.0, 1.0, fed_on());
+    let fed_b = fed * fed_in;
+    th_h = th_h + FED_RISE * fed_b;
     // A mini-boss's body (2026-11-16): its members' share of the walkers
     // round the cell (a member counts once in `n` and once in `lc`), and the
     // nearest lump's look. Where its members are, it stands up from the
@@ -2532,6 +2606,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
         m1 = set_mat(m1, ss, wide);
         m1 = dormant_mat(m1, dormant_share(gid.x, gid.y));
         m1 = scar_mat(m1, scar_share(wx, wy), tm);
+        m1 = fed_mat(m1, fed, fed_in);
         mcell[i] = mat_pack(m1);
         return;
     }
@@ -2562,6 +2637,7 @@ fn prep(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation
     mt = set_mat(mt, ss, wide);
     mt = dormant_mat(mt, dormant_share(gid.x, gid.y));
     mt = scar_mat(mt, scar_share(wx, wy), tm);
+    mt = fed_mat(mt, fed, fed_in);
     hcell[i] = h.x + set_rise(ss, wide) + lump.pack;
     hcell[P.rw * P.rh + i] = h.y;
     hcell[2u * P.rw * P.rh + i] = ground_pack(gcol);
@@ -3421,7 +3497,11 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     // one glint a walker clump.
     // The spacing is some 9 screen pixels (1.5 cells at zoom 6, 0.75 at
     // 12): a fixed 1.5 cells made zoom 12 read soft again.
-    let so = clamp(9.0 / P.zoom, 0.6, 1.5);
+    // 11-28 (Look B, "the slime up close"): 6 pixels and an exponent of
+    // 22 + 46 x the gloss (was 9 and 14 + 30), with the fed swell, so the
+    // sheen sits tighter on the body's crinkle at zoom 12 without going
+    // back to the 11-14 foil.
+    let so = clamp(6.0 / P.zoom, 0.4, 1.5);
     // From the mould's own height (`hm`): the sheen is the wet film's and
     // the water's, which is flat. Taken from the whole height, a reed bed's
     // slope down into the water caught the highlight on the water's gloss,
@@ -3429,7 +3509,7 @@ fn shaded(x: f32, y: f32, e: f32) -> vec3<f32> {
     let sx = film_h(x + so, y) - film_h(x - so, y);
     let sy = film_h(x, y + so) - film_h(x, y - so);
     let ns = normalize(vec3<f32>(-sx / (2.0 * so), -sy / (2.0 * so), 1.0));
-    var spec = pow(max(dot(ns, half_v), 0.0), 14.0 + 30.0 * m.gloss) * m.gloss * (0.5 + 0.7 * m.gloss);
+    var spec = pow(max(dot(ns, half_v), 0.0), 22.0 + 46.0 * m.gloss) * m.gloss * (0.6 + 0.9 * m.gloss);
     // The old looks' highlights, off the fine slope as they were: paint's
     // one soft lobe, foil's tight glints (11-21, the slime viewer).
     if (P.slime_look == 8u) {
@@ -4360,6 +4440,12 @@ fn draw_specks(@builtin(global_invocation_id) gid: vec3<u32>) {
         if (crust_look() && !member) {
             let dorm = ((life_words[k] >> 9u) & 3u) == 2u;
             atomicAdd(&fgrid[2u * P.fhalf + u32(gy) * P.rw + u32(gx)], select(1u << 16u, 1u, dorm));
+        }
+        // How fed it is (`fed_on`): its energy in 64ths over bits 8-31 and
+        // a count in bits 0-7, for `prep`'s mean (the fed swell).
+        if (fed_on() && !member && w.w == 0.0) {
+            let fe = u32(round(clamp(alive[k], 0.0, 4.0) * 64.0));
+            atomicAdd(&fgrid[2u * P.fhalf + u32(gy) * P.rw + u32(gx)], 1u | (fe << 8u));
         }
         if (dcnt > 0u) { atomicAdd(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], dcnt); }
         if (member) { atomicOr(&fgrid[P.fhalf + u32(gy) * P.rw + u32(gx)], 1u << (FG_FLAGS + lump_k - 1u)); }
