@@ -1714,8 +1714,13 @@ impl StartMenu {
         // a frame on this page at 4K (Look, 11-24, counted for Engine).
         let steps = shade_steps(40, |f| (9.0 * (1.0 - f)) as u8 + 2);
         for (k, &a) in steps.iter().enumerate() {
-            let (x0, x1) = (shade_w * (1.0 - (k + 1) as f32 / 40.0), shade_w * (1.0 - k as f32 / 40.0));
-            c.rrect(Rect::new(x0, 0.0, x1 - x0 + 0.5, sh), 0.0, [4, 6, 8, a]);
+            // On whole pixels, edge to edge (11-28: with half a pixel of
+            // overlap each seam was covered twice and the menu's dish
+            // showed a dark vertical line every 18 px at 1536 wide).
+            let (x0, x1) = ((shade_w * (1.0 - (k + 1) as f32 / 40.0)).round(), (shade_w * (1.0 - k as f32 / 40.0)).round());
+            if x1 > x0 {
+                c.rrect(Rect::new(x0, 0.0, x1 - x0, sh), 0.0, [4, 6, 8, a]);
+            }
         }
         // The main page's title and its foot hint over a dish that fills the
         // window (`menu_camera`, 11-20): a shade down from the top and up
@@ -1724,9 +1729,16 @@ impl StartMenu {
             let (top_h, foot_h) = (130.0 * s, 60.0 * s);
             // Side by side as the left shade (`shade_steps`).
             for (k, &a) in shade_steps(24, |f| (7.0 * (1.0 - f)) as u8 + 1).iter().enumerate() {
+                // Whole pixels, edge to edge, as the left shade.
                 let (near, far) = ((1.0 - (k + 1) as f32 / 24.0), (1.0 - k as f32 / 24.0));
-                c.rrect(Rect::new(0.0, top_h * near, sw, top_h * (far - near) + 0.5), 0.0, [4, 6, 8, a]);
-                c.rrect(Rect::new(0.0, sh - foot_h * far, sw, foot_h * (far - near) + 0.5), 0.0, [4, 6, 8, a]);
+                let (t0, t1) = ((top_h * near).round(), (top_h * far).round());
+                let (f0, f1) = ((sh - foot_h * far).round(), (sh - foot_h * near).round());
+                if t1 > t0 {
+                    c.rrect(Rect::new(0.0, t0, sw, t1 - t0), 0.0, [4, 6, 8, a]);
+                }
+                if f1 > f0 {
+                    c.rrect(Rect::new(0.0, f0, sw, f1 - f0), 0.0, [4, 6, 8, a]);
+                }
             }
         }
         // The shop and the gun range's armory: one screen of their own
