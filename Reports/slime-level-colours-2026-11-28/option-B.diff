@@ -1,0 +1,10 @@
+--- /dev/fd/63	2026-11-28 04:04:00.219965974 +0000
++++ /tmp/claude-0/f/optB.wgsl	2026-11-28 03:51:17.124406661 +0000
+@@ -1497,6 +1497,7 @@
+     // explorers, whose height (`film_th`) is next to none.
+     m.vis = 1.0 - smoothstep(0.004, 0.05, th);
+     m.glow = vec3<f32>(0.0);
++    if (lvl > 0.0) { m.glow = level_rgb(lvl) * 0.3 * smoothstep(1.0, 7.0, lvl) * (1.0 - cut) * opaque; }
+     m.gloss = mix((0.1 + 0.9 * sqrt(th)) * (1.0 - 0.6 * cut), 0.95, dense * (1.0 - cut));
+     // Old looks, given back as body looks (the slime viewer, 11-21: the
+     // owner's card "Bring back old looks", from git). 8, paint: the first

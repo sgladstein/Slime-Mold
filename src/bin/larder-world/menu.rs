@@ -688,6 +688,8 @@ pub(super) fn star_view(r: &Run) -> slime_mould::world::start::StarView {
                         twist: at.twist().map(|t| (t.name().to_string(), t.card())),
                         size: l.walkers,
                         hits: run::blows(e),
+                        level_top: run::level_max(e),
+                        top_hits: run::blows_at_level(e, run::level_max(e)),
                         area: (p.size.0 * p.size.1) as f32,
                         pay: at.pay(2),
                         heat_pay: hot.pay(2),

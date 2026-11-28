@@ -50,6 +50,10 @@ pub struct StarNode {
     pub size: f32,
     /// The blows a bit of its slime takes (`run::blows`).
     pub hits: f32,
+    /// The highest level its crystals reach (`run::level_max`), and the
+    /// blows a bit of that level takes.
+    pub level_top: u32,
+    pub top_hits: f32,
     /// Its map's area, in cells.
     pub area: f32,
     /// What winning it pays at two stars, without and with heat.
@@ -96,6 +100,51 @@ const CARD_H: f32 = 404.0;
 /// The pip colours: Safe, Fair, Hard. Hard is a red-orange (it was the
 /// amber of the stars won and the slime, and read as a reward).
 pub(crate) const PIP_INKS: [Rgba; 3] = [GOOD, ACCENT, [255, 120, 76, 255]];
+
+/// The slime's levels' colours, 0 (the gold) to 7, as `view.wgsl`'s
+/// `level_rgb` paints them (keep the two in step): the star card's swatches.
+pub(crate) const LEVEL_INKS: [Rgba; 8] = [
+    [240, 166, 63, 255],
+    [238, 112, 36, 255],
+    [220, 58, 32, 255],
+    [178, 26, 38, 255],
+    [140, 20, 58, 255],
+    [112, 26, 96, 255],
+    [80, 30, 120, 255],
+    [52, 22, 92, 255],
+];
+
+/// The height a card of width `cw` needs for all its facts, with the
+/// pip's line: `star_card`'s steps, added up.
+fn card_need(c: &Canvas, s: f32, v: &StarView, nd: &StarNode, cw: f32) -> f32 {
+    let p = 20.0 * s;
+    let tw = cw - 2.0 * p;
+    let vw = tw - 62.0 * s;
+    let row = 23.0 * s;
+    // The planet's pip, name, line and rule.
+    let mut y = (34.0 + 30.0 + 22.0 + 14.0 + 24.0) * s;
+    y += row + 12.0 * s; // the slime
+    y += row; // tough
+    y += match &nd.twist {
+        Some((_, line)) => 19.0 * s + 17.0 * s * c.wrap(Weight::Medium, 13.0 * s, vw, line).len().min(2) as f32 + 6.0 * s,
+        None => row,
+    };
+    if nd.pips >= 3 {
+        y += row;
+    }
+    if !nd.contracts.is_empty() {
+        y += 8.0 * s + 20.0 * s * nd.contracts.len() as f32;
+    }
+    let leads = v.steps.iter().position(|st| st.iter().any(|o| o.k == nd.k && o.open)).and_then(|i| v.steps.get(i + 1)).is_some();
+    // The world's row, then where it leads; the last row must sit 54
+    // over the card's foot (the pay's 34 and 20 of margin).
+    if leads {
+        y += row;
+    }
+    // (2 units spare: at exactly the need the last row's `y <= limit`
+    // missed by a rounding and "Then" was dropped.)
+    y + 56.0 * s
+}
 
 fn pip_ink(pips: u8) -> Rgba {
     PIP_INKS[(pips.clamp(1, 3) - 1) as usize]
@@ -264,7 +313,15 @@ impl StartMenu {
         let by = sh - BOTTOM * s;
         let gap = 16.0 * s;
         let body = Rect::new(x, top + gap, sw - 2.0 * x, by - top - 2.0 * gap);
-        let card_h = if open.is_empty() { 0.0 } else { (CARD_H * s).min(body.h * 0.62) };
+        // As tall as the fullest card's facts need (11-28: a card was
+        // CARD_H whatever it held, and two Fair cards without a twist were
+        // empty below their facts for a third of their height), and never
+        // more than CARD_H or three fifths of the page.
+        let n = open.len().max(1) as f32;
+        let cw = (CARD_W * s).min((body.w - gap * (n - 1.0)) / n);
+        let need = open.iter().map(|nd| card_need(c, s, &v, nd, cw)).fold(0.0f32, f32::max);
+        let card_h = if open.is_empty() { 0.0 } else { need.min(CARD_H * s).min(body.h * 0.62) };
+        let about = card_h >= need - 1.0;
         let map = Rect::new(body.x, body.y, body.w, body.h - card_h - if open.is_empty() { 0.0 } else { gap });
         let hover_node = self.route_map(c, s, &v, map, pick, focus);
         // Hovering a planet names it, and what it is.
@@ -281,8 +338,6 @@ impl StartMenu {
         if open.is_empty() {
             c.text(Weight::Medium, 15.0 * s, (sw / 2.0, map.bottom() - 30.0 * s), Align::Centre, "No planet to pick from here.", MUTED);
         }
-        let n = open.len().max(1) as f32;
-        let cw = (CARD_W * s).min((body.w - gap * (n - 1.0)) / n);
         let x0 = body.x + (body.w - cw * n - gap * (n - 1.0)) / 2.0;
         // What the cards' bars are measured on: the biggest slime among
         // them and the last planet's.
@@ -290,7 +345,7 @@ impl StartMenu {
         for (j, nd) in open.iter().enumerate() {
             let r = Rect::new(x0 + j as f32 * (cw + gap), map.bottom() + gap, cw, card_h);
             let picked = Some(nd.k) == pick;
-            self.star_card(c, s, &v, nd, r, picked, hot(r), focus == Some(Hit::Star(nd.k)), most);
+            self.star_card(c, s, &v, nd, r, (picked, hot(r), focus == Some(Hit::Star(nd.k)), about), most);
             self.hits.push((r, Hit::Star(nd.k)));
         }
 
@@ -474,7 +529,9 @@ impl StartMenu {
     /// One planet to pick from, as a card: what it is, how it differs,
     /// what it pays.
     #[allow(clippy::too_many_arguments)]
-    fn star_card(&mut self, c: &mut Canvas, s: f32, v: &StarView, nd: &StarNode, r: Rect, picked: bool, lit: bool, focused: bool, most: f32) {
+    /// `look`: picked, hovered, focused, and room for the pip's line.
+    fn star_card(&mut self, c: &mut Canvas, s: f32, v: &StarView, nd: &StarNode, r: Rect, look: (bool, bool, bool, bool), most: f32) {
+        let (picked, lit, focused, about) = look;
         let ink = pip_ink(nd.pips);
         c.shadow(r, 14.0 * s, 20.0 * s, 6.0 * s, SHADOW);
         let (t, b) = if lit && !picked { (BUTTON_HOVER_TOP, PANEL_BOTTOM) } else { (PANEL_TOP, PANEL_BOTTOM) };
@@ -499,7 +556,7 @@ impl StartMenu {
         c.text_fit(Weight::SemiBold, 24.0 * s, (px, y), Align::Left, &nd.name, nw, TEXT);
         // Its pip's line in words, where the card has its full height (the
         // facts under it say the same in numbers, and come first).
-        if r.h >= CARD_H * s - 1.0 {
+        if about {
             y += 22.0 * s;
             c.text_fit(Weight::Medium, 13.5 * s, (px, y), Align::Left, &nd.about, tw, MUTED);
         }
@@ -534,7 +591,23 @@ impl StartMenu {
             y += row + 12.0 * s;
         }
         if y <= limit {
-            fact(c, y, "Tough", &format!("each bit takes {} hit{}", hits(nd.hits), if nd.hits < 1.05 { "" } else { "s" }), None, TEXT);
+            if nd.level_top == 0 {
+                fact(c, y, "Tough", &format!("each bit takes {} hit{}", hits(nd.hits), if nd.hits < 1.05 { "" } else { "s" }), None, TEXT);
+            } else {
+                // The slime's levels as the world colours them, lowest to
+                // its home crystal's, then the hits from the orange to the
+                // darkest (11-28: the card gave the orange's alone, and the
+                // colours that say how tough a crystal is were not on it).
+                c.text(Weight::Medium, 13.0 * s, (px, y), Align::Left, "Tough", MUTED);
+                let d = 10.0 * s;
+                let mut sx = vx;
+                for l in 0..=nd.level_top.min(7) {
+                    c.rrect(Rect::new(sx, y - 9.5 * s, d, d), 2.5 * s, LEVEL_INKS[l as usize]);
+                    sx += d + 3.0 * s;
+                }
+                let words = format!("{} to {} hits", hits(nd.hits).split('-').next().unwrap_or("1"), hits(nd.top_hits).rsplit('-').next().unwrap_or("1"));
+                c.text_fit(Weight::Medium, 14.5 * s, (sx + 5.0 * s, y), Align::Left, &words, vx + vw - sx - 5.0 * s, TEXT);
+            }
             y += row;
         }
         // The twist: its name, then its line in up to two lines.
