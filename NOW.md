@@ -1,7 +1,7 @@
 # Now
 
 The front page: what is being built, who builds it, and what waits on the
-owner. Kept by the Direction lane (last change 2026-11-27), which owns it; send it
+owner. Kept by the Direction lane (last change 2026-11-28), which owns it; send it
 changes, don't edit it. At most 100 lines. The rules are in
 [`CLAUDE.md`](CLAUDE.md), each lane's state in `handoff/<lane>.md`, the
 reasons in [the plan](Reports/continuation-plan-2026-11-17.md) the owner
@@ -29,7 +29,7 @@ wants to finish and replay. It is done when all six hold:
 
 Milestone 3, a release, only if he chooses one.
 
-**Where it stands (11-27).** From 11-25 to 11-27 his other project built, on his own chat rulings (all in [`wiki/decisions-game.md`](wiki/decisions-game.md)): the star map (#860), hearts as a crystal mini-boss (#858), slime levels and toughness by planet (#862, #864), stronger and smarter mini-bosses (#865), a faster early climb (#868), harder Hard forks (#870), harder from step 2 (#873), turrets that fire their loadout's gun (#871, #875) and are bought like guns (#876), and the HUD's slime bar (#872). Review: [doc](https://claude.ai/artifact/6dmCXQ5GC3H1w8LN4ZWGrE); plan: [doc](https://claude.ai/artifact/57RBPNiFdCkUk4DZwN28nG), kept in the repo as `Reports/plan-2026-11-27/` (#882). The work moves to a new account (11-27 23:36Z): start from [`handoff/account-move-2026-11-27.md`](handoff/account-move-2026-11-27.md).
+**Where it stands (11-27).** From 11-25 to 11-27 his other project built, on his own chat rulings (all in [`wiki/decisions-game.md`](wiki/decisions-game.md)): the star map (#860), hearts as a crystal mini-boss (#858), slime levels and toughness by planet (#862, #864), stronger and smarter mini-bosses (#865), a faster early climb (#868), harder Hard forks (#870), harder from step 2 (#873), turrets that fire their loadout's gun (#871, #875) and are bought like guns (#876), and the HUD's slime bar (#872). Review: [doc](https://claude.ai/artifact/6dmCXQ5GC3H1w8LN4ZWGrE); plan: [doc](https://claude.ai/artifact/57RBPNiFdCkUk4DZwN28nG), kept in the repo as `Reports/plan-2026-11-27/` (#882). The work moves to a new account (11-27 23:36Z): start from [`handoff/account-move-2026-11-27.md`](handoff/account-move-2026-11-27.md). New lane threads started there 11-28 03:14Z with the jobs below.
 - **Tests 1 and 3: not measurable yet.** The run bot plays only the Fair planet, builds no turret designs and still aims its siege at hearts; the nightly Run bot was red on 11-25 and 11-27. Last curve pass: 11-24, eight planets.
 - **Test 2: close.** His 11-27 run took about 55 minutes for steps 1 to 6, so about 1 h 50 m for twelve, before the raises since.
 - **Test 4: holds**, recheck on his PC with a star-map run. **Test 5: held 11-24** (P8 p95 16.4 ms), recheck: levels, bigger raids and Hard home-world sizes came since. **Test 6: holds.**
@@ -40,7 +40,7 @@ Milestone 3, a release, only if he chooses one.
 | Lane | Test | Top jobs, in order |
 |---|---|---|
 | Direction | all | This page and the rulings, including asks he makes in any thread. One retune pass from each of his run logs. The curve page when test 3 can be measured. D8. |
-| Enemy | 1, 3 | #848 (no mini-boss on a live heart), the Grudge readout, then the rescue planet as a star-map node (below). Pressure from the slime itself: rerun the Lab's hunt on today's slime. |
+| Enemy | 1, 3 | The Grudge readout (#848 merged 11-27), then the rescue planet as a star-map node (below). Pressure from the slime itself: rerun the Lab's hunt on today's slime. |
 | Squad and arsenal | 3 | Turret designs in the run bot (with Engine). Energy something worth buying if his next log still banks 5,000 or more. |
 | Look and interface | 1, 5 | The star map and slime colours checked against the art direction; the rescue node's badge and screens; then his A to D order. |
 | Engine and tools | 1, 3, 4, 5 | The run bot up to today's game: picks by pip, builds turret designs, no heart siege, the builder arm; then the curve on twelve steps. The 1070 retime and a star-map save check. The PC league stopped or rebuilt on main. |
