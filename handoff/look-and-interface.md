@@ -2,6 +2,27 @@
 
 ## State (2026-11-20)
 
+**11-27, the loadout page (thread "Redesign the loadout page"; owner
+21:43Z "Does the page for creating gun and turret loadouts need to be
+improved?", 21:48Z "Nothing gets replaced ... select two to three
+loadouts ... quick build"):** the shop's loadouts are a row of cards over
+the gun slots (`loadout_rail` in `start/shop.rs`, `LoadoutCard`,
+`menu::loadout_cards`): number, what it holds, who uses it, its cards, a
+"Build N" quick-build switch on each turret's card (`Pick::QuickOf`,
+run.rs), "+ New loadout" last; one line high under 640 units
+(`RAIL_LOW`). The budget/DPS line moved to the right end of the shots'
+names row (`late_line`), else the Squad tab paged at 200% on 1080 and
+540 lines. New Owned tab (`OWNED`, `TabKind::Owned`, `owned_card`): every
+gun, turret and device with "In loadout N" / "Spare"; owned turrets show
+their rolls (`menu::turret_bars`). Film: `menu=shop-loadouts`,
+`shop-loadouts-lobber`, `shop-loadouts@Owned`. Stills
+`Reports/pr-stills/loadout-cards-2026-11-27-*.jpg`. Built on PR #876's
+branch (turrets bought like guns). **Next ideas:** drag a gun or turret
+from the Owned tab onto a loadout card; show a loadout's cards as mini
+pips on its card; "Devices use this" / "Squad N uses this" still sit on
+the bottom bar and could move onto the shown card; the bot still builds
+turrets by kind, not by quick slot.
+
 **11-27, the 4K review (Direction's 11-25 ask, re-filmed on 11-27's main):** command card squares (`command_card`, unlabelled cells) draw the icon at 19 units, 3.5 right and 2 down of centre (1.5 up with a cost), so the 15.5-unit keycap sits beside it; a smaller cap fails `the_bottom_row_keeps_its_text_at_every_size` (10.5 floor). Star card twist line: a third line joins the second, cut with an ellipsis. Heart pill and goal: "cut it under N". Slime `says` lines end in a full stop (`run::does_to_you`, Enemy's file, text only). Films and the ranked list went to Direction.
 
 **11-27, alerts:** at most three (`ALERTS_MAX`), 4 s (`ALERT_LIFE`; red

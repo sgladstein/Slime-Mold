@@ -71,6 +71,7 @@ code:
   - HeartRules
   - LADDER
   - LURE_PULL
+  - LoadoutCard
   - LureMark
   - PLANETS
   - Pip::offset
@@ -120,6 +121,7 @@ code:
   - head_start
   - level_max
   - limit
+  - loadout_cards
   - par
   - raid_cores
   - range_args
@@ -189,6 +191,21 @@ owner; nothing is balanced ([report](../../Reports/roguelike-run-2026-11-14/READ
 Ending early, the goal's mass, the play log and the planets' pressure: below.
 The gun range plays with its shop as a free armory (below).
 
+
+## Loadouts in the shop
+
+**Loadouts** (2026-11-27, after the owner's "Does the
+page for creating gun and turret loadouts need to be improved?" and "You
+can own multiple guns and then select which one you're using"): a row of
+cards over the gun slots, one a loadout, says what each holds, who uses
+it (Squads, a squad, Devices) and its cards, with a Quick build switch
+on each turret loadout's card ("Build 1" to "Build 3", `Pick::QuickOf`)
+and "+ New loadout" last (`LoadoutCard`, `menu::loadout_cards`); a click
+shows that loadout in the slots. Every gun, turret design and device owned
+sits on one Owned tab, tagged with the loadout it is in or Spare, and a
+pick puts it in the loadout shown (`OWNED`). Until then the loadouts were
+small buttons on the bottom bar beside Reroll and Hold, and the owned
+things were spread over Guns, Buildings and Tools.
 
 ## The star map
 

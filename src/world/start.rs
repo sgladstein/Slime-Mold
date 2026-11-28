@@ -222,6 +222,45 @@ pub enum ShopArea {
 /// The group of the cards owned and out of the gun.
 pub const BAG: &str = "In the bag";
 
+/// The shop's tab of every gun, turret design and device owned, each
+/// tagged with the loadout it is in (2026-11-27, the loadout page's
+/// redesign: they were split over Guns, Buildings and Tools).
+pub const OWNED: &str = "Owned";
+
+/// The group of the rows the shop draws on its row of loadouts (show one,
+/// its quick-build switch, a new one), not on a tab or the bottom bar.
+pub const LOADOUT_ROW: &str = "Loadouts";
+
+/// A loadout as a card on the shop's row of loadouts, over the gun slots
+/// (2026-11-27; the owner, 21:43Z: "Does the page for creating gun and
+/// turret loadouts need to be improved?"). Until then each was a small
+/// "2: Gun turret" button on the bottom bar between Give up and Reroll,
+/// what used it said only in its hover text, and Quick build showed only
+/// for the loadout open.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LoadoutCard {
+    /// Its number, from 1.
+    pub n: usize,
+    /// What it holds: "Carbine", "Gun turret", "Mine layer", "Plain rifle".
+    pub holds: String,
+    /// What kind of thing that is, as the gun slots' label: "Gun",
+    /// "Turret", "Device", "Empty".
+    pub kind: String,
+    pub icon: Icon,
+    /// Who uses it, shortest first: "Squads", "Squad 2", "Devices";
+    /// empty for a turret's (its quick-build switch says it) or a spare.
+    pub roles: Vec<String>,
+    /// Its cards.
+    pub cards: usize,
+    /// The one the gun slots show.
+    pub shown: bool,
+    /// The shop row that shows it (`Hit::Do`).
+    pub row: usize,
+    /// A turret loadout's quick-build switch: its shop row, and the Build
+    /// page button it is (from 1) while on.
+    pub quick: Option<(usize, Option<u8>)>,
+}
+
 /// A row of the run's shop page (the game fills it: `mould::run::Run::shop`).
 #[derive(Clone, Debug, PartialEq)]
 pub struct ShopRow {
@@ -329,6 +368,12 @@ pub struct Shop {
     /// The shot of the gun's own plain bullet that leftover cards go on,
     /// drawn as a ghost card after them; None when there is none.
     pub plain_shot: Option<u8>,
+    /// The run's loadouts, as the row of cards over the gun slots; empty
+    /// in the gun range, which has one gun.
+    pub loadouts: Vec<LoadoutCard>,
+    /// The "New loadout" row, the last card of that row, while there is
+    /// room for one more.
+    pub new_loadout: Option<usize>,
 }
 
 /// Which shot a card in the gun's slots joins (`mould::rounds::Shot`).
@@ -3377,7 +3422,50 @@ mod tests {
         for k in 0..n {
             add(if k < n / 2 { BAG } else { "Cards" }, ShopArea::Cards, k);
         }
-        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None }
+        Shop { heading: "Planet 2 next".into(), lines: vec!["1 planet freed".into()], purse: "200 points".into(), rows, slots: 4, budget: (6, 10), range: false, turrets: false, bench: String::new(), field: false, glance: None, dps: Some(14.0), stats: profile(0.5), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None, loadouts: Vec::new(), new_loadout: None }
+    }
+
+    /// `shop` with `n` loadouts on its row of cards (2026-11-27), the
+    /// longest names the game gives, three of them turrets quick to build,
+    /// a "New loadout" card while under six; and an Owned tab of two guns
+    /// and three turrets, one in the loadout shown.
+    fn with_loadouts(mut shop: Shop, n: usize) -> Shop {
+        let holds = ["Scattergun", "Gun turret", "Sprayer", "Lobber", "Nothing yet", "Mine layer"];
+        let kinds = ["Gun", "Turret", "Turret", "Turret", "Empty", "Device"];
+        for k in 0..n {
+            let row = shop.rows.len();
+            let mut r = ShopRow::new(LOADOUT_ROW, ShopArea::Upgrades, Icon::Fast, &format!("{}: {}", k + 1, holds[k]));
+            (r.ready, r.about) = (k != 1, "Gun turret, 2 cards (quick build). Click to show it in the gun slots.".into());
+            shop.rows.push(r);
+            let quick = (kinds[k] == "Turret").then(|| {
+                let q = shop.rows.len();
+                let mut r = ShopRow::new(LOADOUT_ROW, ShopArea::Upgrades, Icon::Fast, "Quick build: off");
+                (r.ready, r.about) = (true, "Click to put Loadout 4's lobber on the Build page on a planet.".into());
+                shop.rows.push(r);
+                (q, (k < 3).then_some(k as u8))
+            });
+            let roles = match k {
+                0 => vec!["Squads".to_string(), "Squad 2".to_string()],
+                5 => vec!["Devices".to_string()],
+                _ => Vec::new(),
+            };
+            shop.loadouts.push(LoadoutCard { n: k + 1, holds: holds[k].into(), kind: kinds[k].into(), icon: Icon::Turret, roles, cards: k * 2 % 7, shown: k == 1, row, quick });
+        }
+        if n < 6 {
+            shop.new_loadout = Some(shop.rows.len());
+            let mut r = ShopRow::new(LOADOUT_ROW, ShopArea::Upgrades, Icon::Fast, "New loadout");
+            (r.ready, r.about) = (true, "An empty loadout: put a gun or a turret and cards in it.".into());
+            shop.rows.push(r);
+        }
+        for k in 0..5 {
+            let gun = k < 2;
+            let mut r = ShopRow::new(OWNED, if gun { ShopArea::Guns } else { ShopArea::Upgrades }, if gun { Icon::Scattergun } else { Icon::Turret }, ["Scattergun", "Long gun", "Gun turret", "Sprayer", "Lobber"][k]);
+            (r.on, r.ready, r.state) = (k == 2, k != 2, ["Loadout 1", "owned", "carried", "Loadout 3", "Loadout 4"][k].into());
+            r.bars = vec![("Reach".into(), 0.6, "x1.26".into()), ("Rate".into(), 0.6, "x1.19".into()), ("Over walls".into(), 1.0, "yes".into()), ("Card slots".into(), 0.5, "3".into()), ("Budget".into(), 0.3, "9".into())];
+            r.about = "Lays its cards in a strip across the slime's way. In Loadout 3: click to move it to Loadout 2.".into();
+            shop.rows.push(r);
+        }
+        shop
     }
 
     /// The gun range's armory as the game fills it, with the longest
@@ -3426,7 +3514,7 @@ mod tests {
             rows.push(r);
         }
         let lines = vec!["Everything is free. Put cards in the gun: the squad fires them left to right, over and over.".into(), "Guns and bullets are rolled as on planet 3; the buttons along the bottom roll them again, deeper or shallower".into()];
-        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new(), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None }
+        Shop { heading: "The gun range".into(), lines, purse: "Free".into(), rows, slots: 6, budget: (4, 10), range: true, turrets: false, bench: String::new(), field: false, glance: None, dps: None, stats: Vec::new(), run: None, slime: None, beat: None, twist: None, shots: Vec::new(), plain_shot: None, loadouts: Vec::new(), new_loadout: None }
     }
 
     /// Shop B (owner's pick, 11-15 19:37Z): a click picks a row and the
@@ -4373,7 +4461,7 @@ mod tests {
             // the gun's, the bag's and the bottom bar's too.
             let mut big = shop(30);
             big.slots = 6;
-            for (name, sh) in [("shop", shop(14)), ("full shop", big), ("armory", armory(3)), ("full armory", armory(14))] {
+            for (name, sh) in [("shop", shop(14)), ("full shop", big), ("armory", armory(3)), ("full armory", armory(14)), ("loadouts", with_loadouts(shop(14), 5)), ("six loadouts", with_loadouts(shop(14), 6))] {
                 m.shop = Some(sh);
                 m.show(Page::Shop);
                 draw(&mut m, &mut c);

@@ -1512,6 +1512,10 @@ pub enum Pick {
     Turret(usize),
     /// The loadout shown in or out of quick build (`Run::quick`).
     Quick,
+    /// Loadout `i` in or out of quick build, from its card in the shop's
+    /// row of loadouts (2026-11-27: the switch on each turret loadout's
+    /// card, so one need not be shown first).
+    QuickOf(usize),
     /// Owned turret design `i` into the loadout shown.
     CarryTurret(usize),
     /// The relic on offer bought (gun step F).
@@ -1850,8 +1854,7 @@ impl Run {
 
     /// The loadout shown in or out of quick build (`quick`): in only while
     /// it holds a turret and a slot is free. True if it changed.
-    fn toggle_quick(&mut self) -> bool {
-        let l = self.editing;
+    fn toggle_quick(&mut self, l: usize) -> bool {
         if let Some(k) = self.quick.iter().position(|&q| q == l) {
             self.quick.remove(k);
             return true;
@@ -3210,18 +3213,19 @@ impl Run {
                 };
                 rows.push(bar(name, about, self.held.is_some(), true, Pick::Hold));
             }
-            // Quick build (owner, 21:48Z): the shown loadout's turret on
-            // the Build page, up to `QUICK`.
-            if let Some(t) = self.loadouts.get(self.editing).and_then(|l| l.turret).and_then(|t| self.turrets.get(t)) {
-                let on = self.quick.contains(&self.editing);
-                let (name, about) = if on {
-                    ("Quick build: on".to_string(), format!("{shown}'s {} is on the Build page on a planet. Click to take it off.", t.kind.name().to_lowercase()))
-                } else if self.quick.len() >= QUICK {
-                    ("Quick build: full".to_string(), format!("At most {QUICK} loadouts are quick to build: take one off first."))
-                } else {
-                    ("Quick build: off".to_string(), format!("Click to put {shown}'s {} on the Build page on a planet.", t.kind.name().to_lowercase()))
+            // Quick build (owner, 21:48Z): a turret loadout's design on the
+            // Build page, up to `QUICK`; a switch for each turret loadout,
+            // which the shop draws on that loadout's card (2026-11-27).
+            for (i, t) in self.loadouts.iter().enumerate().filter_map(|(i, l)| Some((i, self.turrets.get(l.turret?)?))) {
+                let me = self.loadout_name(i);
+                let kind = t.kind.name().to_lowercase();
+                let on = self.quick.iter().position(|&q| q == i);
+                let (name, about) = match on {
+                    Some(k) => (format!("Quick build {}", k + 1), format!("{me}'s {kind} is button {} of the Build page on a planet. Click to take it off.", k + 1)),
+                    None if self.quick.len() >= QUICK => ("Quick build: full".to_string(), format!("At most {QUICK} loadouts are quick to build: take one off first.")),
+                    None => ("Quick build: off".to_string(), format!("Click to put {me}'s {kind} on the Build page on a planet.")),
                 };
-                rows.push(bar(name, about, on, on || self.quick.len() < QUICK, Pick::Quick));
+                rows.push(bar(name, about, on.is_some(), on.is_some() || self.quick.len() < QUICK, Pick::QuickOf(i)));
             }
             if self.loadouts.len() < LOADOUTS_MAX {
                 rows.push(bar("New loadout".into(), "An empty loadout: put a gun or a turret and cards in it.".into(), false, true, Pick::NewLoadout));
@@ -3321,7 +3325,8 @@ impl Run {
                 true
             }
             Pick::CarryTurret(i) => self.take_turret(i),
-            Pick::Quick => self.toggle_quick(),
+            Pick::Quick => self.toggle_quick(self.editing),
+            Pick::QuickOf(l) => self.toggle_quick(l),
             Pick::BodyAuto(i) => match self.bodies.get_mut(i) {
                 Some(b) => {
                     b.auto = !b.auto;
@@ -4153,7 +4158,7 @@ mod tests {
     fn the_shop_sells_what_the_points_buy_and_no_more() {
         let mut r = Run::new(1);
         assert!(r.has("walls") && r.has("turret"), "the plain gun turret from planet 1");
-        assert!(r.shop().iter().all(|row| !row.ready || matches!(row.pick, Pick::Card(_) | Pick::Edit(_) | Pick::NewLoadout | Pick::DevSkip)), "no points, nothing to buy");
+        assert!(r.shop().iter().all(|row| !row.ready || matches!(row.pick, Pick::Card(_) | Pick::Edit(_) | Pick::NewLoadout | Pick::QuickOf(_) | Pick::DevSkip)), "no points, nothing to buy");
         r.won(1);
         assert_eq!((r.depth, r.points), (2, reward(1, 1)));
         assert_eq!(r.offers.len(), OFFER + AMMO_OFFER);
@@ -4560,7 +4565,10 @@ mod tests {
         let last = r.loadouts.iter().position(|l| l.turret == Some(3)).unwrap();
         assert!(!r.quick.contains(&last), "the fourth found no free slot");
         assert!(r.edit(last) && !r.pick(Pick::Quick), "full");
-        assert!(r.shop().iter().any(|w| w.pick == Pick::Quick));
+        assert!(r.shop().iter().any(|w| w.pick == Pick::QuickOf(last)));
+        assert!(r.edit(0) && r.shop().iter().filter(|w| matches!(w.pick, Pick::QuickOf(_))).count() == 4, "a switch on each turret loadout's card, whichever is shown");
+        assert!(r.pick(Pick::QuickOf(1)) && !r.quick.contains(&1) && r.editing == 0, "switched from its card");
+        assert!(r.pick(Pick::QuickOf(1)) && r.quick.contains(&1));
         assert!(r.edit(1) && r.pick(Pick::Quick) && !r.quick.contains(&1));
         assert!(r.edit(last) && r.pick(Pick::Quick) && r.quick.contains(&last));
         assert!(r.edit(0) && !r.pick(Pick::Quick), "no turret there");

@@ -1014,8 +1014,10 @@ fn the_menu_starts_a_runs_level_like_a_mission() {
     // The shop page shows what the run sells, by group.
     let shop = shop_of(&Run::new(1));
     assert!(shop.heading.starts_with(&format!("Planet 1 of {}", slime_mould::mould::run::PLANETS)), "{}", shop.heading);
-    // The plain gun turret, owned from planet 1 (2026-11-27).
-    assert!(shop.rows.iter().any(|row| row.group == "Buildings" && row.name.starts_with("Gun turret")), "{:?}", shop.rows.iter().map(|r| (&r.group, &r.name)).collect::<Vec<_>>());
+    // The plain gun turret, owned from planet 1 (2026-11-27), on the
+    // Owned tab, and in loadout 2 on the row of loadouts, quick to build.
+    assert!(shop.loadouts.iter().any(|l| l.n == 2 && l.holds == "Gun turret" && l.quick.is_some_and(|q| q.1 == Some(1))));
+    assert!(shop.rows.iter().any(|row| row.group == slime_mould::world::start::OWNED && row.name.starts_with("Gun turret")), "{:?}", shop.rows.iter().map(|r| (&r.group, &r.name)).collect::<Vec<_>>());
 }
 
 /// **A run in the window** (needs a GPU; the cloud's software Vulkan runs
