@@ -58,7 +58,15 @@ rings `split_preview` after the controls' marks with "k of n" at the cursor.
 A tap of Y is `Cmd::Split` as before. Film: `film_split` (stills). Also
 11-28: #887 merged; step 6 (energy) dropped by his ruling (balance from his
 play logs once the stronger slime and turrets land); the Grudge re-film is
-this lane's now that Enemy's readout is on main (#886).
+this lane's now that Enemy's readout is on main (#886). Done 11-28 on
+step 10 (the Grudge on twelve steps; run seed 1, `hand=hold@600,400`):
+the readout reads 42% at 0:32 and 75-82% from 0:41, but 8 soldiers are
+wiped in every arm (plain 0:53, Torch 0:58 with 27 burned, Tinder + Torch
+0:45 with 38). Direction: "move, don't hold" is the counter for now; rerun
+once with the run bot's real step-10 army when Engine's bot fields one.
+The hold hand buys at most 8 and no rule key sets a bigger landing.
+Open: Scott's card on turrets (play first, recommended) and on the split
+control (#893 waits on it).
 
 **2026-11-28, the new account's lane thread (plan of 11-27, steps 3 and 6).**
 Jobs from Direction, in order: turret designs in the run bot (with Engine,
